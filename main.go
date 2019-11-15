@@ -5,6 +5,9 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -25,16 +28,23 @@ func main() {
 	jr.routes()
 
 	go func() {
-		// FIXME:  If this fails (port already in use), the error will be ignored
 		log.Println("Starting management web server on", *mgmt_addr)
 		if err := http.ListenAndServe(*mgmt_addr, mgmt_mux); err != nil {
 			log.Fatal("ListenAndServe:", err)
 		}
 	}()
 
-	log.Println("Starting websocket server on", *ws_addr)
-	if err := http.ListenAndServe(*ws_addr, ws_mux); err != nil {
-		log.Fatal("ListenAndServe:", err)
-	}
+	go func() {
+		log.Println("Starting websocket server on", *ws_addr)
+		if err := http.ListenAndServe(*ws_addr, ws_mux); err != nil {
+			log.Fatal("ListenAndServe:", err)
+		}
+	}()
 
+	signal_chan := make(chan os.Signal, 1)
+
+	signal.Notify(signal_chan, syscall.SIGINT, syscall.SIGTERM)
+
+	log.Println("Blocking waiting for signal")
+	<-signal_chan
 }
