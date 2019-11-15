@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	var addr = flag.String("addr", ":8080", "The addr of the application.")
+	var ws_addr = flag.String("ws_addr", ":8080", "Hostname:port of the websocket server")
+	var mgmt_addr = flag.String("mgmt_addr", ":9090", "Hostname:port of the management server")
 	flag.Parse()
 
 	ws_mux := http.NewServeMux()
@@ -24,13 +25,15 @@ func main() {
 	jr.routes()
 
 	go func() {
-		mgmt_port := ":9090"
-		log.Println("Starting management web server on", mgmt_port)
-		http.ListenAndServe(mgmt_port, mgmt_mux)
+		// FIXME:  If this fails (port already in use), the error will be ignored
+		log.Println("Starting management web server on", *mgmt_addr)
+		if err := http.ListenAndServe(*mgmt_addr, mgmt_mux); err != nil {
+			log.Fatal("ListenAndServe:", err)
+		}
 	}()
 
-	log.Println("Starting web server on", *addr)
-	if err := http.ListenAndServe(*addr, ws_mux); err != nil {
+	log.Println("Starting websocket server on", *ws_addr)
+	if err := http.ListenAndServe(*ws_addr, ws_mux); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 
