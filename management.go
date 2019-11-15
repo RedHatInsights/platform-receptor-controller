@@ -21,22 +21,19 @@ func newManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementSer
 }
 
 func (s *ManagementServer) routes() {
-	s.router.HandleFunc("/management/disconnect", s.handleManagement())
+	s.router.HandleFunc("/management/disconnect", s.handleDisconnect())
 }
 
-func (s *ManagementServer) handleManagement() http.HandlerFunc {
+func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
-	// FIXME: Rename me
-	type Job struct {
+	type connectionId struct {
 		Account string `json: "account"`
 		Node_id string `json: "node_id"`
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		fmt.Println("Simulating ManagementServer producing a message")
-
-		var job Job
+		var conn_id connectionId
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -48,7 +45,7 @@ func (s *ManagementServer) handleManagement() http.HandlerFunc {
 			panic(err)
 		}
 
-		if err := json.Unmarshal(body, &job); err != nil {
+		if err := json.Unmarshal(body, &conn_id); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			w.WriteHeader(422) // unprocessable entity
 			if err := json.NewEncoder(w).Encode(err); err != nil {
@@ -56,25 +53,20 @@ func (s *ManagementServer) handleManagement() http.HandlerFunc {
 			}
 		}
 
-        fmt.Println(job)
+        fmt.Println(conn_id)
 
-		// dispatch job
-		var client Client
-		client = s.connection_mgr.GetConnection(job.Account)
+		client := s.connection_mgr.GetConnection(conn_id.Account)
 		if client == nil {
-			// FIXME:  the connection is not connected!!
-			//         is it connected to another pod?
-			fmt.Println("Not sure what to do here!!")
-			fmt.Println("No connection to the customer...leaving")
+			w.WriteHeader(404)
+			fmt.Printf("No connection to the customer (%+v)...\n", conn_id)
 			return
 		}
 
-		// FIXME: just for testing
 		client.DisconnectReceptorNetwork()
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(job); err != nil {
+		if err := json.NewEncoder(w).Encode(conn_id); err != nil {
 			panic(err)
 		}
 	}
