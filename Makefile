@@ -1,11 +1,13 @@
-run: receptor-controller
-	./receptor-controller
+GATEWAY_BINARY=receptor-controller-gateway
 
-receptor-controller: main.go ws_controller.go management.go job_receiver.go
-	go build -o receptor-controller
+run: $(GATEWAY_BINARY)
+	./$(GATEWAY_BINARY)
+
+$(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go
+	go build -o $(GATEWAY_BINARY)
 
 test:
-	go test -v receptor/mesh_router/router_test.go receptor/mesh_router/heap_test.go
+	go test -v ./...
 
 clean:
-	rm -f receptor-controller
+	rm -f $(GATEWAY_BINARY)
