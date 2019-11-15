@@ -1,11 +1,10 @@
 package protocol
 
-
 import (
 	//	"bufio"
 	"encoding/json"
 	//"fmt"
-//	"net"
+	//	"net"
 	"time"
 	//"os"
 )
@@ -20,21 +19,21 @@ import (
 */
 
 type OuterEnvelope struct {
-    frame_id string 
-    sender string 
-    recipient string 
-    route_list []string
-    inner InnerEnvelope
+	frame_id   string
+	sender     string
+	recipient  string
+	route_list []string
+	inner      InnerEnvelope
 }
 
 type InnerEnvelope struct {
-	Message_Id      string    `json:"message_id"`
-	Sender       string    `json:"sender"`
-	Recipient    string    `json:"recipient "`
-	Message_type string    `json:"message_type"`
+	Message_Id   string `json:"message_id"`
+	Sender       string `json:"sender"`
+	Recipient    string `json:"recipient "`
+	Message_type string `json:"message_type"`
 	//Timestamp    time.Time `json:"timestamp"`
-	Raw_payload  string    `json:"raw_payload"`
-	Directive    string    `json:"directive"`
+	Raw_payload string `json:"raw_payload"`
+	Directive   string `json:"directive"`
 }
 
 type Message struct {
@@ -46,11 +45,11 @@ type Message struct {
 
 func (m *Message) Marshal() []byte {
 	marshalled_msg, _ := json.Marshal(m)
-    return marshalled_msg
+	return marshalled_msg
 }
 
 func (m *Message) Unmarshal(buff []byte) {
-    _ = json.Unmarshal(buff, m)
+	_ = json.Unmarshal(buff, m)
 }
 
 /*
@@ -74,4 +73,3 @@ type RouteMessage struct {
 	//             ],
 	//    "seen": ["node-a", "node-b"]}\x1b[K'
 }
-
