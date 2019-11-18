@@ -1,3 +1,5 @@
+.PHONY: test clean
+
 GATEWAY_BINARY=receptor-controller-gateway
 
 run: $(GATEWAY_BINARY)
