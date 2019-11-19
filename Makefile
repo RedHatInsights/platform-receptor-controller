@@ -6,7 +6,7 @@ GATEWAY_BINARY=receptor-controller-gateway
 run: $(GATEWAY_BINARY)
 	./$<
 
-$(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go
+$(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go receptor/protocol/protocol.go
 	go build -o $@
 
 deps:

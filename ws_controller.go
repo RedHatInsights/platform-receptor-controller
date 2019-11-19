@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
 	"github.com/gorilla/websocket"
@@ -48,21 +47,13 @@ func (c *rcClient) read() {
 
 		fmt.Println("WebSocket Client msg:", msgStr)
 
-		// FIXME:
-
-		if strings.HasPrefix(msgStr, "HI") {
-			fmt.Println("client said HI")
-			cmd := protocol.Message{}
-			cmd.Unmarshal([]byte(msgStr))
-			fmt.Println("cmd:", cmd)
-		} else if strings.HasPrefix(msgStr, "ROUTE") {
-			fmt.Println("client said ROUTE")
-			// FIXME:  i don't think this is the right place
-			fmt.Println("save route table info to shared route table")
-		} else if strings.HasPrefix(msgStr, "STATUS") {
-			// FIXME: handle status updates
-			fmt.Println("FIXME:  handle status updates!!")
+		message, err := protocol.ParseMessage(msg)
+		if err != nil {
+			fmt.Println("Unable to parse receptor message...ignoring...")
+			continue
 		}
+
+		fmt.Println("message:", message)
 	}
 
 	fmt.Println("WebSocket reader leaving!")

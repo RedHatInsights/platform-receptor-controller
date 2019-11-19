@@ -1,24 +1,39 @@
 import asyncio
 import aiohttp
-import sys
 import json
 import random
+import sys
+
+from datetime import datetime, timezone
+
+#TIMESTAMP = "2006-01-02T15:04:05Z07:00"
+TIMESTAMP = datetime.now(timezone.utc).astimezone().isoformat()
+
+def generate_route_message(id_, edges, seen):
+    return {"cmd": "ROUTE",
+            "id": id_,
+            "edges": edges,
+            "seen": seen}
 
 def generate_cmd(cmd, id_, timestamp):
     return {"cmd": cmd,
             "id": id_,
             "expire_time": timestamp}
 
+
 async def test_client(loop, account_number, node_id):
     basic_auth = aiohttp.BasicAuth(account_number, "imapassord")
     session = aiohttp.ClientSession(auth=basic_auth)
     ws = await session.ws_connect('http://localhost:8080/receptor-controller')
 
+    edges = [["node-a", "node-b", 1]]
+    seen = []
+
     async def periodic_writer():
         await asyncio.sleep(2)
         while True:
             print("writing")
-            await ws.send_str(f"ROUTE:{node_id}:timestamp")
+            await ws.send_str(json.dumps(generate_route_message(node_id, edges, seen)))
             delay_msecs = random.randrange(100, 1000) / 1000
             await asyncio.sleep(delay_msecs)
 
@@ -35,7 +50,7 @@ async def test_client(loop, account_number, node_id):
             if msg.data[:2] == "HI":
                 print("Gotta HI...")
                 print("Sending HI...")
-                await ws.send_str(json.dumps(generate_cmd("HI", node_id, "timestamp")))
+                await ws.send_str(json.dumps(generate_cmd("HI", node_id, TIMESTAMP)))
                 #await ws.send_str("ROUTE:node-x:timestamp")
             if msg.data == 'close':
                print("CLOSE!")
