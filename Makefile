@@ -11,5 +11,8 @@ $(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go
 test:
 	go test -v ./...
 
+lint:
+	golint
+
 clean:
 	rm -f $(GATEWAY_BINARY)

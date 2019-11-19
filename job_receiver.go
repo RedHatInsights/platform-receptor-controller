@@ -9,22 +9,22 @@ import (
 )
 
 type Job struct {
-	Account    string `json: "account"`
-	Message_id string `json: "message_id"`
-	Recipient  string `json: "recipient"`
-	Payload    string `json: "payload"`
-	Directive  string `json: "directive"`
+	Account   string `json: "account"`
+	MessageID string `json: "message_id"`
+	Recipient string `json: "recipient"`
+	Payload   string `json: "payload"`
+	Directive string `json: "directive"`
 }
 
 type JobReceiver struct {
-	connection_mgr *ConnectionManager
-	router         *http.ServeMux
+	connectionMgr *ConnectionManager
+	router        *http.ServeMux
 }
 
 func newJobReceiver(cm *ConnectionManager, r *http.ServeMux) *JobReceiver {
 	return &JobReceiver{
-		connection_mgr: cm,
-		router:         r,
+		connectionMgr: cm,
+		router:        r,
 	}
 }
 
@@ -60,7 +60,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		// dispatch job
 		var client Client
-		client = jr.connection_mgr.GetConnection(job.Account)
+		client = jr.connectionMgr.GetConnection(job.Account)
 		if client == nil {
 			// FIXME:  the connection is not connected!!
 			//         is it connected to another pod?

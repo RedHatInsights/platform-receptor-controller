@@ -9,14 +9,14 @@ import (
 )
 
 type ManagementServer struct {
-	connection_mgr *ConnectionManager
-	router         *http.ServeMux
+	connectionMgr *ConnectionManager
+	router        *http.ServeMux
 }
 
 func newManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementServer {
 	return &ManagementServer{
-		connection_mgr: cm,
-		router:         r,
+		connectionMgr: cm,
+		router:        r,
 	}
 }
 
@@ -26,14 +26,14 @@ func (s *ManagementServer) routes() {
 
 func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
-	type connectionId struct {
+	type connectionID struct {
 		Account string `json: "account"`
-		Node_id string `json: "node_id"`
+		NodeID  string `json: "node_id"`
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var conn_id connectionId
+		var connID connectionID
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -45,7 +45,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			panic(err)
 		}
 
-		if err := json.Unmarshal(body, &conn_id); err != nil {
+		if err := json.Unmarshal(body, &connID); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			w.WriteHeader(422) // unprocessable entity
 			if err := json.NewEncoder(w).Encode(err); err != nil {
@@ -53,12 +53,12 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			}
 		}
 
-		fmt.Println(conn_id)
+		fmt.Println(connID)
 
-		client := s.connection_mgr.GetConnection(conn_id.Account)
+		client := s.connectionMgr.GetConnection(connID.Account)
 		if client == nil {
 			w.WriteHeader(404)
-			fmt.Printf("No connection to the customer (%+v)...\n", conn_id)
+			fmt.Printf("No connection to the customer (%+v)...\n", connID)
 			return
 		}
 
@@ -66,7 +66,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(conn_id); err != nil {
+		if err := json.NewEncoder(w).Encode(connID); err != nil {
 			panic(err)
 		}
 	}
