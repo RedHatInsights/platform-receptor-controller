@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	"github.com/gorilla/websocket"
 )
 
-type rc_client struct {
+type rcClient struct {
 	account string
 
 	// socket is the web socket for this client.
@@ -19,20 +20,20 @@ type rc_client struct {
 	send chan []byte
 }
 
-func (c *rc_client) SendWork(b []byte) {
+func (c *rcClient) SendWork(b []byte) {
 	c.send <- b
 }
 
-func (c *rc_client) DisconnectReceptorNetwork() {
+func (c *rcClient) DisconnectReceptorNetwork() {
 	fmt.Println("DisconnectReceptorNetwork()")
 	c.socket.Close()
 }
 
-func (c *rc_client) Close() {
+func (c *rcClient) Close() {
 	close(c.send)
 }
 
-func (c *rc_client) read() {
+func (c *rcClient) read() {
 	defer c.socket.Close()
 	for {
 		fmt.Println("WebSocket reader waiting for message...")
@@ -43,22 +44,22 @@ func (c *rc_client) read() {
 			return
 		}
 
-		msg_str := string(msg)
+		msgStr := string(msg)
 
-		fmt.Println("WebSocket Client msg:", msg_str)
+		fmt.Println("WebSocket Client msg:", msgStr)
 
 		// FIXME:
 
-		if strings.HasPrefix(msg_str, "HI") {
+		if strings.HasPrefix(msgStr, "HI") {
 			fmt.Println("client said HI")
 			cmd := protocol.Message{}
-			cmd.Unmarshal([]byte(msg_str))
+			cmd.Unmarshal([]byte(msgStr))
 			fmt.Println("cmd:", cmd)
-		} else if strings.HasPrefix(msg_str, "ROUTE") {
+		} else if strings.HasPrefix(msgStr, "ROUTE") {
 			fmt.Println("client said ROUTE")
 			// FIXME:  i don't think this is the right place
 			fmt.Println("save route table info to shared route table")
-		} else if strings.HasPrefix(msg_str, "STATUS") {
+		} else if strings.HasPrefix(msgStr, "STATUS") {
 			// FIXME: handle status updates
 			fmt.Println("FIXME:  handle status updates!!")
 		}
@@ -67,7 +68,7 @@ func (c *rc_client) read() {
 	fmt.Println("WebSocket reader leaving!")
 }
 
-func (c *rc_client) write() {
+func (c *rcClient) write() {
 	defer c.socket.Close()
 
 	fmt.Println("WebSocket writer - sending HI")
@@ -90,14 +91,14 @@ func (c *rc_client) write() {
 }
 
 type ReceptorController struct {
-	connection_mgr *ConnectionManager
-	router         *http.ServeMux
+	connectionMgr *ConnectionManager
+	router        *http.ServeMux
 }
 
 func newReceptorController(cm *ConnectionManager, r *http.ServeMux) *ReceptorController {
 	return &ReceptorController{
-		connection_mgr: cm,
-		router:         r,
+		connectionMgr: cm,
+		router:        r,
 	}
 }
 
@@ -137,17 +138,17 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			return
 		}
 
-		client := &rc_client{
+		client := &rcClient{
 			account: username, // FIXME:  for now the username from basic auth is the account
 			socket:  socket,
 			send:    make(chan []byte, messageBufferSize),
 		}
 
-		rc.connection_mgr.Register(client.account, client)
+		rc.connectionMgr.Register(client.account, client)
 
 		// once this go routine exits...notify the chat room of the clients departure...close the send channel
 		defer func() {
-			rc.connection_mgr.Unregister(client.account)
+			rc.connectionMgr.Unregister(client.account)
 		}()
 
 		go client.write()
