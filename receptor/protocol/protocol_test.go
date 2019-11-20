@@ -19,3 +19,40 @@ func TestHiMessageUnmarshal(t *testing.T) {
 		t.Errorf("Message parsing failed, got: %d, want: %d.", message.Type(), HiMessageType)
 	}
 }
+
+func TestFrameUnmarshal(t *testing.T) {
+	b := []byte{10, // type
+		22,                     // version
+		0x00, 0x00, 0x00, 0x0f, // id
+		0x00, 0x00, 0x00, 0xff, // length
+		0x78, 0x56, 0x34, 0x12, 0x34, 0x12, 0x78, 0x56, // uuid hi
+		0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78} // uuid low
+
+	f := Frame{}
+	err := f.unmarshal(b)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if f.Type != 10 {
+		t.Fatalf("Frame Type parsing failed, got: %d, want: %d", f.Type, 10)
+	}
+
+	if f.Version != 22 {
+		t.Fatalf("Frame Version parsing failed, got: %d, want: %d", f.Version, 22)
+	}
+
+	if f.ID != 15 {
+		t.Fatalf("Frame ID parsing failed, got: %d, want: %d", f.ID, 15)
+	}
+
+	if f.Length != 255 {
+		t.Fatalf("Frame ID parsing failed, got: %d, want: %d", f.Length, 255)
+	}
+
+	t.Logf("frame msg:%d", f.Type)
+	t.Logf("frame version:%d", f.Version)
+	t.Logf("frame id:%d", f.ID)
+	t.Logf("frame msgid: %X-%X-%X-%X-%X", f.MsgID[0:4], f.MsgID[4:6], f.MsgID[6:8], f.MsgID[8:10], f.MsgID[10:])
+	t.Logf("frame %+v", f)
+}

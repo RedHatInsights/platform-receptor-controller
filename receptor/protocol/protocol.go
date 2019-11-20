@@ -1,15 +1,34 @@
 package protocol
 
 import (
-	"io"
-	"strings"
-	//"bufio"
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	//	"net"
+	"io"
+	"strings"
 	"time"
-	//"os"
 )
+
+type Frame struct {
+	Type    byte
+	Version byte
+	ID      uint32
+	Length  uint32
+	MsgID   [16]byte
+}
+
+func (f *Frame) unmarshal(buf []byte) error {
+	r := bytes.NewReader(buf)
+
+	err := binary.Read(r, binary.BigEndian, f)
+	if err != nil {
+		fmt.Println("failed to read frame:", err)
+		return err
+	}
+
+	return nil
+}
 
 type NetworkMessageType int
 
