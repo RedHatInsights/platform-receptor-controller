@@ -9,7 +9,10 @@ $(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go
 	go build -o $@
 
 test:
-	go test -v ./...
+	go test $(TEST_ARGS) ./...
+
+fmt:
+	go fmt ./...
 
 lint:
 	golint
