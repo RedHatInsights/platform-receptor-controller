@@ -10,16 +10,49 @@ import (
 	"time"
 )
 
-type Frame struct {
-	Type    byte
+type frameType int8
+
+const (
+	HeaderFrame  frameType = 1
+	PayloadFrame frameType = 2
+	CommandFrame frameType = 3
+)
+
+type messageID [16]byte
+
+func (mid messageID) String() string {
+	return fmt.Sprintf("%X-%X-%X-%X-%X",
+		mid[0:4],
+		mid[4:6],
+		mid[6:8],
+		mid[8:10],
+		mid[10:],
+	)
+}
+
+type frame struct {
+	Type    frameType
 	Version byte
 	ID      uint32
 	Length  uint32
-	MsgID   [16]byte
+	MsgID   messageID
 }
 
-func (f *Frame) unmarshal(buf []byte) error {
-	r := bytes.NewReader(buf)
+const frameLength int = 26
+
+func (f *frame) unmarshal(buf []byte) error {
+
+	if len(buf) < frameLength {
+		return io.ErrUnexpectedEOF
+	}
+
+	fb := buf[0:frameLength]
+
+	r := bytes.NewReader(fb)
+
+	fmt.Printf("type(r): %T", r)
+	fmt.Println("len(buf): ", len(buf))
+	fmt.Println("len(fb): ", len(fb))
 
 	err := binary.Read(r, binary.BigEndian, f)
 	if err != nil {
@@ -27,7 +60,34 @@ func (f *Frame) unmarshal(buf []byte) error {
 		return err
 	}
 
+	if f.isValidType() != true {
+		return fmt.Errorf("invalid frame type")
+	}
+
+	fmt.Println("len(buf): ", len(buf))
+
+	dataBuf := make([]byte, f.Length)
+
+	copy(dataBuf, buf[frameLength:])
+	fmt.Println(dataBuf)
+
 	return nil
+}
+
+func (f *frame) isValidType() bool {
+	return f.Type == HeaderFrame || f.Type == PayloadFrame || f.Type == CommandFrame
+}
+
+func (f *frame) marshal() ([]byte, error) {
+	w := new(bytes.Buffer)
+
+	err := binary.Write(w, binary.BigEndian, f)
+	if err != nil {
+		fmt.Println("failed to write frame:", err)
+		return nil, err
+	}
+
+	return w.Bytes(), nil
 }
 
 type NetworkMessageType int
@@ -75,9 +135,10 @@ func ParseMessage(buff []byte) (Message, error) {
 }
 
 type HiMessage struct {
-	Command          string    `json:"cmd"`
-	Id               string    `json:"id"`
-	Expire_timestamp time.Time `json:"expire_time"`
+	Command          string      `json:"cmd"`
+	Id               string      `json:"id"`
+	Expire_timestamp time.Time   `json:"expire_time"`
+	Metadata         interface{} `json:"meta"`
 	// b'{"cmd": "HI", "id": "node-b", "expire_time": 1571507551.7103958}\x1b[K'
 }
 
@@ -104,10 +165,12 @@ type Edge struct {
 */
 
 type RouteMessage struct {
-	Command string          `json:"cmd"`
-	Id      string          `json:"id"`
-	Edges   [][]interface{} `json:"edges"`
-	Seen    []string        `json:"seen"`
+	Command      string          `json:"cmd"`
+	Id           string          `json:"id"`
+	Capabilities interface{}     `json:"capabilities"`
+	Groups       interface{}     `json:"groups"`
+	Edges        [][]interface{} `json:"edges"`
+	Seen         []string        `json:"seen"`
 
 	// b'{"cmd": "ROUTE",
 	//    "id": "node-b",
