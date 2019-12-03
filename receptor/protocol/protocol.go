@@ -1,134 +1,94 @@
 package protocol
 
 import (
-	"bytes"
-	"encoding/binary"
+	//"bytes"
+	//"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 )
 
-type frameType int8
-
-const (
-	HeaderFrame  frameType = 1
-	PayloadFrame frameType = 2
-	CommandFrame frameType = 3
+var (
+	errInvalidMessage = errors.New("invalid message")
 )
 
-type messageID [16]byte
+func readMessage(r io.Reader) (Message, error) {
 
-func (mid messageID) String() string {
-	return fmt.Sprintf("%X-%X-%X-%X-%X",
-		mid[0:4],
-		mid[4:6],
-		mid[6:8],
-		mid[8:10],
-		mid[10:],
-	)
-}
-
-type frame struct {
-	Type    frameType
-	Version byte
-	ID      uint32
-	Length  uint32
-	MsgID   messageID
-}
-
-const frameLength int = 26
-
-func (f *frame) unmarshal(buf []byte) error {
-
-	if len(buf) < frameLength {
-		return io.ErrUnexpectedEOF
-	}
-
-	fb := buf[0:frameLength]
-
-	r := bytes.NewReader(fb)
-
-	fmt.Printf("type(r): %T", r)
-	fmt.Println("len(buf): ", len(buf))
-	fmt.Println("len(fb): ", len(fb))
-
-	err := binary.Read(r, binary.BigEndian, f)
+	f, err := readFrame(r)
 	if err != nil {
-		fmt.Println("failed to read frame:", err)
-		return err
-	}
-
-	if f.isValidType() != true {
-		return fmt.Errorf("invalid frame type")
-	}
-
-	fmt.Println("len(buf): ", len(buf))
-
-	dataBuf := make([]byte, f.Length)
-
-	copy(dataBuf, buf[frameLength:])
-	fmt.Println(dataBuf)
-
-	return nil
-}
-
-func (f *frame) isValidType() bool {
-	return f.Type == HeaderFrame || f.Type == PayloadFrame || f.Type == CommandFrame
-}
-
-func (f *frame) marshal() ([]byte, error) {
-	w := new(bytes.Buffer)
-
-	err := binary.Write(w, binary.BigEndian, f)
-	if err != nil {
-		fmt.Println("failed to write frame:", err)
 		return nil, err
 	}
 
-	return w.Bytes(), nil
+	message, err := parseFrameData(r, f.Type, f.Length)
+	if f.Type != HeaderFrameType {
+		return message, err
+	}
+
+	if f.Type == HeaderFrameType {
+		// The current frame is a header frame...so the next chunk of
+		// data should be a payload frame followed by the payload data
+
+		payloadFrame, err := readFrame(r)
+		if err != nil {
+			fmt.Println("unable to read payload frame")
+			return nil, err
+		}
+
+		if payloadFrame.Type != PayloadFrameType {
+			// FIXME: log it
+			fmt.Println("invalid frame type...expected payload frame")
+			return nil, errInvalidMessage
+		}
+
+		buf := make([]byte, payloadFrame.Length)
+		readSize, err := io.ReadFull(r, buf)
+		fmt.Println("readSize:", readSize)
+		fmt.Println("err:", err)
+		if uint32(readSize) != payloadFrame.Length || err != nil {
+			fmt.Println("unable to read payload data")
+			return nil, err
+		}
+
+		payloadMessage := PayloadMessage{RoutingInfo: message.(*RoutingMessage)}
+		payloadMessage.unmarshal(buf)
+
+		return &payloadMessage, err
+	}
+
+	return message, err
 }
 
 type NetworkMessageType int
 
 const (
-	HiMessageType     NetworkMessageType = 1
-	RouteMessageType  NetworkMessageType = 2
-	WorkMessageType   NetworkMessageType = 3
-	StatusMessageType NetworkMessageType = 4
+	HiMessageType         NetworkMessageType = 1
+	RouteTableMessageType NetworkMessageType = 2
+	RoutingMessageType    NetworkMessageType = 3
+	PayloadMessageType    NetworkMessageType = 4
 )
 
 type Message interface {
 	Type() NetworkMessageType
 	//	marshal() ([]byte, error)
-	//	unmarshal() ([]byte, error)
+	unmarshal(b []byte) error
 }
 
-func ParseMessage(buff []byte) (Message, error) {
-	if len(buff) < 1 /* min length */ {
-		return nil, io.ErrUnexpectedEOF
-	}
-
-	msg_str := string(buff)
+func buildCommandMessage(buff []byte) (Message, error) {
+	msgString := string(buff)
 
 	var m Message
-	if strings.Contains(msg_str, "HI") {
+	if strings.Contains(msgString, "HI") {
 		fmt.Println("client said HI")
-		m = &HiMessage{}
-	} else if strings.Contains(msg_str, "ROUTE") {
+		m = new(HiMessage)
+	} else if strings.Contains(msgString, "ROUTE") {
 		fmt.Println("client said ROUTE")
-		m = &RouteMessage{}
-	} else if strings.Contains(msg_str, "STATUS") {
-		m = &StatusMessage{}
+		m = new(RouteTableMessage)
 	} else {
-		fmt.Println("FIXME: unrecognized")
-		return nil, fmt.Errorf("unrecognized receptor-network message: %s", msg_str)
-	}
-
-	if err := json.Unmarshal(buff, m); err != nil {
-		fmt.Println("FIXME: unmarshal failed, err:", err)
-		return nil, err
+		fmt.Printf("FIXME: unrecognized receptor-network message: %s", msgString)
+		return nil, fmt.Errorf("unrecognized receptor-network message: %s", msgString)
 	}
 
 	return m, nil
@@ -146,15 +106,35 @@ func (m *HiMessage) Type() NetworkMessageType {
 	return HiMessageType
 }
 
-/*
-func (m *HiMessage) Marshal() []byte {
-	return marshalled_msg
+func (m *HiMessage) unmarshal(b []byte) error {
+
+	if err := json.Unmarshal(b, m); err != nil {
+		fmt.Println("FIXME: unmarshal failed, err:", err)
+		return err
+	}
+
+	return nil
 }
 
-func (m *HiMessage) Unmarshal(buff []byte) {
-	_ = json.Unmarshal(buff, m)
+type RoutingMessage struct {
+	Sender    string   `json:"sender"`
+	Recipient string   `json:"recipient"`
+	RouteList []string `json:"route_list"`
 }
-*/
+
+func (m *RoutingMessage) Type() NetworkMessageType {
+	return RoutingMessageType
+}
+
+func (m *RoutingMessage) unmarshal(b []byte) error {
+
+	if err := json.Unmarshal(b, m); err != nil {
+		fmt.Println("FIXME: unmarshal failed, err:", err)
+		return err
+	}
+
+	return nil
+}
 
 /*
 type Edge struct {
@@ -164,7 +144,7 @@ type Edge struct {
 }
 */
 
-type RouteMessage struct {
+type RouteTableMessage struct {
 	Command      string          `json:"cmd"`
 	Id           string          `json:"id"`
 	Capabilities interface{}     `json:"capabilities"`
@@ -181,32 +161,43 @@ type RouteMessage struct {
 	//    "seen": ["node-a", "node-b"]}\x1b[K'
 }
 
-func (m *RouteMessage) Type() NetworkMessageType {
-	return RouteMessageType
+func (m *RouteTableMessage) Type() NetworkMessageType {
+	return RouteTableMessageType
 }
 
-type StatusMessage struct {
-	Id string `json:"id"`
+func (m *RouteTableMessage) unmarshal(b []byte) error {
+	if err := json.Unmarshal(b, m); err != nil {
+		fmt.Println("FIXME: unmarshal failed, err:", err)
+		return err
+	}
+
+	return nil
 }
 
-func (m *StatusMessage) Type() NetworkMessageType {
-	return StatusMessageType
+type PayloadMessage struct {
+	RoutingInfo *RoutingMessage
+	Data        InnerEnvelope
 }
 
-type OuterEnvelope struct {
-	frame_id   string
-	sender     string
-	recipient  string
-	route_list []string
-	inner      InnerEnvelope
+func (m *PayloadMessage) Type() NetworkMessageType {
+	return PayloadMessageType
+}
+
+func (pm *PayloadMessage) unmarshal(buf []byte) error {
+	if err := json.Unmarshal(buf, &pm.Data); err != nil {
+		fmt.Println("FIXME: PayloadMessage unmarshal failed, err:", err)
+		return err
+	}
+
+	return nil
 }
 
 type InnerEnvelope struct {
-	Message_Id   string `json:"message_id"`
-	Sender       string `json:"sender"`
-	Recipient    string `json:"recipient "`
-	Message_type string `json:"message_type"`
+	MessageID   string `json:"message_id"`
+	Sender      string `json:"sender"`
+	Recipient   string `json:"recipient"`
+	MessageType string `json:"message_type"`
 	//Timestamp    time.Time `json:"timestamp"`
-	Raw_payload string `json:"raw_payload"`
-	Directive   string `json:"directive"`
+	RawPayload string `json:"raw_payload"`
+	Directive  string `json:"directive"`
 }

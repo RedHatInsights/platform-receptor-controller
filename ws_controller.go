@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	//	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
 
@@ -47,13 +47,15 @@ func (c *rcClient) read() {
 
 		fmt.Println("WebSocket Client msg:", msgStr)
 
-		message, err := protocol.ParseMessage(msg)
-		if err != nil {
-			fmt.Println("Unable to parse receptor message...ignoring...")
-			continue
-		}
+		/*
+			message, err := protocol.ParseMessage(msg)
+			if err != nil {
+				fmt.Println("Unable to parse receptor message...ignoring...")
+				continue
+			}
 
-		fmt.Println("message:", message)
+			fmt.Println("message:", message)
+		*/
 	}
 
 	fmt.Println("WebSocket reader leaving!")

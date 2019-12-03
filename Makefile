@@ -1,4 +1,4 @@
-.PHONY: test clean deps
+.PHONY: test clean deps coverage
 
 GATEWAY_BINARY=receptor-controller-gateway
 
@@ -6,7 +6,7 @@ GATEWAY_BINARY=receptor-controller-gateway
 run: $(GATEWAY_BINARY)
 	./$<
 
-$(GATEWAY_BINARY): main.go ws_controller.go management.go job_receiver.go receptor/protocol/protocol.go
+$(GATEWAY_BINARY):
 	go build -o $@
 
 deps:
@@ -14,7 +14,13 @@ deps:
 	go get -u github.com/google/uuid
 
 test:
-	go test $(TEST_ARGS) ./...
+	#go test $(TEST_ARGS) ./...
+	#go test -v -run InvalidFrameType github.com/RedHatInsights/platform-receptor-controller/receptor/protocol
+	go test -v -run TestReadMessage github.com/RedHatInsights/platform-receptor-controller/receptor/protocol
+
+coverage:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
 
 fmt:
 	go fmt ./...
@@ -23,4 +29,5 @@ lint:
 	$(GOPATH)/bin/golint ./...
 
 clean:
+	go clean
 	rm -f $(GATEWAY_BINARY)
