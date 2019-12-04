@@ -3,7 +3,6 @@ package protocol
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"testing"
 	//"testing/iotest"
 )
@@ -56,11 +55,13 @@ func TestFrameUnmarshalError(t *testing.T) {
 	}
 
 	for testName, buff := range subTests {
-		f := FrameHeader{}
-		err := f.unmarshal(buff)
-		if err == nil {
-			t.Fatalf("[%s] expected error, but none occurred", testName)
-		}
+		t.Run(testName, func(t *testing.T) {
+			f := FrameHeader{}
+			err := f.unmarshal(buff)
+			if err == nil {
+				t.Fatalf("[%s] expected error, but none occurred", testName)
+			}
+		})
 	}
 }
 
@@ -152,17 +153,16 @@ func TestCommandMessageInvalidMessages(t *testing.T) {
 	}
 
 	for testName, msgBuff := range subTests {
+		t.Run(testName, func(t *testing.T) {
+			b := generateFrameByteArray(CommandFrameType, 123, msgBuff)
 
-		b := generateFrameByteArray(CommandFrameType, 123, msgBuff)
-
-		r := bytes.NewReader(b)
-		//readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
-		message, err := readMessage(r)
-		fmt.Println("message:", message)
-		fmt.Println("err:", err)
-		if message != nil && err == nil {
-			t.Fatalf("[%s] invalid response...expected an error, got success", testName)
-		}
+			r := bytes.NewReader(b)
+			//readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
+			message, err := readMessage(r)
+			if message != nil && err == nil {
+				t.Fatalf("[%s] invalid response...expected an error, got success", testName)
+			}
+		})
 	}
 }
 
@@ -189,13 +189,8 @@ func TestHeaderAndPayload(t *testing.T) {
 
 	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
 
-	fmt.Printf("type(b):%T\n", b)
-	fmt.Println("b:", b)
-	fmt.Printf("len(routingMessage):%d\n", len(routingMessage))
-
 	payload := []byte("{\"message_id\": \"123\", \"raw_payload\": \"BLAH!BLAH!\"}")
 	payloadHeader := generateFrameByteArray(PayloadFrameType, 123, payload)
-	fmt.Printf("len(payload):%d\n", len(payload))
 
 	b = append(b, payloadHeader...)
 
@@ -204,9 +199,7 @@ func TestHeaderAndPayload(t *testing.T) {
 	//message, err := readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
 
 	message, err := readMessage(r)
-	fmt.Println("message:", message)
-	fmt.Println("err:", err)
-	if message.Type() != PayloadMessageType {
+	if message.Type() != PayloadMessageType || err != nil {
 		t.Fatalf("incorrect message type")
 	}
 
@@ -234,8 +227,6 @@ func TestHeaderAndPayloadWithShortPayloadRead(t *testing.T) {
 	//message, err := readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
 
 	message, err := readMessage(r)
-	fmt.Println("message:", message)
-	fmt.Println("err:", err)
 	if message != nil || err != errFrameDataTooShort {
 		t.Fatalf("expected an invalid message error!!")
 	}
