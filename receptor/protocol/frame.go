@@ -88,6 +88,7 @@ func (f *FrameHeader) marshal() ([]byte, error) {
 
 	return w.Bytes(), nil
 }
+
 func readFrame(r io.Reader) (*FrameHeader, error) {
 	buf := make([]byte, FrameHeaderLength)
 

@@ -21,6 +21,7 @@ test:
 coverage:
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
+	@echo "file://$(PWD)/coverage.html"
 
 fmt:
 	go fmt ./...

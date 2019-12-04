@@ -218,6 +218,7 @@ func TestHeaderAndPayload(t *testing.T) {
 }
 
 func TestHeaderAndPayloadWithInvalidPayloadLength(t *testing.T) {
+	t.Fatalf("implement me")
 }
 
 func TestHeaderFollowedByIncorrectFrame(t *testing.T) {
