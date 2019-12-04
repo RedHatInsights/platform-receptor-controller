@@ -43,16 +43,14 @@ func readMessage(r io.Reader) (Message, error) {
 			return nil, errInvalidMessage
 		}
 
-		buf, err := readFrameData(r, payloadFrame.Length)
+		pm, err := parseFrameData(r, payloadFrame.Type, payloadFrame.Length)
 		if err != nil {
-			// FIXME: log err
 			return nil, err
 		}
+		payloadMessage := pm.(*PayloadMessage)
+		payloadMessage.RoutingInfo = message.(*RoutingMessage)
 
-		payloadMessage := PayloadMessage{RoutingInfo: message.(*RoutingMessage)}
-		payloadMessage.unmarshal(buf)
-
-		return &payloadMessage, err
+		return payloadMessage, err
 	}
 
 	return message, err
