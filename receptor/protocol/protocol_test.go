@@ -111,7 +111,7 @@ func TestReadMessageShortFrameData(t *testing.T) {
 	}
 }
 
-func TestCommandMessageHi(t *testing.T) {
+func TestReadCommandMessageHi(t *testing.T) {
 	commandMessage := []byte("{\"cmd\": \"HI\", \"id\": \"node_01\", \"expire_time\": \"2015-01-16T16:52:58.547366+01:00\"}")
 
 	b := generateFrameByteArray(CommandFrameType, 123, commandMessage)
@@ -128,7 +128,7 @@ func TestCommandMessageHi(t *testing.T) {
 	}
 }
 
-func TestCommandMessageRouteTable(t *testing.T) {
+func TestReadCommandMessageRouteTable(t *testing.T) {
 	commandMessage := []byte("{\"cmd\": \"ROUTE\", \"id\": \"node_01\", \"edges\": [[\"node-a\", \"node-b\", 1]], \"seen\": [\"node-a\", \"node-b\"]}")
 
 	b := generateFrameByteArray(CommandFrameType, 123, commandMessage)
@@ -145,7 +145,7 @@ func TestCommandMessageRouteTable(t *testing.T) {
 	}
 }
 
-func TestCommandMessageInvalidMessages(t *testing.T) {
+func TestReadCommandMessageInvalidMessages(t *testing.T) {
 
 	subTests := map[string][]byte{
 		"invalid_msg":     []byte("{\"cmd\": \"HI\", \"id\": \"node_01\", \"expire_time\": }"),
@@ -184,7 +184,7 @@ func generateFrameByteArray(t frameType, messageID int, payload []byte) []byte {
 	return b
 }
 
-func TestHeaderAndPayload(t *testing.T) {
+func TestReadHeaderAndPayload(t *testing.T) {
 	routingMessage := []byte("{\"sender\": \"123\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
 
 	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
@@ -209,7 +209,7 @@ func TestHeaderAndPayload(t *testing.T) {
 	}
 }
 
-func TestHeaderAndPayloadWithShortPayloadRead(t *testing.T) {
+func TestReadHeaderAndPayloadWithShortPayloadData(t *testing.T) {
 	routingMessage := []byte("{\"sender\": \"1234\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
 
 	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
@@ -232,7 +232,7 @@ func TestHeaderAndPayloadWithShortPayloadRead(t *testing.T) {
 	}
 }
 
-func TestHeaderFollowedByIncorrectFrame(t *testing.T) {
+func TestReadHeaderFollowedByIncorrectFrame(t *testing.T) {
 	routingMessage := []byte("{\"sender\": \"1234\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
 
 	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
