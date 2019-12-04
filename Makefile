@@ -14,9 +14,9 @@ deps:
 	go get -u github.com/google/uuid
 
 test:
-	#go test $(TEST_ARGS) ./...
-	#go test -v -run InvalidFrameType github.com/RedHatInsights/platform-receptor-controller/receptor/protocol
-	go test -v -run TestReadMessage github.com/RedHatInsights/platform-receptor-controller/receptor/protocol
+	# Use the following command to run specific tests (not the entire suite)
+	# TEST_ARGS="-run TestReadMessage -v" make test
+	go test $(TEST_ARGS) ./...
 
 coverage:
 	go test -v -coverprofile=coverage.out ./...
