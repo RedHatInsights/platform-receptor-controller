@@ -198,7 +198,6 @@ func TestHeaderAndPayload(t *testing.T) {
 	fmt.Printf("len(payload):%d\n", len(payload))
 
 	b = append(b, payloadHeader...)
-	b = append(b, payload...)
 
 	r := bytes.NewReader(b)
 
@@ -217,8 +216,29 @@ func TestHeaderAndPayload(t *testing.T) {
 	}
 }
 
-func TestHeaderAndPayloadWithInvalidPayloadLength(t *testing.T) {
-	t.Fatalf("implement me")
+func TestHeaderAndPayloadWithShortPayloadRead(t *testing.T) {
+	routingMessage := []byte("{\"sender\": \"1234\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
+
+	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
+
+	payload := []byte("{\"message_id\": \"123\", \"raw_payload\": \"BLAH!BLAH!\"}")
+	payloadHeader := generateFrameByteArray(PayloadFrameType, 123, payload)
+
+	b = append(b, payloadHeader...)
+
+	// make the payload data short
+	b = b[:len(b)-2]
+
+	r := bytes.NewReader(b)
+
+	//message, err := readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
+
+	message, err := readMessage(r)
+	fmt.Println("message:", message)
+	fmt.Println("err:", err)
+	if message != nil || err != errFrameDataTooShort {
+		t.Fatalf("expected an invalid message error!!")
+	}
 }
 
 func TestHeaderFollowedByIncorrectFrame(t *testing.T) {

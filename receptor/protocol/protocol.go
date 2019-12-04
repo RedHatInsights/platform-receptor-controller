@@ -43,12 +43,9 @@ func readMessage(r io.Reader) (Message, error) {
 			return nil, errInvalidMessage
 		}
 
-		buf := make([]byte, payloadFrame.Length)
-		readSize, err := io.ReadFull(r, buf)
-		fmt.Println("readSize:", readSize)
-		fmt.Println("err:", err)
-		if uint32(readSize) != payloadFrame.Length || err != nil {
-			fmt.Println("unable to read payload data")
+		buf, err := readFrameData(r, payloadFrame.Length)
+		if err != nil {
+			// FIXME: log err
 			return nil, err
 		}
 

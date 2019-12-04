@@ -108,12 +108,23 @@ func readFrame(r io.Reader) (*FrameHeader, error) {
 	return f, nil
 }
 
-func parseFrameData(r io.Reader, t frameType, dataLength uint32) (Message, error) {
+func readFrameData(r io.Reader, dataLength uint32) ([]byte, error) {
 	buf := make([]byte, dataLength)
 	_, err := io.ReadFull(r, buf)
 	if err != nil {
 		// FIXME: log err
 		return nil, errFrameDataTooShort
+	}
+
+	return buf, nil
+}
+
+func parseFrameData(r io.Reader, t frameType, dataLength uint32) (Message, error) {
+
+	buf, err := readFrameData(r, dataLength)
+	if err != nil {
+		// FIXME: log err
+		return nil, err
 	}
 
 	var m Message
