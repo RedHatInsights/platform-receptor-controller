@@ -20,9 +20,9 @@ var (
 type frameType int8
 
 const (
-	HeaderFrameType  frameType = 1
-	PayloadFrameType frameType = 2
-	CommandFrameType frameType = 3
+	HeaderFrameType  frameType = 0
+	PayloadFrameType frameType = 1
+	CommandFrameType frameType = 2
 )
 
 type messageID [16]byte

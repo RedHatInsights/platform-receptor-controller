@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	//	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
 
@@ -36,16 +36,17 @@ func (c *rcClient) read() {
 	defer c.socket.Close()
 	for {
 		fmt.Println("WebSocket reader waiting for message...")
-		_, msg, err := c.socket.ReadMessage()
+		messageType, r, err := c.socket.NextReader()
+		fmt.Println("messageType:", messageType)
 		fmt.Println("WebSocket reader got a message...")
 		if err != nil {
 			fmt.Println("WebSocket reader got a error...leaving")
 			return
 		}
 
-		msgStr := string(msg)
-
-		fmt.Println("WebSocket Client msg:", msgStr)
+		message, err := protocol.ReadMessage(r)
+		fmt.Println("Websocket reader message:", message)
+		fmt.Println("Websocket reader message type:", message.Type())
 
 		/*
 			message, err := protocol.ParseMessage(msg)
@@ -65,11 +66,19 @@ func (c *rcClient) write() {
 	defer c.socket.Close()
 
 	fmt.Println("WebSocket writer - sending HI")
-	// FIXME:  NOT THE RIGHT PLACE...protocol object should be created...it should
-	// manage the state/messages that are sent
+
+	w, err := c.socket.NextWriter(websocket.BinaryMessage)
+
+	hiMessage := protocol.HiMessage{Command: "HI", Id: "node-cloud-receptor-controller"}
+
+	err = protocol.WriteMessage(w, &hiMessage)
+	if err != nil {
+		fmt.Println("WebSocket writer - error!  Closing connection!")
+		return
+	}
+	w.Close()
 
 	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	c.socket.WriteMessage(websocket.TextMessage, []byte("HI:node-golang:timestamp"))
 	fmt.Println("WebSocket writer - sent HI")
 
 	fmt.Println("WebSocket writer - Waiting for something to send")
@@ -115,14 +124,17 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// 3) Register account with ConnectionManager
 		// 4) Start processing messages
 
-		username, password, ok := req.BasicAuth()
-		fmt.Println("username:", username)
-		fmt.Println("password:", password)
-		fmt.Println("ok:", ok)
-		if ok == false {
-			log.Println("Failed basic auth")
-			return
-		}
+		/*
+			username, password, ok := req.BasicAuth()
+			fmt.Println("username:", username)
+			fmt.Println("password:", password)
+			fmt.Println("ok:", ok)
+			if ok == false {
+				log.Println("Failed basic auth")
+				return
+			}
+		*/
+		username := "0000001"
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		fmt.Println("WebSocket client - got a connection")

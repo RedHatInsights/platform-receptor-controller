@@ -85,7 +85,7 @@ func TestReadMessageInvalidFrameType(t *testing.T) {
 	b, err := f.marshal()
 
 	r := bytes.NewReader(b)
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message != nil || err != errInvalidFrameType {
 		t.Fatalf("expected an invalid frame type error!!")
 	}
@@ -94,7 +94,7 @@ func TestReadMessageInvalidFrameType(t *testing.T) {
 func TestReadMessageShortFrame(t *testing.T) {
 	badFrame := []byte{0x00, 0x01}
 	r := bytes.NewReader(badFrame)
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message != nil || err != errFrameTooShort {
 		t.Fatalf("expected an frame too short error!!")
 	}
@@ -107,7 +107,7 @@ func TestReadMessageShortFrameData(t *testing.T) {
 	b = b[:len(b)-2]
 
 	r := bytes.NewReader(b)
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message != nil || err != errFrameDataTooShort {
 		t.Fatalf("expected an frame data too short error!!")
 	}
@@ -119,7 +119,7 @@ func TestReadCommandMessageHi(t *testing.T) {
 	b := generateFrameByteArray(CommandFrameType, 123, commandMessage)
 
 	r := bytes.NewReader(b)
-	message, _ := readMessage(r)
+	message, _ := ReadMessage(r)
 	if message.Type() != HiMessageType {
 		t.Fatalf("incorrect message type")
 	}
@@ -136,7 +136,7 @@ func TestReadCommandMessageRouteTable(t *testing.T) {
 	b := generateFrameByteArray(CommandFrameType, 123, commandMessage)
 
 	r := bytes.NewReader(b)
-	message, _ := readMessage(r)
+	message, _ := ReadMessage(r)
 	if message.Type() != RouteTableMessageType {
 		t.Fatalf("incorrect message type")
 	}
@@ -159,8 +159,8 @@ func TestReadCommandMessageInvalidMessages(t *testing.T) {
 			b := generateFrameByteArray(CommandFrameType, 123, msgBuff)
 
 			r := bytes.NewReader(b)
-			//readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
-			message, err := readMessage(r)
+			//ReadMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
+			message, err := ReadMessage(r)
 			if message != nil && err == nil {
 				t.Fatalf("[%s] invalid response...expected an error, got success", testName)
 			}
@@ -198,9 +198,9 @@ func TestReadHeaderAndPayload(t *testing.T) {
 
 	r := bytes.NewReader(b)
 
-	//message, err := readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
+	//message, err := ReadMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
 
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message.Type() != PayloadMessageType || err != nil {
 		t.Fatalf("incorrect message type")
 	}
@@ -226,9 +226,9 @@ func TestReadHeaderAndPayloadWithShortPayloadData(t *testing.T) {
 
 	r := bytes.NewReader(b)
 
-	//message, err := readMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
+	//message, err := ReadMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
 
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message != nil || err != errFrameDataTooShort {
 		t.Fatalf("expected an invalid message error!!")
 	}
@@ -247,38 +247,61 @@ func TestReadHeaderFollowedByIncorrectFrame(t *testing.T) {
 
 	r := bytes.NewReader(b)
 
-	message, err := readMessage(r)
+	message, err := ReadMessage(r)
 	if message != nil || err != errInvalidMessage {
 		t.Fatalf("expected an invalid message error!!")
 	}
 }
 
 func TestWriteCommandMessageHi(t *testing.T) {
-	//var b bytes.Buffer
-	//w := bufio.NewWriter(&b)
-
 	var w bytes.Buffer
 
 	hiMessage := HiMessage{Command: "HI",
 		Id:       "123456",
 		Metadata: "{\"blah\": \"blah\"}"}
 
-	//fmt.Println("b.Len():", b.Len())
+	err := WriteMessage(&w, &hiMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
 
-	err := writeMessage(&w, &hiMessage)
-	fmt.Println("err:", err)
+	readMessage, err := ReadMessage(&w)
 
-	fmt.Println("w.Len():", w.Len())
-	/*
-	   fmt.Println("b:", b)
-	   fmt.Println("b.Len():", b.Len())
-
-	   r := bufio.NewReader(w)
-	*/
-	readHiMessage, err := readMessage(&w)
-	fmt.Println("readHiMessage:", readHiMessage)
-	fmt.Println("err:", err)
+	readHiMessage := readMessage.(*HiMessage)
+	if hiMessage != *readHiMessage {
+		t.Fatalf("messages are unequal")
+	}
 }
 
 func TestWritingToClosedWriter(t *testing.T) {
+}
+
+func TestWriteCommandMessageRouteTable(t *testing.T) {
+	var w bytes.Buffer
+
+	routeTableMessage := RouteTableMessage{Command: "ROUTE",
+		Id: "123456",
+		/*
+		   Edges:    []Edge{ Edge{Left: "node-a", Right: "node-b", Cost: 1},
+		   Edge{Left: "node-b", Right: "node-c", Cost: 1},},
+		*/
+
+		//Edges: [[\"node-a\", \"node-b\", 1]]
+		//Seen: \"seen\": [\"node-a\", \"node-b\"]}")
+	}
+
+	err := WriteMessage(&w, &routeTableMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	readMessage, err := ReadMessage(&w)
+	fmt.Println("readMessage:", readMessage)
+
+	/*
+	   readRouteTableMessage := readMessage.(*RouteTableMessage)
+	   if routeTableMessage != *readRouteTableMessage {
+	       t.Fatalf("messages are unequal")
+	   }
+	*/
 }

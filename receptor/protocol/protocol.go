@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
+	//"time"
 )
 
 var (
 	errInvalidMessage = errors.New("invalid message")
 )
 
-func readMessage(r io.Reader) (Message, error) {
+func ReadMessage(r io.Reader) (Message, error) {
 
 	f, err := readFrame(r)
 	if err != nil {
@@ -56,7 +56,7 @@ func readMessage(r io.Reader) (Message, error) {
 	return message, err
 }
 
-func writeMessage(w io.Writer, message Message) error {
+func WriteMessage(w io.Writer, message Message) error {
 
 	messageBuffer, err := message.marshal()
 	if err != nil {
@@ -65,22 +65,8 @@ func writeMessage(w io.Writer, message Message) error {
 		return err
 	}
 
-	//    messageBuffer := []byte{0x00, 0x00}
-
 	frameHeader := FrameHeader{Version: 1, ID: 1}
 
-	/*
-	       switch message.Type() {
-	   	case HiMessageType:
-	       case RouteTableMessageType:
-	           frameHeader.Type = CommandFrameType
-	       case PayloadMessageType:
-	           fmt.Println("HANDLE THIS")
-	       default:
-	           fmt.Println("unknown message type")
-	           return errInvalidMessage
-	       }
-	*/
 	frameHeader.Type = CommandFrameType
 
 	frameHeader.Length = uint32(len(messageBuffer))
@@ -146,10 +132,10 @@ func buildCommandMessage(buff []byte) (Message, error) {
 }
 
 type HiMessage struct {
-	Command          string      `json:"cmd"`
-	Id               string      `json:"id"`
-	Expire_timestamp time.Time   `json:"expire_time"`
-	Metadata         interface{} `json:"meta"`
+	Command         string      `json:"cmd"`
+	Id              string      `json:"id"`
+	ExpireTimestamp interface{} `json:"expire_time"` // FIXME:
+	Metadata        interface{} `json:"meta"`
 	// b'{"cmd": "HI", "id": "node-b", "expire_time": 1571507551.7103958}\x1b[K'
 }
 
@@ -211,13 +197,11 @@ func (m *RoutingMessage) marshal() ([]byte, error) {
 	return b, nil
 }
 
-/*
 type Edge struct {
-    Left string
-    Right string
-    Cost int
+	Left  string
+	Right string
+	Cost  int
 }
-*/
 
 type RouteTableMessage struct {
 	Command      string          `json:"cmd"`
