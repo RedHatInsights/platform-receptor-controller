@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -32,8 +33,63 @@ func (c *rcClient) Close() {
 	close(c.send)
 }
 
+func performHandshake(socket *websocket.Conn) error {
+	messageType, r, err := socket.NextReader()
+	fmt.Println("messageType:", messageType)
+	fmt.Println("WebSocket reader got a message...")
+	if err != nil {
+		fmt.Println("WebSocket reader got a error...leaving")
+		return err
+	}
+
+	if messageType != websocket.BinaryMessage {
+		fmt.Println("WebSocket reader...invalid type...leaving")
+		return errors.New("websocket reader: invalid message type")
+	}
+
+	message, err := protocol.ReadMessage(r)
+	fmt.Println("Websocket reader message:", message)
+	fmt.Println("Websocket reader message type:", message.Type())
+
+	if message.Type() != protocol.HiMessageType {
+		fmt.Println("Received incorrect message type!")
+		return errors.New("websocket reader: invalid receptor message type")
+	}
+
+	hiMessage := message.(*protocol.HiMessage)
+
+	fmt.Printf("Received a hi message from receptor node %s", hiMessage.Id)
+
+	fmt.Println("WebSocket writer - sending HI")
+
+	w, err := socket.NextWriter(websocket.BinaryMessage)
+
+	responseHiMessage := protocol.HiMessage{Command: "HI", Id: "node-cloud-receptor-controller"}
+
+	err = protocol.WriteMessage(w, &responseHiMessage)
+	if err != nil {
+		fmt.Println("WebSocket writer - error!  Closing connection!")
+		return err
+	}
+	w.Close()
+
+	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
+	fmt.Println("WebSocket writer - sent HI")
+
+	return nil
+}
+
 func (c *rcClient) read() {
 	defer c.socket.Close()
+
+	err := performHandshake(c.socket)
+	if err != nil {
+		fmt.Println("Error during handshake:", err)
+		return
+	}
+
+	go c.write()
+
 	for {
 		fmt.Println("WebSocket reader waiting for message...")
 		messageType, r, err := c.socket.NextReader()
@@ -47,16 +103,6 @@ func (c *rcClient) read() {
 		message, err := protocol.ReadMessage(r)
 		fmt.Println("Websocket reader message:", message)
 		fmt.Println("Websocket reader message type:", message.Type())
-
-		/*
-			message, err := protocol.ParseMessage(msg)
-			if err != nil {
-				fmt.Println("Unable to parse receptor message...ignoring...")
-				continue
-			}
-
-			fmt.Println("message:", message)
-		*/
 	}
 
 	fmt.Println("WebSocket reader leaving!")
@@ -64,22 +110,6 @@ func (c *rcClient) read() {
 
 func (c *rcClient) write() {
 	defer c.socket.Close()
-
-	fmt.Println("WebSocket writer - sending HI")
-
-	w, err := c.socket.NextWriter(websocket.BinaryMessage)
-
-	hiMessage := protocol.HiMessage{Command: "HI", Id: "node-cloud-receptor-controller"}
-
-	err = protocol.WriteMessage(w, &hiMessage)
-	if err != nil {
-		fmt.Println("WebSocket writer - error!  Closing connection!")
-		return
-	}
-	w.Close()
-
-	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	fmt.Println("WebSocket writer - sent HI")
 
 	fmt.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
@@ -155,8 +185,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		defer func() {
 			rc.connectionMgr.Unregister(client.account)
 		}()
-
-		go client.write()
 
 		client.read()
 	}
