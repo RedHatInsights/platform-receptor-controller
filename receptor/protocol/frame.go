@@ -65,6 +65,8 @@ func (f *FrameHeader) unmarshal(buf []byte) error {
 		return err
 	}
 
+	fmt.Println("f:", f)
+
 	if f.isValidType() != true {
 		return errInvalidFrameType
 	}

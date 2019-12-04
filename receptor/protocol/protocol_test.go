@@ -2,9 +2,11 @@ package protocol
 
 import (
 	"bytes"
+	//"bufio"
 	"encoding/binary"
 	"testing"
 	//"testing/iotest"
+	"fmt"
 )
 
 func TestFrameUnmarshal(t *testing.T) {
@@ -237,7 +239,7 @@ func TestReadHeaderFollowedByIncorrectFrame(t *testing.T) {
 
 	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
 
-	// Add a Command frame behind a Header frame
+	// Add a Command frame behind a Header frame...this is wrong
 	payload := []byte("{\"cmd\": \"blah\", \"raw_payload\": \"BLAH!BLAH!\"}")
 	invalidFrame := generateFrameByteArray(CommandFrameType, 123, payload)
 
@@ -249,4 +251,34 @@ func TestReadHeaderFollowedByIncorrectFrame(t *testing.T) {
 	if message != nil || err != errInvalidMessage {
 		t.Fatalf("expected an invalid message error!!")
 	}
+}
+
+func TestWriteCommandMessageHi(t *testing.T) {
+	//var b bytes.Buffer
+	//w := bufio.NewWriter(&b)
+
+	var w bytes.Buffer
+
+	hiMessage := HiMessage{Command: "HI",
+		Id:       "123456",
+		Metadata: "{\"blah\": \"blah\"}"}
+
+	//fmt.Println("b.Len():", b.Len())
+
+	err := writeMessage(&w, &hiMessage)
+	fmt.Println("err:", err)
+
+	fmt.Println("w.Len():", w.Len())
+	/*
+	   fmt.Println("b:", b)
+	   fmt.Println("b.Len():", b.Len())
+
+	   r := bufio.NewReader(w)
+	*/
+	readHiMessage, err := readMessage(&w)
+	fmt.Println("readHiMessage:", readHiMessage)
+	fmt.Println("err:", err)
+}
+
+func TestWritingToClosedWriter(t *testing.T) {
 }

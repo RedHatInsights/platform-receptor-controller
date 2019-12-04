@@ -56,6 +56,62 @@ func readMessage(r io.Reader) (Message, error) {
 	return message, err
 }
 
+func writeMessage(w io.Writer, message Message) error {
+
+	messageBuffer, err := message.marshal()
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error marshalling message")
+		return err
+	}
+
+	//    messageBuffer := []byte{0x00, 0x00}
+
+	frameHeader := FrameHeader{Version: 1, ID: 1}
+
+	/*
+	       switch message.Type() {
+	   	case HiMessageType:
+	       case RouteTableMessageType:
+	           frameHeader.Type = CommandFrameType
+	       case PayloadMessageType:
+	           fmt.Println("HANDLE THIS")
+	       default:
+	           fmt.Println("unknown message type")
+	           return errInvalidMessage
+	       }
+	*/
+	frameHeader.Type = CommandFrameType
+
+	frameHeader.Length = uint32(len(messageBuffer))
+
+	frameHeaderBuffer, err := frameHeader.marshal()
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error marshalling frame header")
+		return err
+	}
+	fmt.Println("len(frameHeaderBuffer):", len(frameHeaderBuffer))
+
+	n, err := w.Write(frameHeaderBuffer)
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error writing frame header")
+		return err
+	}
+	fmt.Println("n:", n)
+
+	n, err = w.Write(messageBuffer)
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error writing frame header")
+		return err
+	}
+	fmt.Println("n:", n)
+
+	return nil
+}
+
 type NetworkMessageType int
 
 const (
@@ -67,7 +123,7 @@ const (
 
 type Message interface {
 	Type() NetworkMessageType
-	//	marshal() ([]byte, error)
+	marshal() ([]byte, error)
 	unmarshal(b []byte) error
 }
 
@@ -104,11 +160,23 @@ func (m *HiMessage) Type() NetworkMessageType {
 func (m *HiMessage) unmarshal(b []byte) error {
 
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("FIXME: unmarshal failed, err:", err)
+		fmt.Println("FIXME: unmarshal of HiMessage failed, err:", err)
 		return err
 	}
 
 	return nil
+}
+
+func (m *HiMessage) marshal() ([]byte, error) {
+
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		fmt.Println("FIXME: marshal of HiMessage failed, err:", err)
+		return nil, err
+	}
+
+	return b, nil
 }
 
 type RoutingMessage struct {
@@ -129,6 +197,18 @@ func (m *RoutingMessage) unmarshal(b []byte) error {
 	}
 
 	return nil
+}
+
+func (m *RoutingMessage) marshal() ([]byte, error) {
+
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		fmt.Println("FIXME: marshal of RoutingMessage failed, err:", err)
+		return nil, err
+	}
+
+	return b, nil
 }
 
 /*
@@ -169,6 +249,18 @@ func (m *RouteTableMessage) unmarshal(b []byte) error {
 	return nil
 }
 
+func (m *RouteTableMessage) marshal() ([]byte, error) {
+
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		fmt.Println("FIXME: marshal of RoutingMessage failed, err:", err)
+		return nil, err
+	}
+
+	return b, nil
+}
+
 type PayloadMessage struct {
 	RoutingInfo *RoutingMessage
 	Data        InnerEnvelope
@@ -185,6 +277,18 @@ func (pm *PayloadMessage) unmarshal(buf []byte) error {
 	}
 
 	return nil
+}
+
+func (m *PayloadMessage) marshal() ([]byte, error) {
+
+	b, err := json.Marshal(m.Data)
+
+	if err != nil {
+		fmt.Println("FIXME: marshal of PayloadMessage failed, err:", err)
+		return nil, err
+	}
+
+	return b, nil
 }
 
 type InnerEnvelope struct {
