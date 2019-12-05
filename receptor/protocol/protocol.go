@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	//"time"
+	"time"
 )
 
 var (
@@ -57,6 +57,37 @@ func ReadMessage(r io.Reader) (Message, error) {
 }
 
 func WriteMessage(w io.Writer, message Message) error {
+
+	if message.Type() == PayloadMessageType {
+		payloadMessage := message.(*PayloadMessage)
+		routingMessageBuffer, err := payloadMessage.RoutingInfo.marshal()
+		if err != nil {
+			return err
+		}
+
+		frameHeader := FrameHeader{Version: 1, ID: 1}
+		frameHeader.Type = HeaderFrameType
+		frameHeader.Length = uint32(len(routingMessageBuffer))
+		frameHeaderBuffer, err := frameHeader.marshal()
+
+		w.Write(frameHeaderBuffer)
+		w.Write(routingMessageBuffer)
+
+		payloadDataBuffer, err := message.marshal()
+		if err != nil {
+			return err
+		}
+
+		payloadFrame := FrameHeader{Version: 1, ID: 1}
+		payloadFrame.Type = PayloadFrameType
+		payloadFrame.Length = uint32(len(payloadDataBuffer))
+		payloadFrameBuffer, err := payloadFrame.marshal()
+
+		w.Write(payloadFrameBuffer)
+		w.Write(payloadDataBuffer)
+
+		return nil
+	}
 
 	messageBuffer, err := message.marshal()
 	if err != nil {
@@ -276,11 +307,11 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 }
 
 type InnerEnvelope struct {
-	MessageID   string `json:"message_id"`
-	Sender      string `json:"sender"`
-	Recipient   string `json:"recipient"`
-	MessageType string `json:"message_type"`
-	//Timestamp    time.Time `json:"timestamp"`
-	RawPayload string `json:"raw_payload"`
-	Directive  string `json:"directive"`
+	MessageID   string    `json:"message_id"`
+	Sender      string    `json:"sender"`
+	Recipient   string    `json:"recipient"`
+	MessageType string    `json:"message_type"`
+	Timestamp   time.Time `json:"timestamp"`
+	RawPayload  string    `json:"raw_payload"`
+	Directive   string    `json:"directive"`
 }

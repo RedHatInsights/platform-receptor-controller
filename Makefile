@@ -1,6 +1,6 @@
-.PHONY: test clean deps coverage $(GATEWAY_BINARY)
-
 GATEWAY_BINARY=receptor-controller-gateway
+
+.PHONY: test clean deps coverage $(GATEWAY_BINARY)
 
 
 run: $(GATEWAY_BINARY)

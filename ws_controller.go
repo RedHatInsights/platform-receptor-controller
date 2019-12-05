@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
 	"github.com/gorilla/websocket"
@@ -58,7 +59,7 @@ func performHandshake(socket *websocket.Conn) error {
 
 	hiMessage := message.(*protocol.HiMessage)
 
-	fmt.Printf("Received a hi message from receptor node %s", hiMessage.ID)
+	fmt.Printf("Received a hi message from receptor node %s\n", hiMessage.ID)
 
 	fmt.Println("WebSocket writer - sending HI")
 
@@ -111,13 +112,43 @@ func (c *rcClient) read() {
 func (c *rcClient) write() {
 	defer c.socket.Close()
 
+	var msgCounter int
+
 	fmt.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
-		err := c.socket.WriteMessage(websocket.TextMessage, msg)
+		fmt.Println("Websocket writer needs to send msg:", msg)
+
+		routingMessage := protocol.RoutingMessage{Sender: "me",
+			Recipient: "node-b",
+			//RouteList: []string["node-b"],
+		}
+
+		innerMessage := protocol.InnerEnvelope{
+			MessageID:   string(msgCounter),
+			Sender:      "me",
+			Recipient:   "node-b",
+			MessageType: "directive",
+			RawPayload:  "ima payload bro!",
+			Directive:   "demo:do_uptime",
+			Timestamp:   time.Now(),
+		}
+
+		msgCounter++
+
+		payloadMessage := protocol.PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+
+		w, err := c.socket.NextWriter(websocket.BinaryMessage)
 		if err != nil {
-			fmt.Println("WebSocket writer - WS error...leaving")
+			fmt.Println("WebSocket writer - error!  Closing connection!")
 			return
 		}
+
+		err = protocol.WriteMessage(w, &payloadMessage)
+		if err != nil {
+			fmt.Println("WebSocket writer - error writing the message!  Closing connection!")
+			return
+		}
+		w.Close()
 	}
 	fmt.Println("WebSocket writer leaving!")
 }
@@ -164,10 +195,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 				return
 			}
 		*/
-		username := "0000001"
+		username := "01"
 
 		socket, err := upgrader.Upgrade(w, req, nil)
-		fmt.Println("WebSocket server - got a connection")
+		fmt.Println("WebSocket server - got a connection, account #", username)
 		if err != nil {
 			log.Fatal("ServeHTTP:", err)
 			return
