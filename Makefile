@@ -1,4 +1,4 @@
-.PHONY: test clean deps coverage
+.PHONY: test clean deps coverage $(GATEWAY_BINARY)
 
 GATEWAY_BINARY=receptor-controller-gateway
 
@@ -6,10 +6,8 @@ GATEWAY_BINARY=receptor-controller-gateway
 run: $(GATEWAY_BINARY)
 	./$<
 
-$(GATEWAY_BINARY): FORCE
+$(GATEWAY_BINARY):
 	go build -o $@
-
-FORCE: ;
 
 deps:
 	go get -u golang.org/x/lint/golint
