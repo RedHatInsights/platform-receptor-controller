@@ -6,8 +6,10 @@ GATEWAY_BINARY=receptor-controller-gateway
 run: $(GATEWAY_BINARY)
 	./$<
 
-$(GATEWAY_BINARY):
+$(GATEWAY_BINARY): FORCE
 	go build -o $@
+
+FORCE: ;
 
 deps:
 	go get -u golang.org/x/lint/golint

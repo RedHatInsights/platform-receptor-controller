@@ -167,7 +167,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		username := "0000001"
 
 		socket, err := upgrader.Upgrade(w, req, nil)
-		fmt.Println("WebSocket client - got a connection")
+		fmt.Println("WebSocket server - got a connection")
 		if err != nil {
 			log.Fatal("ServeHTTP:", err)
 			return
