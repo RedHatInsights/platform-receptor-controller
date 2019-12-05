@@ -257,7 +257,7 @@ func TestWriteCommandMessageHi(t *testing.T) {
 	var w bytes.Buffer
 
 	hiMessage := HiMessage{Command: "HI",
-		Id:       "123456",
+		ID:       "123456",
 		Metadata: "{\"blah\": \"blah\"}"}
 
 	err := WriteMessage(&w, &hiMessage)
@@ -280,7 +280,7 @@ func TestWriteCommandMessageRouteTable(t *testing.T) {
 	var w bytes.Buffer
 
 	routeTableMessage := RouteTableMessage{Command: "ROUTE",
-		Id: "123456",
+		ID: "123456",
 		/*
 		   Edges:    []Edge{ Edge{Left: "node-a", Right: "node-b", Cost: 1},
 		   Edge{Left: "node-b", Right: "node-c", Cost: 1},},

@@ -58,13 +58,13 @@ func performHandshake(socket *websocket.Conn) error {
 
 	hiMessage := message.(*protocol.HiMessage)
 
-	fmt.Printf("Received a hi message from receptor node %s", hiMessage.Id)
+	fmt.Printf("Received a hi message from receptor node %s", hiMessage.ID)
 
 	fmt.Println("WebSocket writer - sending HI")
 
 	w, err := socket.NextWriter(websocket.BinaryMessage)
 
-	responseHiMessage := protocol.HiMessage{Command: "HI", Id: "node-cloud-receptor-controller"}
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "node-cloud-receptor-controller"}
 
 	err = protocol.WriteMessage(w, &responseHiMessage)
 	if err != nil {

@@ -133,7 +133,7 @@ func buildCommandMessage(buff []byte) (Message, error) {
 
 type HiMessage struct {
 	Command         string      `json:"cmd"`
-	Id              string      `json:"id"`
+	ID              string      `json:"id"`
 	ExpireTimestamp interface{} `json:"expire_time"` // FIXME:
 	Metadata        interface{} `json:"meta"`
 	// b'{"cmd": "HI", "id": "node-b", "expire_time": 1571507551.7103958}\x1b[K'
@@ -205,7 +205,7 @@ type Edge struct {
 
 type RouteTableMessage struct {
 	Command      string          `json:"cmd"`
-	Id           string          `json:"id"`
+	ID           string          `json:"id"`
 	Capabilities interface{}     `json:"capabilities"`
 	Groups       interface{}     `json:"groups"`
 	Edges        [][]interface{} `json:"edges"`
