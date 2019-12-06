@@ -56,6 +56,27 @@ func ReadMessage(r io.Reader) (Message, error) {
 	return message, err
 }
 
+func WriteMessage(w io.Writer, message Message) error {
+
+	if message.Type() == PayloadMessageType {
+		return writePayloadMessage(w, message)
+	}
+
+	messageBuffer, err := message.marshal()
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error marshalling message")
+		return err
+	}
+
+	err = writeFrame(w, CommandFrameType, messageBuffer)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func writePayloadMessage(w io.Writer, message Message) error {
 	payloadMessage := message.(*PayloadMessage)
 	routingMessageBuffer, err := payloadMessage.RoutingInfo.marshal()
@@ -74,57 +95,6 @@ func writePayloadMessage(w io.Writer, message Message) error {
 	}
 
 	err = writeFrame(w, PayloadFrameType, payloadDataBuffer)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func writeFrame(w io.Writer, ftype frameType, frameData []byte) error {
-
-	frameHeader := FrameHeader{Version: 1, ID: 1} // FIXME: pass this in
-	frameHeader.Type = ftype
-	frameHeader.Length = uint32(len(frameData))
-
-	frameHeaderBuffer, err := frameHeader.marshal()
-	if err != nil {
-		// FIXME: log the error
-		fmt.Println("error marshalling frame header")
-		return err
-	}
-
-	n, err := w.Write(frameHeaderBuffer)
-	if n != len(frameHeaderBuffer) || err != nil {
-		// FIXME: log the error
-		fmt.Println("error writing frame header")
-		return err
-	}
-
-	n, err = w.Write(frameData)
-	if n != len(frameData) || err != nil {
-		// FIXME: log the error
-		fmt.Println("error writing frame data")
-		return err
-	}
-
-	return nil
-}
-
-func WriteMessage(w io.Writer, message Message) error {
-
-	if message.Type() == PayloadMessageType {
-		return writePayloadMessage(w, message)
-	}
-
-	messageBuffer, err := message.marshal()
-	if err != nil {
-		// FIXME: log the error
-		fmt.Println("error marshalling message")
-		return err
-	}
-
-	err = writeFrame(w, CommandFrameType, messageBuffer)
 	if err != nil {
 		return err
 	}

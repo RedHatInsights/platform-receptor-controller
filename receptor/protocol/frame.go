@@ -149,3 +149,33 @@ func parseFrameData(r io.Reader, t frameType, dataLength uint32) (Message, error
 
 	return m, nil
 }
+
+func writeFrame(w io.Writer, ftype frameType, frameData []byte) error {
+
+	frameHeader := FrameHeader{Version: 1, ID: 1} // FIXME: pass this in
+	frameHeader.Type = ftype
+	frameHeader.Length = uint32(len(frameData))
+
+	frameHeaderBuffer, err := frameHeader.marshal()
+	if err != nil {
+		// FIXME: log the error
+		fmt.Println("error marshalling frame header")
+		return err
+	}
+
+	n, err := w.Write(frameHeaderBuffer)
+	if n != len(frameHeaderBuffer) || err != nil {
+		// FIXME: log the error
+		fmt.Println("error writing frame header")
+		return err
+	}
+
+	n, err = w.Write(frameData)
+	if n != len(frameData) || err != nil {
+		// FIXME: log the error
+		fmt.Println("error writing frame data")
+		return err
+	}
+
+	return nil
+}
