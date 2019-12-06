@@ -1,30 +1,35 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	kafka "github.com/segmentio/kafka-go"
 )
 
 type Job struct {
-	Account   string `json: "account"`
-	MessageID string `json: "message_id"`
-	Recipient string `json: "recipient"`
-	Payload   string `json: "payload"`
-	Directive string `json: "directive"`
+	Account   string `json:"account"`
+	MessageID string `json:"message_id"`
+	Recipient string `json:"recipient"`
+	Payload   string `json:"payload"`
+	Directive string `json:"directive"`
 }
 
 type JobReceiver struct {
 	connectionMgr *ConnectionManager
 	router        *http.ServeMux
+	producer      *kafka.Writer
 }
 
-func newJobReceiver(cm *ConnectionManager, r *http.ServeMux) *JobReceiver {
+func newJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
+		producer:      kw,
 	}
 }
 
@@ -58,7 +63,8 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			}
 		}
 
-		// dispatch job
+		// dispatch job via client's sendwork
+		// not using client's sendwork, but leaving this code in to verify connection?
 		var client Client
 		client = jr.connectionMgr.GetConnection(job.Account)
 		if client == nil {
@@ -68,7 +74,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			fmt.Println("No connection to the customer...leaving")
 			return
 		}
-		client.SendWork([]byte("blah..."))
+		// client.SendWork([]byte("blah..."))
+
+		// dispatch job via kafka queue
+		jobJSON, err := json.Marshal(job)
+		jr.producer.WriteMessages(context.Background(),
+			kafka.Message{
+				Key:   []byte(job.Account),
+				Value: []byte(jobJSON),
+			})
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
