@@ -30,3 +30,39 @@ A work request can be submitted by sending a work request message to the _/job_ 
     "id": <uuid for the work request>
   }
 ```
+
+### Development
+
+#### Building
+
+```
+  $ make
+```
+
+#### Testing
+
+Run the unit test:
+
+```
+  $ make test
+```
+
+Verbose output from the tests:
+
+```
+  $ TEST_ARGS="-v" make test
+```
+
+Run specific tests:
+
+```
+  $ TEST_ARGS="-run TestReadMessage -v" make test
+```
+
+Test coverage:
+
+```
+  $ make coverage
+```
+
+Load the coverage.html file in your browser
