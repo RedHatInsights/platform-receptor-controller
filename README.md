@@ -33,6 +33,12 @@ A work request can be submitted by sending a work request message to the _/job_ 
 
 ### Development
 
+Install the project dependencies:
+
+```
+  $ make deps
+```
+
 #### Building
 
 ```
@@ -63,6 +69,9 @@ Test coverage:
 
 ```
   $ make coverage
+  ...
+  ...
+  file:///home/dehort/dev/go/src/github.com/RedHatInsights/platform-receptor-controller/coverage.html
 ```
 
 Load the coverage.html file in your browser
