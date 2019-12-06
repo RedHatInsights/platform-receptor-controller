@@ -307,11 +307,33 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 }
 
 type InnerEnvelope struct {
-	MessageID   string    `json:"message_id"`
-	Sender      string    `json:"sender"`
-	Recipient   string    `json:"recipient"`
-	MessageType string    `json:"message_type"`
-	Timestamp   time.Time `json:"timestamp"`
-	RawPayload  string    `json:"raw_payload"`
-	Directive   string    `json:"directive"`
+	MessageID   string `json:"message_id"`
+	Sender      string `json:"sender"`
+	Recipient   string `json:"recipient"`
+	MessageType string `json:"message_type"`
+	Timestamp   MyTime `json:"timestamp"`
+	RawPayload  string `json:"raw_payload"`
+	Directive   string `json:"directive"`
+}
+
+type MyTime struct {
+	time.Time
+}
+
+func (mt *MyTime) UnmarshalJSON(b []byte) error {
+	timeString := string(b)
+	timeString = strings.Trim(timeString, "\"")
+
+	// Python is sending us a timestamp that looks like this "2019-12-06T04:42:10.988383"
+	// but Go is expecting something like this "2006-01-02T15:04:05.999999999Z07:00"...
+	// we get a failure like: cannot parse "" as "Z07:00"
+
+	parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999", timeString)
+	if err != nil {
+		fmt.Println("error unmarshalling timestamp: ", err)
+		return err
+	}
+	mt.Time = parsedTime
+
+	return nil
 }

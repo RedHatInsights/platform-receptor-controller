@@ -95,7 +95,6 @@ func (c *rcClient) read() {
 		fmt.Println("WebSocket reader waiting for message...")
 		messageType, r, err := c.socket.NextReader()
 		fmt.Println("messageType:", messageType)
-		fmt.Println("WebSocket reader got a message...")
 		if err != nil {
 			fmt.Println("WebSocket reader got a error...leaving")
 			return
@@ -118,19 +117,20 @@ func (c *rcClient) write() {
 	for msg := range c.send {
 		fmt.Println("Websocket writer needs to send msg:", msg)
 
-		routingMessage := protocol.RoutingMessage{Sender: "me",
+		me := "node-cloud-receptor-controller"
+		routingMessage := protocol.RoutingMessage{Sender: me,
 			Recipient: "node-b",
 			//RouteList: []string["node-b"],
 		}
 
 		innerMessage := protocol.InnerEnvelope{
 			MessageID:   string(msgCounter),
-			Sender:      "me",
+			Sender:      me,
 			Recipient:   "node-b",
 			MessageType: "directive",
 			RawPayload:  "ima payload bro!",
 			Directive:   "demo:do_uptime",
-			Timestamp:   time.Now(),
+			Timestamp:   protocol.MyTime{time.Now()},
 		}
 
 		msgCounter++
