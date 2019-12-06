@@ -47,7 +47,7 @@ Install the project dependencies:
 
 #### Testing
 
-Run the unit test:
+Run the unit tests:
 
 ```
   $ make test
