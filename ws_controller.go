@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -101,7 +102,7 @@ func (c *rcClient) read() {
 		}
 
 		message, err := protocol.ReadMessage(r)
-		fmt.Println("Websocket reader message:", message)
+		fmt.Printf("Websocket reader message: %+v\n", message)
 		fmt.Println("Websocket reader message type:", message.Type())
 	}
 
@@ -110,8 +111,6 @@ func (c *rcClient) read() {
 
 func (c *rcClient) write() {
 	defer c.socket.Close()
-
-	var msgCounter int
 
 	fmt.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
@@ -123,8 +122,11 @@ func (c *rcClient) write() {
 			//RouteList: []string["node-b"],
 		}
 
+		messageId, err := uuid.NewUUID()
+		// FIXME: handle error
+
 		innerMessage := protocol.InnerEnvelope{
-			MessageID:   string(msgCounter),
+			MessageID:   messageId.String(),
 			Sender:      me,
 			Recipient:   "node-b",
 			MessageType: "directive",
@@ -132,8 +134,6 @@ func (c *rcClient) write() {
 			Directive:   "demo:do_uptime",
 			Timestamp:   protocol.MyTime{time.Now()},
 		}
-
-		msgCounter++
 
 		payloadMessage := protocol.PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
 

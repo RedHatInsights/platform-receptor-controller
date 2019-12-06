@@ -307,13 +307,14 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 }
 
 type InnerEnvelope struct {
-	MessageID   string `json:"message_id"`
-	Sender      string `json:"sender"`
-	Recipient   string `json:"recipient"`
-	MessageType string `json:"message_type"`
-	Timestamp   MyTime `json:"timestamp"`
-	RawPayload  string `json:"raw_payload"`
-	Directive   string `json:"directive"`
+	MessageID    string `json:"message_id"`
+	Sender       string `json:"sender"`
+	Recipient    string `json:"recipient"`
+	MessageType  string `json:"message_type"`
+	Timestamp    MyTime `json:"timestamp"`
+	RawPayload   string `json:"raw_payload"`
+	Directive    string `json:"directive"`
+	InResponseTo string `json:"in_response_to"`
 }
 
 type MyTime struct {
