@@ -64,8 +64,6 @@ func (f *FrameHeader) unmarshal(buf []byte) error {
 		return err
 	}
 
-	fmt.Println("f:", f)
-
 	if f.isValidType() != true {
 		return errInvalidFrameType
 	}
@@ -74,7 +72,6 @@ func (f *FrameHeader) unmarshal(buf []byte) error {
 }
 
 func (f *FrameHeader) isValidType() bool {
-	fmt.Println("f.Type: ", f.Type)
 	return f.Type == HeaderFrameType || f.Type == PayloadFrameType || f.Type == CommandFrameType
 }
 
@@ -131,13 +128,10 @@ func parseFrameData(r io.Reader, t frameType, dataLength uint32) (Message, error
 	var m Message
 	switch t {
 	case HeaderFrameType:
-		fmt.Println("Header!")
 		m = new(RoutingMessage)
 	case PayloadFrameType:
-		fmt.Println("Payload!")
 		m = new(PayloadMessage)
 	case CommandFrameType:
-		fmt.Println("Command!")
 		m, err = buildCommandMessage(buf)
 	default:
 		// FIXME: log the invalid type

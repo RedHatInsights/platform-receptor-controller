@@ -108,23 +108,20 @@ func WriteMessage(w io.Writer, message Message) error {
 		fmt.Println("error marshalling frame header")
 		return err
 	}
-	fmt.Println("len(frameHeaderBuffer):", len(frameHeaderBuffer))
 
 	n, err := w.Write(frameHeaderBuffer)
-	if err != nil {
+	if n != len(frameHeaderBuffer) || err != nil {
 		// FIXME: log the error
 		fmt.Println("error writing frame header")
 		return err
 	}
-	fmt.Println("n:", n)
 
 	n, err = w.Write(messageBuffer)
-	if err != nil {
+	if n != len(messageBuffer) || err != nil {
 		// FIXME: log the error
 		fmt.Println("error writing frame header")
 		return err
 	}
-	fmt.Println("n:", n)
 
 	return nil
 }
@@ -148,11 +145,11 @@ func buildCommandMessage(buff []byte) (Message, error) {
 	msgString := string(buff)
 
 	var m Message
+
+	// FIXME: look into dynamically unmarshalling json
 	if strings.Contains(msgString, "HI") {
-		fmt.Println("client said HI")
 		m = new(HiMessage)
 	} else if strings.Contains(msgString, "ROUTE") {
-		fmt.Println("client said ROUTE")
 		m = new(RouteTableMessage)
 	} else {
 		fmt.Printf("FIXME: unrecognized receptor-network message: %s", msgString)
