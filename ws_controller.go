@@ -119,7 +119,7 @@ func (c *rcClient) write() {
 		me := "node-cloud-receptor-controller"
 		routingMessage := protocol.RoutingMessage{Sender: me,
 			Recipient: "node-b",
-			//RouteList: []string["node-b"],
+			RouteList: []string{"node-b"},
 		}
 
 		messageId, err := uuid.NewUUID()
