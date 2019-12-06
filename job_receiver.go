@@ -4,20 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
 	"net/http"
 
 	kafka "github.com/segmentio/kafka-go"
 )
-
-type Job struct {
-	Account   string `json:"account"`
-	MessageID string `json:"message_id"`
-	Recipient string `json:"recipient"`
-	Payload   string `json:"payload"`
-	Directive string `json:"directive"`
-}
 
 type JobReceiver struct {
 	connectionMgr *ConnectionManager
@@ -39,11 +32,22 @@ func (jr *JobReceiver) routes() {
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
+	type JobRequest struct {
+		Account   string `json:"account"`
+		Recipient string `json:"recipient"`
+		Payload   string `json:"payload"`
+		Directive string `json:"directive"`
+	}
+
+	type JobResponse struct {
+		JobID string `json:"id"`
+	}
+
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		fmt.Println("Simulating JobReceiver producing a message")
 
-		var job Job
+		var jobRequest JobRequest
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -55,7 +59,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			panic(err)
 		}
 
-		if err := json.Unmarshal(body, &job); err != nil {
+		if err := json.Unmarshal(body, &jobRequest); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			w.WriteHeader(422) // unprocessable entity
 			if err := json.NewEncoder(w).Encode(err); err != nil {
@@ -66,27 +70,37 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
 		var client Client
-		client = jr.connectionMgr.GetConnection(job.Account)
+		client = jr.connectionMgr.GetConnection(jobRequest.Account)
 		if client == nil {
-			// FIXME:  the connection is not connected!!
-			//         is it connected to another pod?
-			fmt.Println("Not sure what to do here!!")
-			fmt.Println("No connection to the customer...leaving")
+			// FIXME: the connection to the client was not available
+			fmt.Println("No connection to the customer...")
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+    
+		jobID, err := uuid.NewUUID()
+		if err != nil {
+			fmt.Println("Unable to generate UUID for routing the job...cannot proceed")
+			return
+		}
+
+		jobResponse := JobResponse{jobID.String()}
+
+		fmt.Println("job request:", jobRequest)
+
 		// client.SendWork([]byte("blah..."))
 
 		// dispatch job via kafka queue
-		jobJSON, err := json.Marshal(job)
+		jobRequestJSON, err := json.Marshal(jobRequest)
 		jr.producer.WriteMessages(context.Background(),
 			kafka.Message{
-				Key:   []byte(job.Account),
-				Value: []byte(jobJSON),
+				Key:   []byte(jobRequest.Account),
+				Value: []byte(jobRequestJSON),
 			})
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(job); err != nil {
+		if err := json.NewEncoder(w).Encode(jobResponse); err != nil {
 			panic(err)
 		}
 	}
