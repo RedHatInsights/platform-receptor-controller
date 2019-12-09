@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"testing"
 	//"testing/iotest"
-	"fmt"
+	//"fmt"
 	"time"
 )
 
@@ -297,14 +297,27 @@ func TestWriteCommandMessageRouteTable(t *testing.T) {
 	}
 
 	readMessage, err := ReadMessage(&w)
-	fmt.Println("readMessage:", readMessage)
 
-	/*
-	   readRouteTableMessage := readMessage.(*RouteTableMessage)
-	   if routeTableMessage != *readRouteTableMessage {
-	       t.Fatalf("messages are unequal")
-	   }
-	*/
+	readRouteTableMessage := readMessage.(*RouteTableMessage)
+
+	verifyRouteTableMessage(t, &routeTableMessage, readRouteTableMessage)
+}
+
+func verifyRouteTableMessage(t *testing.T, expected *RouteTableMessage, actual *RouteTableMessage) {
+	if expected.Command != actual.Command {
+		t.Fatalf("route table messages are not equal, expected Command: %s, got: %s\n",
+			expected.Command,
+			actual.Command)
+	}
+
+	if expected.ID != actual.ID {
+		t.Fatalf("route table messages are not equal, expected ID: %s, got: %s\n",
+			expected.ID,
+			actual.ID)
+	}
+
+	// FIXME: verify the rest of the RouteTableMessage
+	t.Logf("FIXME: verify the rest of the RouteTableMessage\n")
 }
 
 func TestWritePayloadMessage(t *testing.T) {
@@ -320,7 +333,7 @@ func TestWritePayloadMessage(t *testing.T) {
 		Sender:      me,
 		Recipient:   "node-b",
 		MessageType: "directive",
-		RawPayload:  "ima payload bro!",
+		RawPayload:  "ima payload!",
 		Directive:   "demo:do_uptime",
 		Timestamp:   Time{time.Now().UTC()},
 	}
@@ -333,7 +346,6 @@ func TestWritePayloadMessage(t *testing.T) {
 	}
 
 	readMessage, err := ReadMessage(&w)
-	fmt.Println("readMessage:", readMessage)
 
 	readPayloadMessage := readMessage.(*PayloadMessage)
 	if payloadMessage.Data != readPayloadMessage.Data {
