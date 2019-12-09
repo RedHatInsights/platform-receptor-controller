@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/RedHatInsights/platform-receptor-controller/queue"
 
 	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
 	"github.com/gorilla/websocket"
@@ -82,12 +85,41 @@ func (c *rcClient) write() {
 	fmt.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
 		err := c.socket.WriteMessage(websocket.TextMessage, msg)
+		fmt.Println("Received message for writing")
+		fmt.Println("Writing message: ", msg)
 		if err != nil {
 			fmt.Println("WebSocket writer - WS error...leaving")
 			return
 		}
 	}
 	fmt.Println("WebSocket writer leaving!")
+}
+
+func (c *rcClient) consume() {
+	r := queue.InitConsumer(queue.Get())
+
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			fmt.Println("Error closing consumer: ", err)
+			return
+		}
+		fmt.Println("Consumer closed")
+	}()
+
+	for {
+		m, err := r.ReadMessage(context.Background())
+		if err != nil {
+			fmt.Println("Error reading message: ", err)
+			break
+		}
+		fmt.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		if string(m.Key) == c.account {
+			c.SendWork(m.Value)
+		} else {
+			fmt.Println("Received message but did not send. Account number not found")
+		}
+	}
 }
 
 type ReceptorController struct {
@@ -152,6 +184,8 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		}()
 
 		go client.write()
+
+		go client.consume()
 
 		client.read()
 	}

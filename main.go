@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/RedHatInsights/platform-receptor-controller/queue"
 )
 
 func main() {
@@ -24,7 +26,9 @@ func main() {
 	mgmtServer := newManagementServer(cm, mgmtMux)
 	mgmtServer.routes()
 
-	jr := newJobReceiver(cm, mgmtMux)
+	kw := queue.InitProducer(queue.Get())
+
+	jr := newJobReceiver(cm, mgmtMux, kw)
 	jr.routes()
 
 	go func() {

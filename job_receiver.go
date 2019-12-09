@@ -1,23 +1,28 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	kafka "github.com/segmentio/kafka-go"
 )
 
 type JobReceiver struct {
 	connectionMgr *ConnectionManager
 	router        *http.ServeMux
+	producer      *kafka.Writer
 }
 
-func newJobReceiver(cm *ConnectionManager, r *http.ServeMux) *JobReceiver {
+func newJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
+		producer:      kw,
 	}
 }
 
@@ -62,7 +67,8 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			}
 		}
 
-		// dispatch job
+		// dispatch job via client's sendwork
+		// not using client's sendwork, but leaving this code in to verify connection?
 		var client Client
 		client = jr.connectionMgr.GetConnection(jobRequest.Account)
 		if client == nil {
@@ -71,7 +77,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-
+    
 		jobID, err := uuid.NewUUID()
 		if err != nil {
 			fmt.Println("Unable to generate UUID for routing the job...cannot proceed")
@@ -82,7 +88,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		fmt.Println("job request:", jobRequest)
 
-		client.SendWork([]byte("blah..."))
+		// client.SendWork([]byte("blah..."))
+
+		// dispatch job via kafka queue
+		jobRequestJSON, err := json.Marshal(jobRequest)
+		jr.producer.WriteMessages(context.Background(),
+			kafka.Message{
+				Key:   []byte(jobRequest.Account),
+				Value: []byte(jobRequestJSON),
+			})
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
