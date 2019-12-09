@@ -132,7 +132,7 @@ func (c *rcClient) write() {
 			MessageType: "directive",
 			RawPayload:  "ima payload bro!",
 			Directive:   "demo:do_uptime",
-			Timestamp:   protocol.MyTime{time.Now()},
+			Timestamp:   protocol.Time{time.Now().UTC()},
 		}
 
 		payloadMessage := protocol.PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}

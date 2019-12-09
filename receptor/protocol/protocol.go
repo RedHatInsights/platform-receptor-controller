@@ -284,17 +284,22 @@ type InnerEnvelope struct {
 	Sender       string `json:"sender"`
 	Recipient    string `json:"recipient"`
 	MessageType  string `json:"message_type"`
-	Timestamp    MyTime `json:"timestamp"`
+	Timestamp    Time   `json:"timestamp"`
 	RawPayload   string `json:"raw_payload"`
 	Directive    string `json:"directive"`
 	InResponseTo string `json:"in_response_to"`
 }
 
-type MyTime struct {
+type Time struct {
 	time.Time
 }
 
-func (mt *MyTime) UnmarshalJSON(b []byte) error {
+func (jt Time) MarshalJSON() ([]byte, error) {
+	timeString := fmt.Sprintf("\"%s\"", jt.Format("2006-01-02T15:04:05.999999999"))
+	return []byte(timeString), nil
+}
+
+func (jt *Time) UnmarshalJSON(b []byte) error {
 	timeString := string(b)
 	timeString = strings.Trim(timeString, "\"")
 
@@ -307,7 +312,8 @@ func (mt *MyTime) UnmarshalJSON(b []byte) error {
 		fmt.Println("error unmarshalling timestamp: ", err)
 		return err
 	}
-	mt.Time = parsedTime
+
+	jt.Time = parsedTime
 
 	return nil
 }

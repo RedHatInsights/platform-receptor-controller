@@ -7,6 +7,7 @@ import (
 	"testing"
 	//"testing/iotest"
 	"fmt"
+	"time"
 )
 
 func TestFrameUnmarshal(t *testing.T) {
@@ -304,4 +305,72 @@ func TestWriteCommandMessageRouteTable(t *testing.T) {
 	       t.Fatalf("messages are unequal")
 	   }
 	*/
+}
+
+func TestWritePayloadMessage(t *testing.T) {
+	var w bytes.Buffer
+	me := "node-cloud-receptor-controller"
+	routingMessage := RoutingMessage{Sender: me,
+		Recipient: "node-b",
+		RouteList: []string{"node-b"},
+	}
+
+	innerMessage := InnerEnvelope{
+		MessageID:   "1234-123-1234",
+		Sender:      me,
+		Recipient:   "node-b",
+		MessageType: "directive",
+		RawPayload:  "ima payload bro!",
+		Directive:   "demo:do_uptime",
+		Timestamp:   Time{time.Now().UTC()},
+	}
+
+	payloadMessage := PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+
+	err := WriteMessage(&w, &payloadMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	readMessage, err := ReadMessage(&w)
+	fmt.Println("readMessage:", readMessage)
+
+	readPayloadMessage := readMessage.(*PayloadMessage)
+	if payloadMessage.Data != readPayloadMessage.Data {
+		t.Fatalf("inner messages are unequal")
+	}
+
+	//routingMessage.Sender = "fred"
+	//routingMessage.Recipient = "fred"
+	//routingMessage.RouteList = []string{}
+	//routingMessage.RouteList = []string{"node-c"}
+	verifyRoutingMessage(t, &routingMessage, readPayloadMessage.RoutingInfo)
+}
+
+func verifyRoutingMessage(t *testing.T, expected *RoutingMessage, actual *RoutingMessage) {
+	if expected.Recipient != actual.Recipient {
+		t.Fatalf("routing messages are not equal, expected Recipient: %s, got: %s\n",
+			expected.Recipient,
+			actual.Recipient)
+	}
+
+	if expected.Sender != actual.Sender {
+		t.Fatalf("routing messages are not equal, expected Sender: %s, got: %s\n",
+			expected.Sender,
+			actual.Sender)
+	}
+
+	if len(expected.RouteList) != len(actual.RouteList) {
+		t.Fatalf("routing messages are not equal, RouteLists differ: expected: %s, got: %s\n",
+			expected.RouteList,
+			actual.RouteList)
+	}
+
+	for i, v := range expected.RouteList {
+		if v != actual.RouteList[i] {
+			t.Fatalf("routing messages are not equal, RouteLists differ: expected: %s, got: %s\n",
+				expected.RouteList,
+				actual.RouteList)
+		}
+	}
 }
