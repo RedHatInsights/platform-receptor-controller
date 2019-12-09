@@ -15,6 +15,21 @@ var (
 	errInvalidMessage = errors.New("invalid message")
 )
 
+type NetworkMessageType int
+
+const (
+	HiMessageType         NetworkMessageType = 1
+	RouteTableMessageType NetworkMessageType = 2
+	RoutingMessageType    NetworkMessageType = 3
+	PayloadMessageType    NetworkMessageType = 4
+)
+
+type Message interface {
+	Type() NetworkMessageType
+	marshal() ([]byte, error)
+	unmarshal(b []byte) error
+}
+
 func ReadMessage(r io.Reader) (Message, error) {
 
 	f, err := readFrame(r)
@@ -100,21 +115,6 @@ func writePayloadMessage(w io.Writer, message Message) error {
 	}
 
 	return nil
-}
-
-type NetworkMessageType int
-
-const (
-	HiMessageType         NetworkMessageType = 1
-	RouteTableMessageType NetworkMessageType = 2
-	RoutingMessageType    NetworkMessageType = 3
-	PayloadMessageType    NetworkMessageType = 4
-)
-
-type Message interface {
-	Type() NetworkMessageType
-	marshal() ([]byte, error)
-	unmarshal(b []byte) error
 }
 
 func buildCommandMessage(buff []byte) (Message, error) {
