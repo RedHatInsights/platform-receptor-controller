@@ -13,6 +13,7 @@ deps:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/google/uuid
 	go get -u github.com/spf13/viper
+	go get -u github.com/segmentio/kafka-go
 
 test:
 	go test $(TEST_ARGS) ./...
