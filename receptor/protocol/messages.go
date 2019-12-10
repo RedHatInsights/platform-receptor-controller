@@ -24,6 +24,8 @@ const (
 	PayloadMessageType    NetworkMessageType = 4
 )
 
+const jsonTimeFormat = "2006-01-02T15:04:05.999999999"
+
 type Message interface {
 	Type() NetworkMessageType
 	marshal() ([]byte, error)
@@ -295,7 +297,7 @@ type Time struct {
 }
 
 func (jt Time) MarshalJSON() ([]byte, error) {
-	timeString := fmt.Sprintf("\"%s\"", jt.Format("2006-01-02T15:04:05.999999999"))
+	timeString := fmt.Sprintf("\"%s\"", jt.Format(jsonTimeFormat))
 	return []byte(timeString), nil
 }
 
@@ -307,7 +309,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 	// but Go is expecting something like this "2006-01-02T15:04:05.999999999Z07:00"...
 	// we get a failure like: cannot parse "" as "Z07:00"
 
-	parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999", timeString)
+	parsedTime, err := time.Parse(jsonTimeFormat, timeString)
 	if err != nil {
 		fmt.Println("error unmarshalling timestamp: ", err)
 		return err

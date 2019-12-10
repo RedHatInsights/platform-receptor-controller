@@ -4,6 +4,7 @@ import (
 	"bytes"
 	//"bufio"
 	"encoding/binary"
+	"encoding/json"
 	"testing"
 	//"testing/iotest"
 	//"fmt"
@@ -346,6 +347,9 @@ func TestWritePayloadMessage(t *testing.T) {
 	}
 
 	readMessage, err := ReadMessage(&w)
+	if err != nil {
+		t.Fatalf("reading the payload message failed: %s\n", err)
+	}
 
 	readPayloadMessage := readMessage.(*PayloadMessage)
 	if payloadMessage.Data != readPayloadMessage.Data {
@@ -384,5 +388,31 @@ func verifyRoutingMessage(t *testing.T, expected *RoutingMessage, actual *Routin
 				expected.RouteList,
 				actual.RouteList)
 		}
+	}
+}
+
+// Test to make sure the InnerEnvelope's timestamp marshalling/unmarshalling is working
+func TestInnerEnvelopeMarshalling(t *testing.T) {
+	marshalledInnerEnvelope := InnerEnvelope{
+		RawPayload: "ima payload!!",
+		Timestamp:  Time{time.Now().UTC()},
+	}
+
+	jsonBytes, err := json.Marshal(marshalledInnerEnvelope)
+	if err != nil {
+		t.Fatalf("InnerEnvelope marshal failed, err:%s\n", err)
+	}
+
+	unmarshalledInnerEnvelope := InnerEnvelope{}
+
+	err = json.Unmarshal(jsonBytes, &unmarshalledInnerEnvelope)
+	if err != nil {
+		t.Fatalf("InnerEnvelope unmarshal failed, err:%s\n", err)
+	}
+
+	if marshalledInnerEnvelope != unmarshalledInnerEnvelope {
+		t.Fatalf("marshalled/unmarshalled InnerEnvelopes are different, expected: %s got %s\n",
+			marshalledInnerEnvelope,
+			unmarshalledInnerEnvelope)
 	}
 }
