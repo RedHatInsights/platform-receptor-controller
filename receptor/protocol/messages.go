@@ -50,13 +50,14 @@ func ReadMessage(r io.Reader) (Message, error) {
 
 		payloadFrame, err := readFrame(r)
 		if err != nil {
-			fmt.Println("unable to read payload frame")
+			fmt.Println("unable to read payload frame:", err)
 			return nil, err
 		}
 
 		if payloadFrame.Type != PayloadFrameType {
-			// FIXME: log it
-			fmt.Println("invalid frame type...expected payload frame")
+			fmt.Printf("read invalid frame type...expected payload frame '%d' received frame type '%d'",
+				PayloadFrameType,
+				payloadFrame.Type)
 			return nil, errInvalidMessage
 		}
 
@@ -152,7 +153,7 @@ func (m *HiMessage) Type() NetworkMessageType {
 func (m *HiMessage) unmarshal(b []byte) error {
 
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("FIXME: unmarshal of HiMessage failed, err:", err)
+		fmt.Println("unmarshal of HiMessage failed, err:", err)
 		return err
 	}
 
@@ -164,7 +165,7 @@ func (m *HiMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("FIXME: marshal of HiMessage failed, err:", err)
+		fmt.Println("marshal of HiMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -184,7 +185,7 @@ func (m *RoutingMessage) Type() NetworkMessageType {
 func (m *RoutingMessage) unmarshal(b []byte) error {
 
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("FIXME: unmarshal failed, err:", err)
+		fmt.Println("unmarshal of RoutingMessage failed, err:", err)
 		return err
 	}
 
@@ -196,7 +197,7 @@ func (m *RoutingMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("FIXME: marshal of RoutingMessage failed, err:", err)
+		fmt.Println("marshal of RoutingMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -232,7 +233,7 @@ func (m *RouteTableMessage) Type() NetworkMessageType {
 
 func (m *RouteTableMessage) unmarshal(b []byte) error {
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("FIXME: unmarshal failed, err:", err)
+		fmt.Println("unmarshal of RouteTableMessage failed, err:", err)
 		return err
 	}
 
@@ -244,7 +245,7 @@ func (m *RouteTableMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("FIXME: marshal of RoutingMessage failed, err:", err)
+		fmt.Println("marshal of RouteTableMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -262,7 +263,7 @@ func (m *PayloadMessage) Type() NetworkMessageType {
 
 func (pm *PayloadMessage) unmarshal(buf []byte) error {
 	if err := json.Unmarshal(buf, &pm.Data); err != nil {
-		fmt.Println("FIXME: PayloadMessage unmarshal failed, err:", err)
+		fmt.Println("unmarshal of PayloadMessage failed, err:", err)
 		return err
 	}
 
@@ -274,7 +275,7 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m.Data)
 
 	if err != nil {
-		fmt.Println("FIXME: marshal of PayloadMessage failed, err:", err)
+		fmt.Println("marshal of PayloadMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -311,7 +312,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 
 	parsedTime, err := time.Parse(jsonTimeFormat, timeString)
 	if err != nil {
-		fmt.Println("error unmarshalling timestamp: ", err)
+		fmt.Println("unmarshal of Time failed: ", err)
 		return err
 	}
 
