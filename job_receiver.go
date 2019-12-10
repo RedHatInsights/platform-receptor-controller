@@ -77,7 +77,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-    
+
 		jobID, err := uuid.NewUUID()
 		if err != nil {
 			fmt.Println("Unable to generate UUID for routing the job...cannot proceed")
