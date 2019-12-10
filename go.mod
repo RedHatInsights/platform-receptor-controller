@@ -6,3 +6,5 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/spf13/viper v1.6.1
 )
+
+go 1.13
