@@ -1,5 +1,7 @@
 GATEWAY_BINARY=receptor-controller-gateway
 
+DOCKER_COMPOSE_CFG=docker-compose.yml
+
 .PHONY: test clean deps coverage $(GATEWAY_BINARY)
 
 
@@ -21,6 +23,12 @@ coverage:
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "file://$(PWD)/coverage.html"
+
+start-test-env:
+	docker-compose -f $(DOCKER_COMPOSE_CFG) up
+
+stop-test-env:
+	docker-compose -f $(DOCKER_COMPOSE_CFG) down
 
 fmt:
 	go fmt ./...
