@@ -1,4 +1,4 @@
-# This docker-compose file spins up containers for kafka and zookeeper
+# This docker-compose file spins up containers for kafka, zookeeper, and the receptor controller
 
 version: "3"
 services:
@@ -18,3 +18,13 @@ services:
       - KAFKA_BROKER_ID=1
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
+  platform-receptor-controller:
+    build: .
+    image: platform-receptor-controller:latest
+    ports:
+      - 8080:8080
+      - 9090:9090
+    environment:
+      - PLACEHOLDER_ENV_VAR=placeholder_env_var
+    depends_on:
+      - kafka
