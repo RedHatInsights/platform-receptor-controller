@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/queue"
-
 	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -36,36 +37,77 @@ func (c *rcClient) Close() {
 	close(c.send)
 }
 
+func performHandshake(socket *websocket.Conn) error {
+	messageType, r, err := socket.NextReader()
+	fmt.Println("messageType:", messageType)
+	fmt.Println("WebSocket reader got a message...")
+	if err != nil {
+		fmt.Println("WebSocket reader got a error...leaving")
+		return err
+	}
+
+	if messageType != websocket.BinaryMessage {
+		fmt.Println("WebSocket reader...invalid type...leaving")
+		return errors.New("websocket reader: invalid message type")
+	}
+
+	message, err := protocol.ReadMessage(r)
+	fmt.Println("Websocket reader message:", message)
+	fmt.Println("Websocket reader message type:", message.Type())
+
+	if message.Type() != protocol.HiMessageType {
+		fmt.Println("Received incorrect message type!")
+		return errors.New("websocket reader: invalid receptor message type")
+	}
+
+	hiMessage := message.(*protocol.HiMessage)
+
+	fmt.Printf("Received a hi message from receptor node %s\n", hiMessage.ID)
+
+	fmt.Println("WebSocket writer - sending HI")
+
+	w, err := socket.NextWriter(websocket.BinaryMessage)
+
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "node-cloud-receptor-controller"}
+
+	err = protocol.WriteMessage(w, &responseHiMessage)
+	if err != nil {
+		fmt.Println("WebSocket writer - error!  Closing connection!")
+		return err
+	}
+	w.Close()
+
+	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
+	fmt.Println("WebSocket writer - sent HI")
+
+	return nil
+}
+
 func (c *rcClient) read() {
 	defer c.socket.Close()
+
+	err := performHandshake(c.socket)
+	if err != nil {
+		fmt.Println("Error during handshake:", err)
+		return
+	}
+
+	go c.write()
+
+	go c.consume()
+
 	for {
 		fmt.Println("WebSocket reader waiting for message...")
-		_, msg, err := c.socket.ReadMessage()
-		fmt.Println("WebSocket reader got a message...")
+		messageType, r, err := c.socket.NextReader()
+		fmt.Println("messageType:", messageType)
 		if err != nil {
 			fmt.Println("WebSocket reader got a error...leaving")
 			return
 		}
 
-		msgStr := string(msg)
-
-		fmt.Println("WebSocket Client msg:", msgStr)
-
-		// FIXME:
-
-		if strings.HasPrefix(msgStr, "HI") {
-			fmt.Println("client said HI")
-			cmd := protocol.Message{}
-			cmd.Unmarshal([]byte(msgStr))
-			fmt.Println("cmd:", cmd)
-		} else if strings.HasPrefix(msgStr, "ROUTE") {
-			fmt.Println("client said ROUTE")
-			// FIXME:  i don't think this is the right place
-			fmt.Println("save route table info to shared route table")
-		} else if strings.HasPrefix(msgStr, "STATUS") {
-			// FIXME: handle status updates
-			fmt.Println("FIXME:  handle status updates!!")
-		}
+		message, err := protocol.ReadMessage(r)
+		fmt.Printf("Websocket reader message: %+v\n", message)
+		fmt.Println("Websocket reader message type:", message.Type())
 	}
 
 	fmt.Println("WebSocket reader leaving!")
@@ -74,23 +116,43 @@ func (c *rcClient) read() {
 func (c *rcClient) write() {
 	defer c.socket.Close()
 
-	fmt.Println("WebSocket writer - sending HI")
-	// FIXME:  NOT THE RIGHT PLACE...protocol object should be created...it should
-	// manage the state/messages that are sent
-
-	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	c.socket.WriteMessage(websocket.TextMessage, []byte("HI:node-golang:timestamp"))
-	fmt.Println("WebSocket writer - sent HI")
-
 	fmt.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
-		err := c.socket.WriteMessage(websocket.TextMessage, msg)
-		fmt.Println("Received message for writing")
-		fmt.Println("Writing message: ", msg)
+		fmt.Println("Websocket writer needs to send msg:", msg)
+
+		me := "node-cloud-receptor-controller"
+		routingMessage := protocol.RoutingMessage{Sender: me,
+			Recipient: "node-b",
+			RouteList: []string{"node-b"},
+		}
+
+		messageId, err := uuid.NewUUID()
+		// FIXME: handle error
+
+		innerMessage := protocol.InnerEnvelope{
+			MessageID:   messageId.String(),
+			Sender:      me,
+			Recipient:   "node-b",
+			MessageType: "directive",
+			RawPayload:  "ima payload bro!",
+			Directive:   "demo:do_uptime",
+			Timestamp:   protocol.Time{time.Now().UTC()},
+		}
+
+		payloadMessage := protocol.PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+
+		w, err := c.socket.NextWriter(websocket.BinaryMessage)
 		if err != nil {
-			fmt.Println("WebSocket writer - WS error...leaving")
+			fmt.Println("WebSocket writer - error!  Closing connection!")
 			return
 		}
+
+		err = protocol.WriteMessage(w, &payloadMessage)
+		if err != nil {
+			fmt.Println("WebSocket writer - error writing the message!  Closing connection!")
+			return
+		}
+		w.Close()
 	}
 	fmt.Println("WebSocket writer leaving!")
 }
@@ -154,17 +216,20 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// 3) Register account with ConnectionManager
 		// 4) Start processing messages
 
-		username, password, ok := req.BasicAuth()
-		fmt.Println("username:", username)
-		fmt.Println("password:", password)
-		fmt.Println("ok:", ok)
-		if ok == false {
-			log.Println("Failed basic auth")
-			return
-		}
+		/*
+			username, password, ok := req.BasicAuth()
+			fmt.Println("username:", username)
+			fmt.Println("password:", password)
+			fmt.Println("ok:", ok)
+			if ok == false {
+				log.Println("Failed basic auth")
+				return
+			}
+		*/
+		username := "01"
 
 		socket, err := upgrader.Upgrade(w, req, nil)
-		fmt.Println("WebSocket client - got a connection")
+		fmt.Println("WebSocket server - got a connection, account #", username)
 		if err != nil {
 			log.Fatal("ServeHTTP:", err)
 			return
@@ -182,10 +247,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		defer func() {
 			rc.connectionMgr.Unregister(client.account)
 		}()
-
-		go client.write()
-
-		go client.consume()
 
 		client.read()
 	}

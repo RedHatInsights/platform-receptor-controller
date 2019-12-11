@@ -30,3 +30,48 @@ A work request can be submitted by sending a work request message to the _/job_ 
     "id": <uuid for the work request>
   }
 ```
+
+### Development
+
+Install the project dependencies:
+
+```
+  $ make deps
+```
+
+#### Building
+
+```
+  $ make
+```
+
+#### Testing
+
+Run the unit tests:
+
+```
+  $ make test
+```
+
+Verbose output from the tests:
+
+```
+  $ TEST_ARGS="-v" make test
+```
+
+Run specific tests:
+
+```
+  $ TEST_ARGS="-run TestReadMessage -v" make test
+```
+
+Test coverage:
+
+```
+  $ make coverage
+  ...
+  ...
+  file:///home/dehort/dev/go/src/github.com/RedHatInsights/platform-receptor-controller/coverage.html
+```
+
+Load the coverage.html file in your browser
