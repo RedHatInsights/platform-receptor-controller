@@ -6,8 +6,8 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-func InitConsumer(cfg *KafkaConfig) *kafka.Reader {
-	fmt.Println("Initializing new kafka consumer...")
+func StartConsumer(cfg *KafkaConfig) *kafka.Reader {
+	fmt.Println("Starting a new kafka consumer...")
 
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     cfg.Brokers,

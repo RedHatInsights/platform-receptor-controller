@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"encoding/json"
@@ -13,14 +13,14 @@ type ManagementServer struct {
 	router        *http.ServeMux
 }
 
-func newManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementServer {
+func NewManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
 	}
 }
 
-func (s *ManagementServer) routes() {
+func (s *ManagementServer) Routes() {
 	s.router.HandleFunc("/management/disconnect", s.handleDisconnect())
 	// FIXME: This might not belong here
 	s.router.HandleFunc("/management/connection_status", s.handleConnectionStatus())

@@ -1,13 +1,14 @@
-package main
+package controller
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/google/uuid"
 
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -18,7 +19,7 @@ type JobReceiver struct {
 	producer      *kafka.Writer
 }
 
-func newJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *JobReceiver {
+func NewJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
@@ -26,7 +27,7 @@ func newJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *
 	}
 }
 
-func (jr *JobReceiver) routes() {
+func (jr *JobReceiver) Routes() {
 	jr.router.HandleFunc("/job", jr.handleJob())
 }
 

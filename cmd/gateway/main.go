@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/RedHatInsights/platform-receptor-controller/queue"
+	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 )
 
 func main() {
@@ -18,18 +18,13 @@ func main() {
 	flag.Parse()
 
 	wsMux := http.NewServeMux()
-	cm := newConnectionManager()
-	rc := newReceptorController(cm, wsMux)
-	rc.routes()
+	cm := c.NewConnectionManager()
+	rc := c.NewReceptorController(cm, wsMux)
+	rc.Routes()
 
 	mgmtMux := http.NewServeMux()
-	mgmtServer := newManagementServer(cm, mgmtMux)
-	mgmtServer.routes()
-
-	kw := queue.InitProducer(queue.Get())
-
-	jr := newJobReceiver(cm, mgmtMux, kw)
-	jr.routes()
+	mgmtServer := c.NewManagementServer(cm, mgmtMux)
+	mgmtServer.Routes()
 
 	go func() {
 		log.Println("Starting management web server on", *mgmtAddr)

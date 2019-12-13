@@ -6,8 +6,8 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-func InitProducer(cfg *KafkaConfig) *kafka.Writer {
-	log.Println("Initializing new Kafka producer..")
+func StartProducer(cfg *KafkaConfig) *kafka.Writer {
+	log.Println("Starting a new Kafka producer..")
 
 	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: cfg.Brokers,
