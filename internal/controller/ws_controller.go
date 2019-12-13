@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/RedHatInsights/platform-receptor-controller/queue"
-	"github.com/RedHatInsights/platform-receptor-controller/receptor/protocol"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
 
@@ -145,7 +145,7 @@ func (c *rcClient) write() {
 }
 
 func (c *rcClient) consume() {
-	r := queue.InitConsumer(queue.Get())
+	r := queue.StartConsumer(queue.Get())
 
 	defer func() {
 		err := r.Close()
@@ -178,7 +178,7 @@ type ReceptorController struct {
 	router        *http.ServeMux
 }
 
-func newReceptorController(cm *ConnectionManager, r *http.ServeMux) *ReceptorController {
+func NewReceptorController(cm *ConnectionManager, r *http.ServeMux) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr: cm,
 		router:        r,
@@ -192,7 +192,7 @@ const (
 
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
 
-func (rc *ReceptorController) routes() {
+func (rc *ReceptorController) Routes() {
 	rc.router.HandleFunc("/receptor-controller", rc.handleWebSocket())
 }
 

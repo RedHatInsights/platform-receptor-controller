@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	//"fmt"
@@ -24,7 +24,7 @@ type ConnectionManager struct {
 	sync.Mutex
 }
 
-func newConnectionManager() *ConnectionManager {
+func NewConnectionManager() *ConnectionManager {
 	return &ConnectionManager{
 		connections: make(map[string]Client),
 	}
