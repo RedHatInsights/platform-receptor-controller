@@ -9,7 +9,7 @@ the customer's environment.
 A work request can be submitted by sending a work request message to the _/job_ endpoint.
 
 ```
-  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' http://localhost:9090/job
+  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' http://localhost:8081/job
 ```
 
 #### Work Request Message Format
