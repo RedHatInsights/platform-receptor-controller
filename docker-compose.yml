@@ -18,11 +18,11 @@ services:
       - KAFKA_BROKER_ID=1
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
-  platform-receptor-controller-gateway:
+  gateway:
     build:
       context: ./
       dockerfile: ./cmd/gateway/Dockerfile
-    image: platform-receptor-controller-gateway:latest
+    image: platform-receptor-controller-gateway
     ports:
       - 8080:8080 # websocket gateway
       - 9090:9090 # gateway management server
@@ -30,11 +30,11 @@ services:
       - PLACEHOLDER_ENV_VAR=placeholder_env_var
     depends_on:
       - kafka
-  platform-receptor-controller-job-receiver:
+  job-receiver:
     build:
       context: ./
       dockerfile: ./cmd/job_receiver/Dockerfile
-    image: platform-receptor-controller-job-receiver:latest
+    image: platform-receptor-controller-job-receiver
     ports:
       - 8081:8081 # job_receiver management server
     environment:
