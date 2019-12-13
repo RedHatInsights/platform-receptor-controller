@@ -4,7 +4,7 @@ DOCKER_COMPOSE_CFG=docker-compose.yml
 
 .PHONY: test clean deps coverage $(GATEWAY_BINARY)
 
-run: 
+build:
 	go build -o gateway cmd/gateway/main.go
 	go build -o job-receiver cmd/job_receiver/main.go
 

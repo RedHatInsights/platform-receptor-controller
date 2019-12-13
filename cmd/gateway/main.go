@@ -10,6 +10,8 @@ import (
 	"syscall"
 
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 )
 
 func main() {
@@ -25,6 +27,10 @@ func main() {
 	mgmtMux := http.NewServeMux()
 	mgmtServer := c.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
+
+	kw := queue.StartProducer(queue.Get())
+	jr := c.NewJobReceiver(cm, mgmtMux, kw)
+	jr.Routes()
 
 	go func() {
 		log.Println("Starting management web server on", *mgmtAddr)
