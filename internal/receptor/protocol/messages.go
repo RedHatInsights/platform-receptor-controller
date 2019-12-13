@@ -9,6 +9,8 @@ import (
 	"io"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -319,4 +321,32 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 	jt.Time = parsedTime
 
 	return nil
+}
+
+func BuildPayloadMessage(sender string, recipient string, route []string,
+	messageType string, directive string, payload string) (Message, *uuid.UUID, error) {
+	routingMessage := RoutingMessage{Sender: sender,
+		Recipient: recipient,
+		RouteList: route,
+	}
+
+	messageId, err := uuid.NewUUID()
+	if err != nil {
+		fmt.Println("unable to generate uuid for message:", err)
+		return nil, nil, err
+	}
+
+	innerMessage := InnerEnvelope{
+		MessageID:   messageId.String(),
+		Sender:      sender,
+		Recipient:   recipient,
+		MessageType: messageType,
+		Directive:   directive,
+		RawPayload:  payload,
+		Timestamp:   Time{time.Now().UTC()},
+	}
+
+	payloadMessage := &PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+
+	return payloadMessage, &messageId, nil
 }

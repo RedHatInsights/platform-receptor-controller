@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -21,11 +19,11 @@ type rcClient struct {
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan []byte
+	send chan Work
 }
 
-func (c *rcClient) SendWork(b []byte) {
-	c.send <- b
+func (c *rcClient) SendWork(w Work) {
+	c.send <- w
 }
 
 func (c *rcClient) DisconnectReceptorNetwork() {
@@ -120,26 +118,15 @@ func (c *rcClient) write() {
 	for msg := range c.send {
 		fmt.Println("Websocket writer needs to send msg:", msg)
 
-		me := "node-cloud-receptor-controller"
-		routingMessage := protocol.RoutingMessage{Sender: me,
-			Recipient: "node-b",
-			RouteList: []string{"node-b"},
-		}
+		sender := "node-cloud-receptor-controller"
 
-		messageId, err := uuid.NewUUID()
-		// FIXME: handle error
-
-		innerMessage := protocol.InnerEnvelope{
-			MessageID:   messageId.String(),
-			Sender:      me,
-			Recipient:   "node-b",
-			MessageType: "directive",
-			RawPayload:  "ima payload bro!",
-			Directive:   "demo:do_uptime",
-			Timestamp:   protocol.Time{time.Now().UTC()},
-		}
-
-		payloadMessage := protocol.PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+		payloadMessage, messageID, err := protocol.BuildPayloadMessage(sender,
+			msg.Recipient,
+			msg.RouteList,
+			"directive",
+			msg.Directive,
+			msg.Payload)
+		fmt.Printf("Sending PayloadMessage - %s\n", *messageID)
 
 		w, err := c.socket.NextWriter(websocket.BinaryMessage)
 		if err != nil {
@@ -147,7 +134,7 @@ func (c *rcClient) write() {
 			return
 		}
 
-		err = protocol.WriteMessage(w, &payloadMessage)
+		err = protocol.WriteMessage(w, payloadMessage)
 		if err != nil {
 			fmt.Println("WebSocket writer - error writing the message!  Closing connection!")
 			return
@@ -177,7 +164,9 @@ func (c *rcClient) consume() {
 		}
 		fmt.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 		if string(m.Key) == c.account {
-			c.SendWork(m.Value)
+			// FIXME:
+			w := Work{}
+			c.SendWork(w)
 		} else {
 			fmt.Println("Received message but did not send. Account number not found")
 		}
@@ -238,7 +227,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		client := &rcClient{
 			account: username, // FIXME:  for now the username from basic auth is the account
 			socket:  socket,
-			send:    make(chan []byte, messageBufferSize),
+			send:    make(chan Work, messageBufferSize),
 		}
 
 		rc.connectionMgr.Register(client.account, client)

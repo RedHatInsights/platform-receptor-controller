@@ -5,8 +5,16 @@ import (
 	"sync"
 )
 
+type Work struct {
+	MessageID string
+	Recipient string
+	RouteList []string
+	Payload   string
+	Directive string
+}
+
 type Client interface {
-	SendWork([]byte)
+	SendWork(Work)
 	Close()
 	DisconnectReceptorNetwork()
 }

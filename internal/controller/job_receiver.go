@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"context"
+	//	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -89,15 +89,23 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		fmt.Println("job request:", jobRequest)
 
-		// client.SendWork([]byte("blah..."))
+		workRequest := Work{MessageID: jobID.String(),
+			Recipient: jobRequest.Recipient,
+			RouteList: []string{"node-b", "node-a"},
+			Payload:   jobRequest.Payload,
+			Directive: jobRequest.Directive}
 
-		// dispatch job via kafka queue
-		jobRequestJSON, err := json.Marshal(jobRequest)
-		jr.producer.WriteMessages(context.Background(),
-			kafka.Message{
-				Key:   []byte(jobRequest.Account),
-				Value: []byte(jobRequestJSON),
-			})
+		client.SendWork(workRequest)
+
+		/*
+			// dispatch job via kafka queue
+			jobRequestJSON, err := json.Marshal(jobRequest)
+			jr.producer.WriteMessages(context.Background(),
+				kafka.Message{
+					Key:   []byte(jobRequest.Account),
+					Value: []byte(jobRequestJSON),
+				})
+		*/
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
