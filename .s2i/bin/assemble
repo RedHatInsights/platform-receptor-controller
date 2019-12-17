@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+INSTALL_DIR=/opt/app-root/src/bin
+
+echo
+echo "===> Build started at $(date)"
+echo
+START=$SECONDS
+
+# Unconditionally print elapsed build time at exit
+function finish {
+  echo "===> Elapsed time: $(($SECONDS - $START)) seconds"
+}
+trap finish EXIT
+
+SOURCE=/tmp/src
+
+cd $SOURCE
+
+echo "---> Building application source..."
+make
+#make test
+
+
+mkdir -p $INSTALL_DIR
+cp gateway $INSTALL_DIR
+cp job-receiver $INSTALL_DIR
+
+echo
+echo "===> Build completed at $(date)"
+
+echo "PWD: $PWD"
+
