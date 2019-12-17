@@ -24,12 +24,10 @@ make
 #make test
 
 
+echo "---> Copying binaries into place..."
 mkdir -p $INSTALL_DIR
 cp gateway $INSTALL_DIR
 cp job-receiver $INSTALL_DIR
 
 echo
 echo "===> Build completed at $(date)"
-
-echo "PWD: $PWD"
-
