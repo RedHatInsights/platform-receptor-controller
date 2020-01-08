@@ -9,7 +9,9 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
 type rcClient struct {
@@ -50,6 +52,10 @@ func performHandshake(socket *websocket.Conn) error {
 	}
 
 	message, err := protocol.ReadMessage(r)
+	if err != nil {
+		fmt.Println("Websocket reader gor an error reading the message")
+		return err
+	}
 	fmt.Println("Websocket reader message:", message)
 	fmt.Println("Websocket reader message type:", message.Type())
 
@@ -175,10 +181,10 @@ func (c *rcClient) consume() {
 
 type ReceptorController struct {
 	connectionMgr *ConnectionManager
-	router        *http.ServeMux
+	router        *mux.Router
 }
 
-func NewReceptorController(cm *ConnectionManager, r *http.ServeMux) *ReceptorController {
+func NewReceptorController(cm *ConnectionManager, r *mux.Router) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr: cm,
 		router:        r,
@@ -194,6 +200,7 @@ var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBuffer
 
 func (rc *ReceptorController) Routes() {
 	rc.router.HandleFunc("/receptor-controller", rc.handleWebSocket())
+	rc.router.Use(identity.EnforceIdentity)
 }
 
 func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
