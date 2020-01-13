@@ -63,6 +63,7 @@ func TestHandshake(t *testing.T) {
 	assert.Equal(t, message.Type(), protocol.HiMessageType, "The Hi response should be of type protocol.HiMessageType")
 }
 
+// This test is verifying that the router is working correctly.
 func TestRouting(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
@@ -92,8 +93,4 @@ func TestRouting(t *testing.T) {
 	if err == nil {
 		t.Fatalf("This test should have thrown and error: %v", ws3)
 	}
-}
-
-func TestRead(t *testing.T) {
-
 }
