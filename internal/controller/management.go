@@ -6,14 +6,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type ManagementServer struct {
 	connectionMgr *ConnectionManager
-	router        *http.ServeMux
+	router        *mux.Router
 }
 
-func NewManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementServer {
+func NewManagementServer(cm *ConnectionManager, r *mux.Router) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
