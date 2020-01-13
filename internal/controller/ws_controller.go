@@ -1,13 +1,11 @@
 package controller
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -53,7 +51,7 @@ func performHandshake(socket *websocket.Conn) error {
 
 	message, err := protocol.ReadMessage(r)
 	if err != nil {
-		fmt.Println("Websocket reader gor an error reading the message")
+		fmt.Println("Websocket reader got an error reading the message")
 		return err
 	}
 	fmt.Println("Websocket reader message:", message)
@@ -98,7 +96,7 @@ func (c *rcClient) read() {
 
 	go c.write()
 
-	go c.consume()
+	// go c.consume()
 
 	for {
 		fmt.Println("WebSocket reader waiting for message...")
@@ -150,34 +148,34 @@ func (c *rcClient) write() {
 	fmt.Println("WebSocket writer leaving!")
 }
 
-func (c *rcClient) consume() {
-	r := queue.StartConsumer(queue.Get())
+// func (c *rcClient) consume() {
+// 	r := queue.StartConsumer(queue.Get())
 
-	defer func() {
-		err := r.Close()
-		if err != nil {
-			fmt.Println("Error closing consumer: ", err)
-			return
-		}
-		fmt.Println("Consumer closed")
-	}()
+// 	defer func() {
+// 		err := r.Close()
+// 		if err != nil {
+// 			fmt.Println("Error closing consumer: ", err)
+// 			return
+// 		}
+// 		fmt.Println("Consumer closed")
+// 	}()
 
-	for {
-		m, err := r.ReadMessage(context.Background())
-		if err != nil {
-			fmt.Println("Error reading message: ", err)
-			break
-		}
-		fmt.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-		if string(m.Key) == c.account {
-			// FIXME:
-			w := Work{}
-			c.SendWork(w)
-		} else {
-			fmt.Println("Received message but did not send. Account number not found")
-		}
-	}
-}
+// 	for {
+// 		m, err := r.ReadMessage(context.Background())
+// 		if err != nil {
+// 			fmt.Println("Error reading message: ", err)
+// 			break
+// 		}
+// 		fmt.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+// 		if string(m.Key) == c.account {
+// 			// FIXME:
+// 			w := Work{}
+// 			c.SendWork(w)
+// 		} else {
+// 			fmt.Println("Received message but did not send. Account number not found")
+// 		}
+// 	}
+// }
 
 type ReceptorController struct {
 	connectionMgr *ConnectionManager
@@ -242,6 +240,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// once this go routine exits...notify the chat room of the clients departure...close the send channel
 		defer func() {
 			rc.connectionMgr.Unregister(client.account)
+			fmt.Println("Websocket server - account unregistered from connection manager")
 		}()
 
 		client.read()
