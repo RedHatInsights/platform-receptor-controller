@@ -12,6 +12,7 @@ import (
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	cm := c.NewConnectionManager()
-	mgmtMux := http.NewServeMux()
+	mgmtMux := mux.NewRouter()
 	mgmtServer := c.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
 
