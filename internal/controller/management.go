@@ -6,14 +6,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
 type ManagementServer struct {
 	connectionMgr *ConnectionManager
-	router        *http.ServeMux
+	router        *mux.Router
 }
 
-func NewManagementServer(cm *ConnectionManager, r *http.ServeMux) *ManagementServer {
+func NewManagementServer(cm *ConnectionManager, r *mux.Router) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
@@ -24,6 +27,7 @@ func (s *ManagementServer) Routes() {
 	s.router.HandleFunc("/management/disconnect", s.handleDisconnect())
 	// FIXME: This might not belong here
 	s.router.HandleFunc("/management/connection_status", s.handleConnectionStatus())
+	s.router.Use(identity.EnforceIdentity)
 }
 
 type connectionID struct {

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"github.com/gorilla/mux"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 	//	"context"
 	"encoding/json"
 	"fmt"
@@ -15,11 +17,11 @@ import (
 
 type JobReceiver struct {
 	connectionMgr *ConnectionManager
-	router        *http.ServeMux
+	router        *mux.Router
 	producer      *kafka.Writer
 }
 
-func NewJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *JobReceiver {
+func NewJobReceiver(cm *ConnectionManager, r *mux.Router, kw *kafka.Writer) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
@@ -29,6 +31,7 @@ func NewJobReceiver(cm *ConnectionManager, r *http.ServeMux, kw *kafka.Writer) *
 
 func (jr *JobReceiver) Routes() {
 	jr.router.HandleFunc("/job", jr.handleJob())
+	jr.router.Use(identity.EnforceIdentity)
 }
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
