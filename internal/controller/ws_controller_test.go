@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+	"go.uber.org/goleak"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -37,6 +38,10 @@ func writeSocket(c *websocket.Conn, message protocol.Message) {
 	w.Close()
 }
 
+func leaks() error {
+	return goleak.Find(goleak.IgnoreTopFunction("github.com/onsi/ginkgo/internal/specrunner.(*SpecRunner).registerForInterrupts"))
+}
+
 var _ = Describe("WsController", func() {
 	var (
 		identity string
@@ -58,6 +63,11 @@ var _ = Describe("WsController", func() {
 		header = map[string][]string{
 			"x-rh-identity": {base64.StdEncoding.EncodeToString([]byte(identity))},
 		}
+	})
+
+	AfterEach(func() {
+		fmt.Println("Checking for leaky goroutines...")
+		Eventually(leaks).ShouldNot(HaveOccurred())
 	})
 
 	Describe("Connecting to the receptor controller", func() {

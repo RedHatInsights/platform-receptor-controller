@@ -31,7 +31,7 @@ func NewJobReceiver(cm *ConnectionManager, r *mux.Router, kw *kafka.Writer) *Job
 }
 
 func (jr *JobReceiver) Routes() {
-	jr.router.HandleFunc("/wss/receptor-controller/job", jr.handleJob())
+	jr.router.HandleFunc("/job", jr.handleJob())
 	jr.router.Use(identity.EnforceIdentity)
 }
 
