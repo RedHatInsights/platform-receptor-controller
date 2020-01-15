@@ -63,14 +63,14 @@ var _ = Describe("WsController", func() {
 	Describe("Connecting to the receptor controller", func() {
 		Context("With a valid identity header", func() {
 			It("Should upgrade the connection to a websocket", func() {
-				c, _, err := d.Dial("ws://localhost:8080/receptor-controller", header)
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).NotTo(HaveOccurred())
 				defer c.Close()
 			})
 		})
 		Context("With a missing identity header", func() {
 			It("Should not be able to open a connection", func() {
-				_, _, err := d.Dial("ws://localhost:8080/receptor-controller", nil)
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", nil)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -79,7 +79,7 @@ var _ = Describe("WsController", func() {
 				id := header["x-rh-identity"]
 				id[0] = ""
 				header["x-rh-identity"] = id
-				_, _, err := d.Dial("ws://localhost:8080/receptor-controller", header)
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -88,7 +88,7 @@ var _ = Describe("WsController", func() {
 				id := header["x-rh-identity"]
 				id[0] = `{ "account_number": "540155 }`
 				header["x-rh-identity"] = id
-				_, _, err := d.Dial("ws://localhost:8080/receptor-controller", header)
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -97,7 +97,7 @@ var _ = Describe("WsController", func() {
 	Describe("Connecting to the receptor controller with a handshake", func() {
 		Context("With an open connection and sending Hi", func() {
 			It("Should in return receive a HiMessage defined in protocol pkg", func() {
-				c, _, err := d.Dial("ws://localhost:8080/receptor-controller", header)
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).NotTo(HaveOccurred())
 				defer c.Close()
 
@@ -113,7 +113,7 @@ var _ = Describe("WsController", func() {
 	Describe("Connecting to the receptor controller and sending work", func() {
 		Context("With an open connection", func() {
 			It("Should send a ping directive", func() {
-				c, _, err := d.Dial("ws://localhost:8080/receptor-controller", header)
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).NotTo(HaveOccurred())
 				defer c.Close()
 

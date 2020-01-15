@@ -23,9 +23,9 @@ func NewManagementServer(cm *ConnectionManager, r *mux.Router) *ManagementServer
 }
 
 func (s *ManagementServer) Routes() {
-	s.router.HandleFunc("/management/disconnect", s.handleDisconnect())
+	s.router.HandleFunc("/wss/receptor-controller/management/disconnect", s.handleDisconnect())
 	// FIXME: This might not belong here
-	s.router.HandleFunc("/management/connection_status", s.handleConnectionStatus())
+	s.router.HandleFunc("/wss/receptor-controller/management/connection_status", s.handleConnectionStatus())
 }
 
 type connectionID struct {
