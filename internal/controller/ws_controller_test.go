@@ -2,95 +2,154 @@ package controller
 
 import (
 	"encoding/base64"
-	"net/http/httptest"
-	"strings"
-	"testing"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+	"go.uber.org/goleak"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/goleak"
+	"github.com/posener/wstest"
 )
 
-const validJSON = `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
+func readSocket(c *websocket.Conn, mt protocol.NetworkMessageType) protocol.Message {
+	mtype, r, _ := c.NextReader()
+	Expect(mtype).Should(Equal(websocket.BinaryMessage))
 
-func newServer(t *testing.T, useRouting bool) *httptest.Server {
-	rc := NewReceptorController(NewConnectionManager(), mux.NewRouter())
-	rc.Routes()
+	fmt.Println("TestClient reading response from receptor-controller")
+	m, _ := protocol.ReadMessage(r)
+	Expect(m.Type()).Should(Equal(mt))
 
-	if useRouting == false {
-		s := httptest.NewServer(rc.handleWebSocket())
-		s.URL = "ws" + strings.TrimPrefix(s.URL, "http")
-		return s
-	}
-
-	s := httptest.NewServer(rc.router)
-	s.URL = "ws" + strings.TrimPrefix(s.URL, "http")
-	return s
+	return m
 }
 
-// This test is just to verify that we can upgrade a connection and not have any leaking goroutines after it closes.
-func TestHandshake(t *testing.T) {
-	defer goleak.VerifyNone(t)
+func writeSocket(c *websocket.Conn, message protocol.Message) {
+	w, err := c.NextWriter(websocket.BinaryMessage)
+	Expect(err).NotTo(HaveOccurred())
 
-	s := newServer(t, false)
-	defer s.Close()
-
-	ws, _, err := websocket.DefaultDialer.Dial(s.URL, nil)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	defer ws.Close()
-
-	hiMessage := protocol.HiMessage{Command: "HI", ID: "test-node"}
-	w, err := ws.NextWriter(websocket.BinaryMessage)
-	if err := protocol.WriteMessage(w, &hiMessage); err != nil {
-		t.Fatalf("Test Write failed to write HI: %v", err)
-	}
+	fmt.Println("TestClient writing to receptor-controller")
+	err = protocol.WriteMessage(w, message)
+	Expect(err).NotTo(HaveOccurred())
 	w.Close()
-
-	messageType, r, err := ws.NextReader()
-	if err != nil {
-		t.Fatalf("Test Reader failed to read response: %v", err)
-	}
-	assert.Equal(t, messageType, websocket.BinaryMessage, "The Hi response from the server should be a binary message")
-
-	message, err := protocol.ReadMessage(r)
-	if err != nil {
-		t.Fatalf("Protocol Reader failed to read the response: %v", err)
-	}
-	assert.Equal(t, message.Type(), protocol.HiMessageType, "The Hi response should be of type protocol.HiMessageType")
 }
 
-// This test is verifying that the router is working correctly.
-func TestRouting(t *testing.T) {
-	defer goleak.VerifyNone(t)
-
-	s := newServer(t, true)
-	defer s.Close()
-
-	headerString := base64.StdEncoding.EncodeToString([]byte(validJSON))
-	header := map[string][]string{
-		"x-rh-identity": {headerString},
-	}
-
-	// testing good route
-	ws1, _, err := websocket.DefaultDialer.Dial(s.URL+"/receptor-controller", header)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	defer ws1.Close()
-
-	// testing request with bad url
-	ws2, _, err := websocket.DefaultDialer.Dial(s.URL+"/receptor", header)
-	if err == nil {
-		t.Fatalf("This test should have thrown an error: %v", ws2)
-	}
-
-	// testing request with no identity header
-	ws3, _, err := websocket.DefaultDialer.Dial(s.URL+"/receptor-controller", nil)
-	if err == nil {
-		t.Fatalf("This test should have thrown and error: %v", ws3)
-	}
+func leaks() error {
+	return goleak.Find(goleak.IgnoreTopFunction("github.com/onsi/ginkgo/internal/specrunner.(*SpecRunner).registerForInterrupts"))
 }
+
+var _ = Describe("WsController", func() {
+	var (
+		identity string
+		wsMux    *mux.Router
+		cm       *ConnectionManager
+		rc       *ReceptorController
+		d        *websocket.Dialer
+		header   http.Header
+	)
+
+	BeforeEach(func() {
+		wsMux = mux.NewRouter()
+		cm = NewConnectionManager()
+		rc = NewReceptorController(cm, wsMux)
+		rc.Routes()
+
+		d = wstest.NewDialer(rc.router)
+		identity = `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
+		header = map[string][]string{
+			"x-rh-identity": {base64.StdEncoding.EncodeToString([]byte(identity))},
+		}
+	})
+
+	AfterEach(func() {
+		fmt.Println("Checking for leaky goroutines...")
+		Eventually(leaks).ShouldNot(HaveOccurred())
+	})
+
+	Describe("Connecting to the receptor controller", func() {
+		Context("With a valid identity header", func() {
+			It("Should upgrade the connection to a websocket", func() {
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+			})
+		})
+		Context("With a missing identity header", func() {
+			It("Should not be able to open a connection", func() {
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", nil)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+		Context("With an empty identity header", func() {
+			It("Should not be able to open a connection", func() {
+				id := header["x-rh-identity"]
+				id[0] = ""
+				header["x-rh-identity"] = id
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+		Context("With a malformed identity header", func() {
+			It("Should not be able to open a connection", func() {
+				id := header["x-rh-identity"]
+				id[0] = `{ "account_number": "540155 }`
+				header["x-rh-identity"] = id
+				_, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+
+	Describe("Connecting to the receptor controller with a handshake", func() {
+		Context("With an open connection and sending Hi", func() {
+			It("Should in return receive a HiMessage defined in protocol pkg", func() {
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+
+				hiMessage := protocol.HiMessage{Command: "HI", ID: "TestClient"}
+				writeSocket(c, &hiMessage)
+
+				m := readSocket(c, 1)
+				Expect(m.Type()).To(Equal(protocol.HiMessageType))
+			})
+		})
+	})
+
+	Describe("Connecting to the receptor controller and sending work", func() {
+		Context("With an open connection", func() {
+			It("Should send a ping directive", func() {
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+
+				hiMessage := protocol.HiMessage{Command: "HI", ID: "TestClient"}
+				writeSocket(c, &hiMessage)
+
+				_ = readSocket(c, 1)
+
+				client := rc.connectionMgr.GetConnection("01")
+
+				workRequest := Work{MessageID: "123",
+					Recipient: "TestClient",
+					RouteList: []string{"test-b", "test-a"},
+					Payload:   "hello",
+					Directive: "receptor:ping"}
+
+				client.SendWork(workRequest)
+
+				m := readSocket(c, 4)      // read response from SendWork request and verify it is a PayloadMessage
+				jm, err := json.Marshal(m) // m's marshal/unmarshal functions are private and can't be used here
+
+				// FIXME: Need a better way to verify the message
+				Expect(string(jm)).To(ContainSubstring("\"sender\":\"node-cloud-receptor-controller\""))
+				Expect(string(jm)).To(ContainSubstring("\"recipient\":\"TestClient\""))
+				Expect(string(jm)).To(ContainSubstring("\"directive\":\"receptor:ping\""))
+			})
+		})
+	})
+})
