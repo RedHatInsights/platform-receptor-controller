@@ -197,7 +197,7 @@ const (
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
 
 func (rc *ReceptorController) Routes() {
-	rc.router.HandleFunc("/receptor-controller", rc.handleWebSocket())
+	rc.router.HandleFunc("/wss/receptor-controller/gateway", rc.handleWebSocket())
 	rc.router.Use(identity.EnforceIdentity)
 }
 
