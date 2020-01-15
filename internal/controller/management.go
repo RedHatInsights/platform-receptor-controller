@@ -60,7 +60,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 		fmt.Println(connID)
 
-		client := s.connectionMgr.GetConnection(connID.Account)
+		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
 			w.WriteHeader(404)
 			fmt.Printf("No connection to the customer (%+v)...\n", connID)
@@ -110,7 +110,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 		var connectionStatus connectionStatusResponse
 
-		client := s.connectionMgr.GetConnection(connID.Account)
+		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client != nil {
 			connectionStatus.Status = "connected"
 		} else {

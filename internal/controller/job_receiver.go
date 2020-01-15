@@ -72,10 +72,11 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			}
 		}
 
+		fmt.Println("jobRequest:", jobRequest)
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
 		var client Client
-		client = jr.connectionMgr.GetConnection(jobRequest.Account)
+		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
 			// FIXME: the connection to the client was not available
 			fmt.Println("No connection to the customer...")
