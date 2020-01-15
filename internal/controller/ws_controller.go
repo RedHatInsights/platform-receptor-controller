@@ -205,32 +205,18 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		// 1) Authenticate the connection
-		// 2) Verify they are a paying customer
-		// 3) Register account with ConnectionManager
-		// 4) Start processing messages
+		rhIdentity := identity.Get(req.Context())
 
-		/*
-			username, password, ok := req.BasicAuth()
-			fmt.Println("username:", username)
-			fmt.Println("password:", password)
-			fmt.Println("ok:", ok)
-			if ok == false {
-				log.Println("Failed basic auth")
-				return
-			}
-		*/
-		username := "01"
+		fmt.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
 
 		socket, err := upgrader.Upgrade(w, req, nil)
-		fmt.Println("WebSocket server - got a connection, account #", username)
 		if err != nil {
 			log.Fatal("ServeHTTP:", err)
 			return
 		}
 
 		client := &rcClient{
-			account: username, // FIXME:  for now the username from basic auth is the account
+			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan Work, messageBufferSize),
 		}

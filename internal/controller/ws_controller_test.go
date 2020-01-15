@@ -132,7 +132,7 @@ var _ = Describe("WsController", func() {
 
 				_ = readSocket(c, 1)
 
-				client := rc.connectionMgr.GetConnection("01")
+				client := rc.connectionMgr.GetConnection("540155")
 
 				workRequest := Work{MessageID: "123",
 					Recipient: "TestClient",
