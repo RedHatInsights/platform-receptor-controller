@@ -24,7 +24,8 @@ def generate_cmd(cmd, id_, timestamp):
 async def test_client(loop, account_number, node_id):
     basic_auth = aiohttp.BasicAuth(account_number, "imapassord")
     session = aiohttp.ClientSession(auth=basic_auth)
-    ws = await session.ws_connect('http://localhost:8080/receptor-controller')
+    headers={"x-rh-identity" : "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0="}
+    ws = await session.ws_connect('http://localhost:8080/receptor-controller', headers=headers)
 
     edges = [["node-a", "node-b", 1]]
     seen = []

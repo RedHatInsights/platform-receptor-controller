@@ -50,6 +50,10 @@ func performHandshake(socket *websocket.Conn) error {
 	}
 
 	message, err := protocol.ReadMessage(r)
+	if err != nil {
+		fmt.Println("Websocket reader got an error reading the message")
+		return err
+	}
 	fmt.Println("Websocket reader message:", message)
 	fmt.Println("Websocket reader message type:", message.Type())
 
@@ -236,6 +240,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// once this go routine exits...notify the chat room of the clients departure...close the send channel
 		defer func() {
 			rc.connectionMgr.Unregister(client.account)
+			fmt.Println("Websocket server - account unregistered from connection manager")
 		}()
 
 		client.read()

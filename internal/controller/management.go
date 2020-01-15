@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
 type ManagementServer struct {
@@ -26,6 +27,7 @@ func (s *ManagementServer) Routes() {
 	s.router.HandleFunc("/wss/receptor-controller/management/disconnect", s.handleDisconnect())
 	// FIXME: This might not belong here
 	s.router.HandleFunc("/wss/receptor-controller/management/connection_status", s.handleConnectionStatus())
+	s.router.Use(identity.EnforceIdentity)
 }
 
 type connectionID struct {

@@ -12,6 +12,7 @@ import (
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -19,12 +20,12 @@ func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
 	flag.Parse()
 
-	wsMux := http.NewServeMux()
+	wsMux := mux.NewRouter()
 	cm := c.NewConnectionManager()
 	rc := c.NewReceptorController(cm, wsMux)
 	rc.Routes()
 
-	mgmtMux := http.NewServeMux()
+	mgmtMux := mux.NewRouter()
 	mgmtServer := c.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
 
