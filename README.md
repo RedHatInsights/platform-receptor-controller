@@ -71,6 +71,24 @@ Install the project dependencies:
   $ make
 ```
 
+#### Local testing with receptor
+
+Start the server
+
+```
+  $ ./gateway
+```
+
+##### Receptor node configuration
+
+Use the receptor's _--peer_ option to configure a receptor node to connect to the platform receptor controller.  The url used with the _--peer_ option should look like _ws://localhost:8080/wss/receptor-controller/gateway_.
+
+The following command can be used to connect a local receptor node to a local receptor controller:
+
+```
+  $ python -m receptor  --debug -d  /tmp/node-b --node-id=node-b node --peer=ws://localhost:8080/wss/receptor-controller/gateway --peer=receptor://localhost:8889/
+```
+
 #### Testing
 
 Run the unit tests:
