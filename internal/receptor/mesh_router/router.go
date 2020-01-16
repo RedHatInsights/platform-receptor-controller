@@ -1,6 +1,6 @@
 package mesh_router
 
-import "fmt"
+import "log"
 
 type Edge struct {
 	Left  *string
@@ -45,16 +45,16 @@ func (mr *MeshRouter) GetRouteToNode(from_node string, to_node string) []*string
 }
 
 func (mr *MeshRouter) AddEdge(left string, right string, cost int) {
-	fmt.Println("** MeshRouter.AddEdge()")
+	log.Println("** MeshRouter.AddEdge()")
 	edge_key := EdgeKey{Left: left, Right: right}
 	existing_cost, exists := mr.edges[edge_key]
 	if exists == false {
-		fmt.Println("Adding a new edge...")
+		log.Println("Adding a new edge...")
 		mr.edges[edge_key] = cost
 	} else if exists && cost < existing_cost {
-		fmt.Println("New cost is less than the existing cost...updating cost...")
+		log.Println("New cost is less than the existing cost...updating cost...")
 		mr.edges[edge_key] = cost
 	} else {
-		fmt.Println("Existing edge...no-op...")
+		log.Println("Existing edge...no-op...")
 	}
 }

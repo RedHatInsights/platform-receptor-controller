@@ -1,12 +1,5 @@
 package mesh_router
 
-/*
-import (
-	"container/heap"
-	"fmt"
-)
-*/
-
 type Path struct {
 	Cost  int
 	Nodes []string

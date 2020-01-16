@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -29,7 +28,7 @@ func (c *rcClient) SendWork(w Work) {
 }
 
 func (c *rcClient) DisconnectReceptorNetwork() {
-	fmt.Println("DisconnectReceptorNetwork()")
+	log.Println("DisconnectReceptorNetwork()")
 	c.socket.Close()
 }
 
@@ -39,36 +38,36 @@ func (c *rcClient) Close() {
 
 func performHandshake(socket *websocket.Conn) (string, error) {
 	messageType, r, err := socket.NextReader()
-	fmt.Println("messageType:", messageType)
-	fmt.Println("WebSocket reader got a message...")
+	log.Println("messageType:", messageType)
+	log.Println("WebSocket reader got a message...")
 	if err != nil {
-		fmt.Println("WebSocket reader got a error...leaving")
+		log.Println("WebSocket reader got a error...leaving")
 		return "", err
 	}
 
 	if messageType != websocket.BinaryMessage {
-		fmt.Println("WebSocket reader...invalid type...leaving")
+		log.Println("WebSocket reader...invalid type...leaving")
 		return "", errors.New("websocket reader: invalid message type")
 	}
 
 	message, err := protocol.ReadMessage(r)
 	if err != nil {
-		fmt.Println("Websocket reader got an error reading the message")
+		log.Println("Websocket reader got an error reading the message")
 		return "", err
 	}
-	fmt.Println("Websocket reader message:", message)
-	fmt.Println("Websocket reader message type:", message.Type())
+	log.Println("Websocket reader message:", message)
+	log.Println("Websocket reader message type:", message.Type())
 
 	if message.Type() != protocol.HiMessageType {
-		fmt.Println("Received incorrect message type!")
+		log.Println("Received incorrect message type!")
 		return "", errors.New("websocket reader: invalid receptor message type")
 	}
 
 	hiMessage := message.(*protocol.HiMessage)
 
-	fmt.Printf("Received a hi message from receptor node %s\n", hiMessage.ID)
+	log.Printf("Received a hi message from receptor node %s\n", hiMessage.ID)
 
-	fmt.Println("WebSocket writer - sending HI")
+	log.Println("WebSocket writer - sending HI")
 
 	w, err := socket.NextWriter(websocket.BinaryMessage)
 
@@ -76,13 +75,13 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 
 	err = protocol.WriteMessage(w, &responseHiMessage)
 	if err != nil {
-		fmt.Println("WebSocket writer - error!  Closing connection!")
+		log.Println("WebSocket writer - error!  Closing connection!")
 		return "", err
 	}
 	w.Close()
 
 	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	fmt.Println("WebSocket writer - sent HI")
+	log.Println("WebSocket writer - sent HI")
 
 	return hiMessage.ID, nil
 }
@@ -95,28 +94,28 @@ func (c *rcClient) read() {
 	// go c.consume()
 
 	for {
-		fmt.Println("WebSocket reader waiting for message...")
+		log.Println("WebSocket reader waiting for message...")
 		messageType, r, err := c.socket.NextReader()
-		fmt.Println("messageType:", messageType)
+		log.Println("messageType:", messageType)
 		if err != nil {
-			fmt.Println("WebSocket reader got a error...leaving")
+			log.Println("WebSocket reader got a error...leaving")
 			return
 		}
 
 		message, err := protocol.ReadMessage(r)
-		fmt.Printf("Websocket reader message: %+v\n", message)
-		fmt.Println("Websocket reader message type:", message.Type())
+		log.Printf("Websocket reader message: %+v\n", message)
+		log.Println("Websocket reader message type:", message.Type())
 	}
 
-	fmt.Println("WebSocket reader leaving!")
+	log.Println("WebSocket reader leaving!")
 }
 
 func (c *rcClient) write() {
 	defer c.socket.Close()
 
-	fmt.Println("WebSocket writer - Waiting for something to send")
+	log.Println("WebSocket writer - Waiting for something to send")
 	for msg := range c.send {
-		fmt.Println("Websocket writer needs to send msg:", msg)
+		log.Println("Websocket writer needs to send msg:", msg)
 
 		sender := "node-cloud-receptor-controller"
 
@@ -126,22 +125,22 @@ func (c *rcClient) write() {
 			"directive",
 			msg.Directive,
 			msg.Payload)
-		fmt.Printf("Sending PayloadMessage - %s\n", *messageID)
+		log.Printf("Sending PayloadMessage - %s\n", *messageID)
 
 		w, err := c.socket.NextWriter(websocket.BinaryMessage)
 		if err != nil {
-			fmt.Println("WebSocket writer - error!  Closing connection!")
+			log.Println("WebSocket writer - error!  Closing connection!")
 			return
 		}
 
 		err = protocol.WriteMessage(w, payloadMessage)
 		if err != nil {
-			fmt.Println("WebSocket writer - error writing the message!  Closing connection!")
+			log.Println("WebSocket writer - error writing the message!  Closing connection!")
 			return
 		}
 		w.Close()
 	}
-	fmt.Println("WebSocket writer leaving!")
+	log.Println("WebSocket writer leaving!")
 }
 
 // func (c *rcClient) consume() {
@@ -150,25 +149,25 @@ func (c *rcClient) write() {
 // 	defer func() {
 // 		err := r.Close()
 // 		if err != nil {
-// 			fmt.Println("Error closing consumer: ", err)
+// 			log.Println("Error closing consumer: ", err)
 // 			return
 // 		}
-// 		fmt.Println("Consumer closed")
+// 		log.Println("Consumer closed")
 // 	}()
 
 // 	for {
 // 		m, err := r.ReadMessage(context.Background())
 // 		if err != nil {
-// 			fmt.Println("Error reading message: ", err)
+// 			log.Println("Error reading message: ", err)
 // 			break
 // 		}
-// 		fmt.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+// 		log.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 // 		if string(m.Key) == c.account {
 // 			// FIXME:
 // 			w := Work{}
 // 			c.SendWork(w)
 // 		} else {
-// 			fmt.Println("Received message but did not send. Account number not found")
+// 			log.Println("Received message but did not send. Account number not found")
 // 		}
 // 	}
 // }
@@ -203,13 +202,14 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Fatal("ServeHTTP:", err)
+			log.Println("ServeHTTP:", err)
 			return
 		}
 
 		rhIdentity := identity.Get(req.Context())
-		fmt.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
-		fmt.Println("All the headers: ", req.Header)
+
+		log.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
+		log.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
 			account: rhIdentity.Identity.AccountNumber,
@@ -219,7 +219,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		peerID, err := performHandshake(client.socket)
 		if err != nil {
-			fmt.Println("Error during handshake:", err)
+			log.Println("Error during handshake:", err)
 			return
 		}
 
@@ -228,7 +228,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// once this go routine exits...notify the chat room of the clients departure...close the send channel
 		defer func() {
 			rc.connectionMgr.Unregister(client.account, peerID)
-			fmt.Println("Websocket server - account unregistered from connection manager")
+			log.Println("Websocket server - account unregistered from connection manager")
 		}()
 
 		client.read()

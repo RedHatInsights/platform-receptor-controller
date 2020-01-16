@@ -2,9 +2,9 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -58,12 +58,12 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			}
 		}
 
-		fmt.Println(connID)
+		log.Println(connID)
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
 			w.WriteHeader(404)
-			fmt.Printf("No connection to the customer (%+v)...\n", connID)
+			log.Printf("No connection to the customer (%+v)...\n", connID)
 			return
 		}
 
@@ -106,7 +106,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			}
 		}
 
-		fmt.Println(connID)
+		log.Println(connID)
 
 		var connectionStatus connectionStatusResponse
 

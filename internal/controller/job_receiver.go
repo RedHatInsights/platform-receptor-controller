@@ -6,9 +6,9 @@ import (
 
 	//	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -50,7 +50,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		fmt.Println("Simulating JobReceiver producing a message")
+		log.Println("Simulating JobReceiver producing a message")
 
 		var jobRequest JobRequest
 
@@ -72,27 +72,27 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			}
 		}
 
-		fmt.Println("jobRequest:", jobRequest)
+		log.Println("jobRequest:", jobRequest)
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
 		var client Client
 		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
 			// FIXME: the connection to the client was not available
-			fmt.Println("No connection to the customer...")
+			log.Println("No connection to the customer...")
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
 		jobID, err := uuid.NewUUID()
 		if err != nil {
-			fmt.Println("Unable to generate UUID for routing the job...cannot proceed")
+			log.Println("Unable to generate UUID for routing the job...cannot proceed")
 			return
 		}
 
 		jobResponse := JobResponse{jobID.String()}
 
-		fmt.Println("job request:", jobRequest)
+		log.Println("job request:", jobRequest)
 
 		workRequest := Work{MessageID: jobID.String(),
 			Recipient: jobRequest.Recipient,

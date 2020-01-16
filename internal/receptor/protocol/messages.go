@@ -1,12 +1,11 @@
 package protocol
 
 import (
-	//"bytes"
-	//"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"time"
 
@@ -52,12 +51,12 @@ func ReadMessage(r io.Reader) (Message, error) {
 
 		payloadFrame, err := readFrame(r)
 		if err != nil {
-			fmt.Println("unable to read payload frame:", err)
+			log.Println("unable to read payload frame:", err)
 			return nil, err
 		}
 
 		if payloadFrame.Type != PayloadFrameType {
-			fmt.Printf("read invalid frame type...expected payload frame '%d' received frame type '%d'",
+			log.Printf("read invalid frame type...expected payload frame '%d' received frame type '%d'",
 				PayloadFrameType,
 				payloadFrame.Type)
 			return nil, errInvalidMessage
@@ -85,7 +84,7 @@ func WriteMessage(w io.Writer, message Message) error {
 	messageBuffer, err := message.marshal()
 	if err != nil {
 		// FIXME: log the error
-		fmt.Println("error marshalling message")
+		log.Println("error marshalling message")
 		return err
 	}
 
@@ -133,7 +132,7 @@ func buildCommandMessage(buff []byte) (Message, error) {
 	} else if strings.Contains(msgString, "ROUTE") {
 		m = new(RouteTableMessage)
 	} else {
-		fmt.Printf("FIXME: unrecognized receptor-network message: %s", msgString)
+		log.Printf("FIXME: unrecognized receptor-network message: %s", msgString)
 		return nil, fmt.Errorf("unrecognized receptor-network message: %s", msgString)
 	}
 
@@ -155,7 +154,7 @@ func (m *HiMessage) Type() NetworkMessageType {
 func (m *HiMessage) unmarshal(b []byte) error {
 
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("unmarshal of HiMessage failed, err:", err)
+		log.Println("unmarshal of HiMessage failed, err:", err)
 		return err
 	}
 
@@ -167,7 +166,7 @@ func (m *HiMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("marshal of HiMessage failed, err:", err)
+		log.Println("marshal of HiMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -187,7 +186,7 @@ func (m *RoutingMessage) Type() NetworkMessageType {
 func (m *RoutingMessage) unmarshal(b []byte) error {
 
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("unmarshal of RoutingMessage failed, err:", err)
+		log.Println("unmarshal of RoutingMessage failed, err:", err)
 		return err
 	}
 
@@ -199,7 +198,7 @@ func (m *RoutingMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("marshal of RoutingMessage failed, err:", err)
+		log.Println("marshal of RoutingMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -235,7 +234,7 @@ func (m *RouteTableMessage) Type() NetworkMessageType {
 
 func (m *RouteTableMessage) unmarshal(b []byte) error {
 	if err := json.Unmarshal(b, m); err != nil {
-		fmt.Println("unmarshal of RouteTableMessage failed, err:", err)
+		log.Println("unmarshal of RouteTableMessage failed, err:", err)
 		return err
 	}
 
@@ -247,7 +246,7 @@ func (m *RouteTableMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m)
 
 	if err != nil {
-		fmt.Println("marshal of RouteTableMessage failed, err:", err)
+		log.Println("marshal of RouteTableMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -265,7 +264,7 @@ func (m *PayloadMessage) Type() NetworkMessageType {
 
 func (pm *PayloadMessage) unmarshal(buf []byte) error {
 	if err := json.Unmarshal(buf, &pm.Data); err != nil {
-		fmt.Println("unmarshal of PayloadMessage failed, err:", err)
+		log.Println("unmarshal of PayloadMessage failed, err:", err)
 		return err
 	}
 
@@ -277,7 +276,7 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 	b, err := json.Marshal(m.Data)
 
 	if err != nil {
-		fmt.Println("marshal of PayloadMessage failed, err:", err)
+		log.Println("marshal of PayloadMessage failed, err:", err)
 		return nil, err
 	}
 
@@ -314,7 +313,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 
 	parsedTime, err := time.Parse(jsonTimeFormat, timeString)
 	if err != nil {
-		fmt.Println("unmarshal of Time failed: ", err)
+		log.Println("unmarshal of Time failed: ", err)
 		return err
 	}
 
@@ -332,7 +331,7 @@ func BuildPayloadMessage(sender string, recipient string, route []string,
 
 	messageId, err := uuid.NewUUID()
 	if err != nil {
-		fmt.Println("unable to generate uuid for message:", err)
+		log.Println("unable to generate uuid for message:", err)
 		return nil, nil, err
 	}
 
