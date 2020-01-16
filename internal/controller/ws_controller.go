@@ -209,6 +209,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		rhIdentity := identity.Get(req.Context())
 		fmt.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
+		fmt.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
 			account: rhIdentity.Identity.AccountNumber,
