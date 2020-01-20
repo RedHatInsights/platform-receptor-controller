@@ -12,6 +12,7 @@ import (
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -35,14 +36,14 @@ func main() {
 
 	go func() {
 		log.Println("Starting management web server on", *mgmtAddr)
-		if err := http.ListenAndServe(*mgmtAddr, mgmtMux); err != nil {
+		if err := http.ListenAndServe(*mgmtAddr, handlers.LoggingHandler(os.Stdout, mgmtMux)); err != nil {
 			log.Fatal("ListenAndServe:", err)
 		}
 	}()
 
 	go func() {
 		log.Println("Starting websocket server on", *wsAddr)
-		if err := http.ListenAndServe(*wsAddr, wsMux); err != nil {
+		if err := http.ListenAndServe(*wsAddr, handlers.LoggingHandler(os.Stdout, wsMux)); err != nil {
 			log.Fatal("ListenAndServe:", err)
 		}
 	}()
