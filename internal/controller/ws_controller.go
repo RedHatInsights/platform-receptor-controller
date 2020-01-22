@@ -1,15 +1,40 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
+
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 5 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 25 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 1024 * 1024
+)
+
+func init() {
+	componentName := "WebSocket"
+	log.Printf("%s writeWait: %s", componentName, writeWait)
+	log.Printf("%s pongWait: %s", componentName, pongWait)
+	log.Printf("%s pingPeriod: %s", componentName, pingPeriod)
+	log.Printf("%s maxMessageSize: %d", componentName, maxMessageSize)
+}
 
 type rcClient struct {
 	account string
@@ -21,6 +46,8 @@ type rcClient struct {
 
 	// send is a channel on which messages are sent.
 	send chan Work
+
+	cancel context.CancelFunc
 }
 
 func (c *rcClient) SendWork(w Work) {
@@ -33,10 +60,15 @@ func (c *rcClient) DisconnectReceptorNetwork() {
 }
 
 func (c *rcClient) Close() {
-	close(c.send)
+	// FIXME:  Think through this a bit more.  On close, we might need to to try
+	// send a CloseMessage to the client??
+	c.cancel()
 }
 
 func performHandshake(socket *websocket.Conn) (string, error) {
+
+	socket.SetReadDeadline(time.Now().Add(pongWait))
+
 	messageType, r, err := socket.NextReader()
 	log.Println("WebSocket reader got a message...")
 	if err != nil {
@@ -72,6 +104,7 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 
 	log.Println("WebSocket writer - sending HI")
 
+	socket.SetWriteDeadline(time.Now().Add(writeWait))
 	w, err := socket.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		log.Println("WebSocket writer - error getting next writer: ", err)
@@ -94,16 +127,27 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 	return hiMessage.ID, nil
 }
 
-func (c *rcClient) read() {
+func (c *rcClient) read(ctx context.Context) {
 	defer c.socket.Close()
 
-	go c.write()
+	go c.write(ctx)
 
-	// go c.consume()
+	// go c.consume(ctx)
+
+	c.socket.SetReadDeadline(time.Now().Add(pongWait))
+
+	c.socket.SetPongHandler(func(data string) error {
+		log.Println("WebSocket reader - got a pong")
+		c.socket.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 
 	for {
 		log.Println("WebSocket reader waiting for message...")
 		messageType, r, err := c.socket.NextReader()
+		log.Println("Websocket reader: got message")
+		log.Println("messageType:", messageType)
+
 		if err != nil {
 			log.Println("WebSocket reader got a error: ", err)
 			return
@@ -122,73 +166,97 @@ func (c *rcClient) read() {
 	log.Println("WebSocket reader leaving!")
 }
 
-func (c *rcClient) write() {
-	defer c.socket.Close()
+func (c *rcClient) write(ctx context.Context) {
 
-	log.Println("WebSocket writer - Waiting for something to send")
-	for msg := range c.send {
-		log.Println("Websocket writer needs to send msg:", msg)
+	ticker := time.NewTicker(pingPeriod)
 
-		sender := "node-cloud-receptor-controller"
+	defer func() {
+		c.socket.Close()
+		log.Println("WebSocket writer leaving!")
+	}()
 
-		payloadMessage, messageID, err := protocol.BuildPayloadMessage(sender,
-			msg.Recipient,
-			msg.RouteList,
-			"directive",
-			msg.Directive,
-			msg.Payload)
-		if err != nil {
-			log.Println("Websocket writer - error building payload: ", err)
+	for {
+		log.Println("WebSocket writer - Waiting for something to send")
+
+		select {
+		case <-ctx.Done():
 			return
-		}
+		case msg := <-c.send:
+			log.Println("Websocket writer needs to send msg:", msg)
 
-		log.Printf("Sending PayloadMessage - %s\n", *messageID)
+			sender := "node-cloud-receptor-controller"
 
-		w, err := c.socket.NextWriter(websocket.BinaryMessage)
-		if err != nil {
-			log.Println("WebSocket writer - error getting next writer: ", err)
-			return
-		}
+			payloadMessage, messageID, err := protocol.BuildPayloadMessage(sender,
+				msg.Recipient,
+				msg.RouteList,
+				"directive",
+				msg.Directive,
+				msg.Payload)
+			log.Printf("Sending PayloadMessage - %s\n", *messageID)
 
-		err = protocol.WriteMessage(w, payloadMessage)
-		if err != nil {
+			c.socket.SetWriteDeadline(time.Now().Add(writeWait))
+			w, err := c.socket.NextWriter(websocket.BinaryMessage)
+			if err != nil {
+				log.Println("WebSocket writer - error!  Closing connection!")
+				return
+			}
+
+			err = protocol.WriteMessage(w, payloadMessage)
+			if err != nil {
+				log.Println("WebSocket writer - error writing the message!  Closing connection!")
+				return
+			}
 			w.Close()
-			log.Println("WebSocket writer - error writing the message: ", err)
-			return
+		case <-ticker.C:
+			log.Println("WebSocket writer - sending PingMessage")
+			c.socket.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("WebSocket writer - error sending ping message!  Closing connection!")
+				return
+			}
 		}
-		w.Close()
 	}
+
 	log.Println("WebSocket writer leaving!")
 }
 
-// func (c *rcClient) consume() {
-// 	r := queue.StartConsumer(queue.Get())
+func (c *rcClient) consume(ctx context.Context) {
+	r := queue.StartConsumer(queue.Get())
 
-// 	defer func() {
-// 		err := r.Close()
-// 		if err != nil {
-// 			log.Println("Error closing consumer: ", err)
-// 			return
-// 		}
-// 		log.Println("Consumer closed")
-// 	}()
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			log.Println("Kafka job reader - error closing consumer: ", err)
+			return
+		}
+		log.Println("Kafka job reader leaving...")
+	}()
 
-// 	for {
-// 		m, err := r.ReadMessage(context.Background())
-// 		if err != nil {
-// 			log.Println("Error reading message: ", err)
-// 			break
-// 		}
-// 		log.Printf("Received message from %s-%d [%d]: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-// 		if string(m.Key) == c.account {
-// 			// FIXME:
-// 			w := Work{}
-// 			c.SendWork(w)
-// 		} else {
-// 			log.Println("Received message but did not send. Account number not found")
-// 		}
-// 	}
-// }
+	for {
+		log.Printf("Kafka job reader - waiting on a message from kafka...")
+		m, err := r.ReadMessage(ctx)
+		if err != nil {
+			// FIXME:  do we need to call cancel here??
+			log.Println("Kafka job reader - error reading message: ", err)
+			break
+		}
+
+		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s = %s\n",
+			m.Topic,
+			m.Partition,
+			m.Offset,
+			string(m.Key),
+			string(m.Value))
+
+		if string(m.Key) == c.account {
+			// FIXME:
+			w := Work{}
+			c.SendWork(w)
+		} else {
+			log.Println("Kafka job reader - received message but did not send. Account number not found.")
+		}
+	}
+}
 
 type ReceptorController struct {
 	connectionMgr *ConnectionManager
@@ -235,6 +303,15 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			send:    make(chan Work, messageBufferSize),
 		}
 
+		ctx := req.Context()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		client.cancel = cancel
+
+		socket.SetReadLimit(maxMessageSize)
+
+		defer socket.Close()
+
 		peerID, err := performHandshake(client.socket)
 		if err != nil {
 			log.Println("Error during handshake:", err)
@@ -249,6 +326,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			log.Println("Websocket server - account unregistered from connection manager")
 		}()
 
-		client.read()
+		client.read(ctx)
 	}
 }
