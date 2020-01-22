@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"go.uber.org/goleak"
@@ -116,6 +117,23 @@ var _ = Describe("WsController", func() {
 
 				m := readSocket(c, 1)
 				Expect(m.Type()).To(Equal(protocol.HiMessageType))
+			})
+		})
+	})
+
+	Describe("Connecting to the receptor controller with a handshake that takes too long", func() {
+		Context("With an open connection and trying to read from the connection", func() {
+			It("Should in return receive connection closed error", func() {
+
+				Skip("Skipping for now.  This test needs to be able to configure the websocket timeouts.")
+
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+
+				c.SetReadDeadline(time.Now().Add(2 * time.Second))
+				_, _, err = c.NextReader()
+				Expect(err).Should(MatchError(&websocket.CloseError{Code: 1006, Text: "unexpected EOF"}))
 			})
 		})
 	})
