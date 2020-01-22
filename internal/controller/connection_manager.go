@@ -5,6 +5,7 @@ import (
 )
 
 type Work struct {
+	Account   string
 	MessageID string
 	Recipient string
 	RouteList []string

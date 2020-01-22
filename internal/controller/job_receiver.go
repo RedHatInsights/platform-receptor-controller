@@ -94,7 +94,9 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		workRequest := Work{MessageID: jobID.String(),
+		workRequest := Work{
+			Account:   jobRequest.Account,
+			MessageID: jobID.String(),
 			Recipient: jobRequest.Recipient,
 			RouteList: []string{"node-b", "node-a"},
 			Payload:   jobRequest.Payload,

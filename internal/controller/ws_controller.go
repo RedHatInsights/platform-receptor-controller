@@ -129,6 +129,15 @@ func (c *rcClient) write() {
 	for msg := range c.send {
 		log.Println("Websocket writer needs to send msg:", msg)
 
+		if msg.Account != c.account {
+			log.Printf("WebSocket writer - account number from work "+
+				"message (%s) does not match expected account number (%s)."+
+				"  Ignoring work message...",
+				msg.Account,
+				c.account)
+			continue
+		}
+
 		sender := "node-cloud-receptor-controller"
 
 		payloadMessage, messageID, err := protocol.BuildPayloadMessage(sender,
