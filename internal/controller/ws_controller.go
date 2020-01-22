@@ -26,6 +26,9 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 1024
+
+	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
+	receptorControllerNodeId = "node-cloud-receptor-controller"
 )
 
 func init() {
@@ -113,8 +116,7 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 
 	defer w.Close()
 
-	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "node-cloud-receptor-controller"}
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: receptorControllerNodeId}
 
 	err = protocol.WriteMessage(w, &responseHiMessage)
 	if err != nil {
@@ -184,9 +186,8 @@ func (c *rcClient) write(ctx context.Context) {
 		case msg := <-c.send:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			sender := "node-cloud-receptor-controller"
-
-			payloadMessage, messageID, err := protocol.BuildPayloadMessage(sender,
+			payloadMessage, messageID, err := protocol.BuildPayloadMessage(
+				receptorControllerNodeId,
 				msg.Recipient,
 				msg.RouteList,
 				"directive",
