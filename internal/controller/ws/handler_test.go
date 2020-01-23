@@ -1,4 +1,4 @@
-package controller
+package ws
 
 import (
 	"encoding/base64"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"go.uber.org/goleak"
 
@@ -47,7 +48,7 @@ var _ = Describe("WsController", func() {
 	var (
 		identity string
 		wsMux    *mux.Router
-		cm       *ConnectionManager
+		cm       *controller.ConnectionManager
 		rc       *ReceptorController
 		d        *websocket.Dialer
 		header   http.Header
@@ -55,7 +56,7 @@ var _ = Describe("WsController", func() {
 
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
-		cm = NewConnectionManager()
+		cm = controller.NewConnectionManager()
 		rc = NewReceptorController(cm, wsMux)
 		rc.Routes()
 
@@ -162,7 +163,7 @@ var _ = Describe("WsController", func() {
 				// client is nil below.
 				client := rc.connectionMgr.GetConnection("540155", nodeID)
 
-				workRequest := Work{MessageID: "123",
+				workRequest := controller.Work{MessageID: "123",
 					Recipient: "TestClient",
 					RouteList: []string{"test-b", "test-a"},
 					Payload:   "hello",
