@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/gorilla/handlers"
@@ -23,7 +24,7 @@ func main() {
 
 	wsMux := mux.NewRouter()
 	cm := c.NewConnectionManager()
-	rc := c.NewReceptorController(cm, wsMux)
+	rc := ws.NewReceptorController(cm, wsMux)
 	rc.Routes()
 
 	mgmtMux := mux.NewRouter()

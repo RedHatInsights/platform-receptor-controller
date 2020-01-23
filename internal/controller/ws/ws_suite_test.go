@@ -1,4 +1,4 @@
-package controller_test
+package ws_test
 
 import (
 	"testing"
