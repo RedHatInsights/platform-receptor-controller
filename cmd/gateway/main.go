@@ -23,7 +23,7 @@ func main() {
 
 	wsMux := mux.NewRouter()
 	cm := c.NewConnectionManager()
-	rc := c.NewReceptorController(cm, wsMux)
+	rc := c.NewReceptorController(cm, wsMux, c.Consume)
 	rc.Routes()
 
 	mgmtMux := mux.NewRouter()

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -51,6 +52,8 @@ type rcClient struct {
 	send chan Work
 
 	cancel context.CancelFunc
+
+	workDispatcher WorkDispatcher
 }
 
 func (c *rcClient) SendWork(w Work) {
@@ -134,7 +137,7 @@ func (c *rcClient) read(ctx context.Context) {
 
 	go c.write(ctx)
 
-	// go c.consume(ctx)
+	go c.workDispatcher(ctx, c.account, c.node_id, c.send)
 
 	c.socket.SetReadDeadline(time.Now().Add(pongWait))
 
@@ -221,7 +224,8 @@ func (c *rcClient) write(ctx context.Context) {
 	log.Println("WebSocket writer leaving!")
 }
 
-func (c *rcClient) consume(ctx context.Context) {
+func Consume(ctx context.Context, account string, nodeId string, workChannel chan Work) {
+	log.Println("HERE!!")
 	r := queue.StartConsumer(queue.Get())
 
 	defer func() {
@@ -232,6 +236,8 @@ func (c *rcClient) consume(ctx context.Context) {
 		}
 		log.Println("Kafka job reader leaving...")
 	}()
+
+	workDispatchKey := fmt.Sprintf("%s:%s", account, nodeId)
 
 	for {
 		log.Printf("Kafka job reader - waiting on a message from kafka...")
@@ -249,25 +255,31 @@ func (c *rcClient) consume(ctx context.Context) {
 			string(m.Key),
 			string(m.Value))
 
-		if string(m.Key) == c.account {
+		if string(m.Key) == workDispatchKey {
 			// FIXME:
 			w := Work{}
-			c.SendWork(w)
+			workChannel <- w
 		} else {
 			log.Println("Kafka job reader - received message but did not send. Account number not found.")
 		}
 	}
 }
 
+type WorkDispatcher func(ctx context.Context, account string, nodeId string, workChannel chan Work)
+
 type ReceptorController struct {
 	connectionMgr *ConnectionManager
 	router        *mux.Router
+	// main go routine needs to tell the WorkDispatcher when to shutdown
+	// go routine handling workDispatcher needs to be able to tell the main go routine to stop
+	workDispatcher WorkDispatcher
 }
 
-func NewReceptorController(cm *ConnectionManager, r *mux.Router) *ReceptorController {
+func NewReceptorController(cm *ConnectionManager, r *mux.Router, wd WorkDispatcher) *ReceptorController {
 	return &ReceptorController{
-		connectionMgr: cm,
-		router:        r,
+		connectionMgr:  cm,
+		router:         r,
+		workDispatcher: wd,
 	}
 }
 
@@ -299,9 +311,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		log.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
-			account: rhIdentity.Identity.AccountNumber,
-			socket:  socket,
-			send:    make(chan Work, messageBufferSize),
+			account:        rhIdentity.Identity.AccountNumber,
+			socket:         socket,
+			send:           make(chan Work, messageBufferSize),
+			workDispatcher: rc.workDispatcher,
 		}
 
 		ctx := req.Context()
