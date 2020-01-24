@@ -38,10 +38,10 @@ func (jr *JobReceiver) Routes() {
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 	type JobRequest struct {
-		Account   string `json:"account"`
-		Recipient string `json:"recipient"`
-		Payload   string `json:"payload"`
-		Directive string `json:"directive"`
+		Account   string      `json:"account"`
+		Recipient string      `json:"recipient"`
+		Payload   interface{} `json:"payload"`
+		Directive string      `json:"directive"`
 	}
 
 	type JobResponse struct {
