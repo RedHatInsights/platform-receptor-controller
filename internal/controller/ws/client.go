@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
+	"github.com/segmentio/kafka-go"
+	"github.com/tidwall/gjson"
 )
 
 const (
@@ -66,11 +69,13 @@ func (c *rcClient) Close() {
 	c.cancel()
 }
 
-func (c *rcClient) read(ctx context.Context) {
-	defer c.socket.Close()
+func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
+	defer func() {
+		c.socket.Close()
+		log.Println("WebSocket reader leaving!")
+	}()
 
 	go c.write(ctx)
-
 	// go c.consume(ctx)
 
 	c.socket.SetReadDeadline(time.Now().Add(pongWait))
@@ -91,18 +96,31 @@ func (c *rcClient) read(ctx context.Context) {
 			log.Println("WebSocket reader got a error: ", err)
 			return
 		}
-		log.Println("messageType:", messageType)
 
 		message, err := protocol.ReadMessage(r)
 		if err != nil {
 			log.Println("WebSocket reader got a error: ", err)
 			return
 		}
+
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
-	}
 
-	log.Println("WebSocket reader leaving!")
+		// only send payloadmessage responses to kafka.
+		// will probably have additional checks?
+		if message.Type() == 4 {
+			messageJSON, err := json.Marshal(message)
+			if err != nil {
+				log.Println("Error parsing response into json for kafka: ", err)
+				return
+			}
+			kw.WriteMessages(context.Background(),
+				kafka.Message{
+					Key:   []byte(c.account + ":" + gjson.Get(string(messageJSON), "Data.in_response_to").String()),
+					Value: []byte(messageJSON),
+				})
+		}
+	}
 }
 
 func (c *rcClient) write(ctx context.Context) {
@@ -154,12 +172,10 @@ func (c *rcClient) write(ctx context.Context) {
 			}
 		}
 	}
-
-	log.Println("WebSocket writer leaving!")
 }
 
 func (c *rcClient) consume(ctx context.Context) {
-	r := queue.StartConsumer(queue.Get())
+	r := queue.StartConsumer(queue.GetConsumer())
 
 	defer func() {
 		err := r.Close()

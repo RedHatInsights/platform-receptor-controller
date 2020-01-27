@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/segmentio/kafka-go"
 )
 
 const (
@@ -19,12 +20,14 @@ const (
 type ReceptorController struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
+	writer        *kafka.Writer
 }
 
-func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router) *ReceptorController {
+func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr: cm,
 		router:        r,
+		writer:        kw,
 	}
 }
 
@@ -79,6 +82,8 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			log.Println("Websocket server - account unregistered from connection manager")
 		}()
 
-		client.read(ctx)
+		// Should the client have a 'handler' function that manages the connection?
+		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
+		client.read(ctx, rc.writer)
 	}
 }

@@ -57,6 +57,13 @@ The status of a connection can be checked by sending a POST to the _/connection/
   }
 ```
 
+### Kafka Topics
+
+The receptor controller will utilize two kafka topics:
+
+  - Consume jobs from: `platform.receptor-controller.jobs`
+  - Produce job responses to: `platform.receptor-controller.responses`
+
 ### Development
 
 Install the project dependencies:
