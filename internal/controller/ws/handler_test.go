@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
-
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/goleak"
