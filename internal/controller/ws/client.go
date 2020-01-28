@@ -106,9 +106,11 @@ func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		err = c.produce(ctx, message, kw)
-		if err != nil {
-			log.Println("Error adding response to kafka message queue: ", err)
+		if message.Type() == protocol.PayloadMessageType {
+			err = c.produce(ctx, message, kw)
+			if err != nil {
+				log.Println("Error adding response to kafka message queue: ", err)
+			}
 		}
 	}
 }
@@ -214,21 +216,19 @@ func (c *rcClient) produce(ctx context.Context, m protocol.Message, kw *kafka.Wr
 
 	r := ResponseMessage{}
 
-	if m.Type() == protocol.PayloadMessageType {
-		mJSON, err := json.Marshal(m)
-		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(mJSON, &r); err != nil {
-			return err
-		}
-		if r.Data.Recipient == receptorControllerNodeId { // verify this message was meant for this receptor/peer (probably want a uuid here)
-			kw.WriteMessages(ctx,
-				kafka.Message{
-					Key:   []byte(r.Data.MessageID),
-					Value: []byte(fmt.Sprintf("sender: %s, payload: %s", r.Data.Sender, r.Data.Payload)),
-				})
-		}
+	mJSON, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(mJSON, &r); err != nil {
+		return err
+	}
+	if r.Data.Recipient == receptorControllerNodeId { // verify this message was meant for this receptor/peer (probably want a uuid here)
+		kw.WriteMessages(ctx,
+			kafka.Message{
+				Key:   []byte(r.Data.MessageID),
+				Value: []byte(fmt.Sprintf("sender: %s, payload: %s", r.Data.Sender, r.Data.Payload)),
+			})
 	}
 
 	return nil
