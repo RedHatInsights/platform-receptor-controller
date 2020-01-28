@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 	"github.com/segmentio/kafka-go"
-	"github.com/tidwall/gjson"
 )
 
 const (
@@ -106,19 +106,9 @@ func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		// only send payloadmessage responses to kafka.
-		// will probably have additional checks?
-		if message.Type() == 4 {
-			messageJSON, err := json.Marshal(message)
-			if err != nil {
-				log.Println("Error parsing response into json for kafka: ", err)
-				return
-			}
-			kw.WriteMessages(context.Background(),
-				kafka.Message{
-					Key:   []byte(c.account + ":" + gjson.Get(string(messageJSON), "Data.in_response_to").String()),
-					Value: []byte(messageJSON),
-				})
+		err = c.produce(ctx, message, kw)
+		if err != nil {
+			log.Println("Error adding response to kafka message queue: ", err)
 		}
 	}
 }
@@ -195,7 +185,7 @@ func (c *rcClient) consume(ctx context.Context) {
 			break
 		}
 
-		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s = %s\n",
+		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s: %s\n",
 			m.Topic,
 			m.Partition,
 			m.Offset,
@@ -210,6 +200,38 @@ func (c *rcClient) consume(ctx context.Context) {
 			log.Println("Kafka job reader - received message but did not send. Account number not found.")
 		}
 	}
+}
+
+func (c *rcClient) produce(ctx context.Context, m protocol.Message, kw *kafka.Writer) error {
+	type ResponseMessage struct {
+		Data struct {
+			Sender    string `json:"sender"`
+			Recipient string `json:"recipient"`
+			MessageID string `json:"in_response_to"`
+			Payload   string `json:"raw_payload"`
+		} `json:"Data"`
+	}
+
+	r := ResponseMessage{}
+
+	if m.Type() == protocol.PayloadMessageType {
+		mJSON, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(mJSON, &r); err != nil {
+			return err
+		}
+		if r.Data.Recipient == receptorControllerNodeId { // verify this message was meant for this receptor/peer (probably want a uuid here)
+			kw.WriteMessages(ctx,
+				kafka.Message{
+					Key:   []byte(r.Data.MessageID),
+					Value: []byte(fmt.Sprintf("sender: %s, payload: %s", r.Data.Sender, r.Data.Payload)),
+				})
+		}
+	}
+
+	return nil
 }
 
 func performHandshake(socket *websocket.Conn) (string, error) {
