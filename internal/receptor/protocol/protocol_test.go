@@ -2,12 +2,10 @@ package protocol
 
 import (
 	"bytes"
-	//"bufio"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"testing"
-	//"testing/iotest"
-	//"fmt"
 	"time"
 )
 
@@ -189,27 +187,43 @@ func generateFrameByteArray(t frameType, messageID int, payload []byte) []byte {
 }
 
 func TestReadHeaderAndPayload(t *testing.T) {
-	routingMessage := []byte("{\"sender\": \"123\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
 
-	b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
-
-	payload := []byte("{\"message_id\": \"123\", \"raw_payload\": \"BLAH!BLAH!\"}")
-	payloadHeader := generateFrameByteArray(PayloadFrameType, 123, payload)
-
-	b = append(b, payloadHeader...)
-
-	r := bytes.NewReader(b)
-
-	//message, err := ReadMessage(iotest.NewReadLogger("read_logger", iotest.OneByteReader(r)))
-
-	message, err := ReadMessage(r)
-	if message.Type() != PayloadMessageType || err != nil {
-		t.Fatalf("incorrect message type")
+	subTests := map[string]string{
+		"raw_payload is a string": "\"BLAH!BLAH!\"",
+		"raw_payload is json":     "{\"name\": \"value\"}",
+		"raw_payload is a number": "123",
+		"raw_payload is a null":   "null",
+		"raw_payload is empty":    "{}",
 	}
 
-	payloadMessage := message.(*PayloadMessage)
-	if payloadMessage.RoutingInfo.Sender != "123" {
-		t.Fatalf("incorrect sender")
+	for testName, rawPayload := range subTests {
+		t.Run(testName, func(t *testing.T) {
+
+			routingMessage := []byte("{\"sender\": \"123\", \"recipient\": \"345\", \"route_list\": [\"678\"]}")
+
+			b := generateFrameByteArray(HeaderFrameType, 123, routingMessage)
+
+			payload := []byte(fmt.Sprintf("{\"message_id\": \"123\", \"raw_payload\":%s}", rawPayload))
+			payloadHeader := generateFrameByteArray(PayloadFrameType, 123, payload)
+
+			b = append(b, payloadHeader...)
+
+			r := bytes.NewReader(b)
+
+			message, err := ReadMessage(r)
+			if err != nil {
+				t.Fatalf("error while reading the message:%s", err)
+			}
+
+			if message.Type() != PayloadMessageType {
+				t.Fatalf("incorrect message type")
+			}
+
+			payloadMessage := message.(*PayloadMessage)
+			if payloadMessage.RoutingInfo.Sender != "123" {
+				t.Fatalf("incorrect sender")
+			}
+		})
 	}
 }
 

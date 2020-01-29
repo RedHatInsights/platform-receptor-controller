@@ -284,14 +284,14 @@ func (m *PayloadMessage) marshal() ([]byte, error) {
 }
 
 type InnerEnvelope struct {
-	MessageID    string `json:"message_id"`
-	Sender       string `json:"sender"`
-	Recipient    string `json:"recipient"`
-	MessageType  string `json:"message_type"`
-	Timestamp    Time   `json:"timestamp"`
-	RawPayload   string `json:"raw_payload"`
-	Directive    string `json:"directive"`
-	InResponseTo string `json:"in_response_to"`
+	MessageID    string      `json:"message_id"`
+	Sender       string      `json:"sender"`
+	Recipient    string      `json:"recipient"`
+	MessageType  string      `json:"message_type"`
+	Timestamp    Time        `json:"timestamp"`
+	RawPayload   interface{} `json:"raw_payload"`
+	Directive    string      `json:"directive"`
+	InResponseTo string      `json:"in_response_to"`
 }
 
 type Time struct {
@@ -323,7 +323,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 }
 
 func BuildPayloadMessage(sender string, recipient string, route []string,
-	messageType string, directive string, payload string) (Message, *uuid.UUID, error) {
+	messageType string, directive string, payload interface{}) (Message, *uuid.UUID, error) {
 	routingMessage := RoutingMessage{Sender: sender,
 		Recipient: recipient,
 		RouteList: route,

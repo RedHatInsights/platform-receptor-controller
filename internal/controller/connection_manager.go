@@ -8,7 +8,7 @@ type Work struct {
 	MessageID string
 	Recipient string
 	RouteList []string
-	Payload   string
+	Payload   interface{}
 	Directive string
 }
 
