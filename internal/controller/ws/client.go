@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"time"
 
@@ -52,6 +51,8 @@ type rcClient struct {
 	send chan controller.Work
 
 	cancel context.CancelFunc
+
+	writer *kafka.Writer
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
@@ -69,7 +70,7 @@ func (c *rcClient) Close() {
 	c.cancel()
 }
 
-func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
+func (c *rcClient) read(ctx context.Context) {
 	defer func() {
 		c.socket.Close()
 		log.Println("WebSocket reader leaving!")
@@ -106,12 +107,7 @@ func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		if message.Type() == protocol.PayloadMessageType {
-			err = c.produce(ctx, message, kw)
-			if err != nil {
-				log.Println("Error adding response to kafka message queue: ", err)
-			}
-		}
+		c.produce(ctx, message)
 	}
 }
 
@@ -204,32 +200,55 @@ func (c *rcClient) consume(ctx context.Context) {
 	}
 }
 
-func (c *rcClient) produce(ctx context.Context, m protocol.Message, kw *kafka.Writer) error {
+func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
 	type ResponseMessage struct {
-		Data struct {
-			Sender    string `json:"sender"`
-			Recipient string `json:"recipient"`
-			MessageID string `json:"in_response_to"`
-			Payload   string `json:"raw_payload"`
-		} `json:"Data"`
+		Account   string      `json:"account"`
+		Sender    string      `json:"sender"`
+		MessageID string      `json:"message_id"`
+		Payload   interface{} `json:"payload"`
 	}
 
-	r := ResponseMessage{}
+	if m.Type() != protocol.PayloadMessageType {
+		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
+		return nil
+	}
 
-	mJSON, err := json.Marshal(m)
+	payloadMessage, ok := m.(*protocol.PayloadMessage)
+	if !ok {
+		log.Println("Unable to convert message into PayloadMessage")
+		return nil
+	}
+
+	// verify this message was meant for this receptor/peer (probably want a uuid here)
+	if payloadMessage.RoutingInfo.Recipient != receptorControllerNodeId {
+		log.Println("Recieved message that was not intended for this node")
+		return nil
+	}
+
+	messageId := payloadMessage.Data.InResponseTo
+
+	responseMessage := ResponseMessage{
+		Account:   c.account,
+		Sender:    payloadMessage.RoutingInfo.Sender,
+		MessageID: messageId,
+		Payload:   payloadMessage.Data.RawPayload,
+	}
+
+	log.Println("Dispatching response:", responseMessage)
+
+	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
-		return err
+		log.Println("JSON marshal of ResponseMessage failed, err:", err)
+		return nil
 	}
-	if err = json.Unmarshal(mJSON, &r); err != nil {
-		return err
-	}
-	if r.Data.Recipient == receptorControllerNodeId { // verify this message was meant for this receptor/peer (probably want a uuid here)
-		kw.WriteMessages(ctx,
-			kafka.Message{
-				Key:   []byte(r.Data.MessageID),
-				Value: []byte(fmt.Sprintf("sender: %s, payload: %s", r.Data.Sender, r.Data.Payload)),
-			})
-	}
+
+	log.Println("Dispatching response:", jsonResponseMessage)
+
+	c.writer.WriteMessages(ctx,
+		kafka.Message{
+			Key:   []byte(messageId),
+			Value: jsonResponseMessage,
+		})
 
 	return nil
 }

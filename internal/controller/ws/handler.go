@@ -57,6 +57,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan controller.Work, messageBufferSize),
+			writer:  rc.writer,
 		}
 
 		ctx := req.Context()
@@ -84,6 +85,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
-		client.read(ctx, rc.writer)
+		client.read(ctx)
 	}
 }
