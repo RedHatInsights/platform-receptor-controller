@@ -51,6 +51,8 @@ type rcClient struct {
 	send chan controller.Work
 
 	cancel context.CancelFunc
+
+	writer *kafka.Writer
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
@@ -68,7 +70,7 @@ func (c *rcClient) Close() {
 	c.cancel()
 }
 
-func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
+func (c *rcClient) read(ctx context.Context) {
 	defer func() {
 		c.socket.Close()
 		log.Println("WebSocket reader leaving!")
@@ -105,7 +107,7 @@ func (c *rcClient) read(ctx context.Context, kw *kafka.Writer) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		c.produce(ctx, message, kw)
+		c.produce(ctx, message)
 	}
 }
 
@@ -198,7 +200,7 @@ func (c *rcClient) consume(ctx context.Context) {
 	}
 }
 
-func (c *rcClient) produce(ctx context.Context, m protocol.Message, kw *kafka.Writer) error {
+func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
 	type ResponseMessage struct {
 		Account   string      `json:"account"`
 		Sender    string      `json:"sender"`
@@ -232,13 +234,17 @@ func (c *rcClient) produce(ctx context.Context, m protocol.Message, kw *kafka.Wr
 		Payload:   payloadMessage.Data.RawPayload,
 	}
 
+	log.Println("Dispatching response:", responseMessage)
+
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
 		log.Println("JSON marshal of ResponseMessage failed, err:", err)
 		return nil
 	}
 
-	kw.WriteMessages(ctx,
+	log.Println("Dispatching response:", jsonResponseMessage)
+
+	c.writer.WriteMessages(ctx,
 		kafka.Message{
 			Key:   []byte(messageId),
 			Value: jsonResponseMessage,
