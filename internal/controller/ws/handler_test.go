@@ -49,6 +49,7 @@ var _ = Describe("WsController", func() {
 		identity string
 		wsMux    *mux.Router
 		cm       *controller.ConnectionManager
+		config   *WebSocketConfig
 		rc       *ReceptorController
 		d        *websocket.Dialer
 		header   http.Header
@@ -56,8 +57,9 @@ var _ = Describe("WsController", func() {
 
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
+		config = GetWebSocketConfig()
 		cm = controller.NewConnectionManager()
-		rc = NewReceptorController(cm, wsMux)
+		rc = NewReceptorController(config, cm, wsMux)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)

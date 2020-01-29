@@ -12,31 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	// Time allowed to write a message to the peer.
-	writeWait = 5 * time.Second
-
-	// Time allowed to read the next pong message from the peer.
-	pongWait = 25 * time.Second
-
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
-	maxMessageSize = 1024 * 1024
-
-	// FIXME:  Should this "node" generate a UUID for its name to avoid collisions
-	receptorControllerNodeId = "node-cloud-receptor-controller"
-)
-
-func init() {
-	componentName := "WebSocket"
-	log.Printf("%s writeWait: %s", componentName, writeWait)
-	log.Printf("%s pongWait: %s", componentName, pongWait)
-	log.Printf("%s pingPeriod: %s", componentName, pingPeriod)
-	log.Printf("%s maxMessageSize: %d", componentName, maxMessageSize)
-}
-
 type rcClient struct {
 	account string
 
@@ -49,6 +24,8 @@ type rcClient struct {
 	send chan controller.Work
 
 	cancel context.CancelFunc
+
+	config *WebSocketConfig
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
@@ -73,11 +50,11 @@ func (c *rcClient) read(ctx context.Context) {
 
 	// go c.consume(ctx)
 
-	c.socket.SetReadDeadline(time.Now().Add(pongWait))
+	c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 
 	c.socket.SetPongHandler(func(data string) error {
 		log.Println("WebSocket reader - got a pong")
-		c.socket.SetReadDeadline(time.Now().Add(pongWait))
+		c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 		return nil
 	})
 
@@ -107,7 +84,7 @@ func (c *rcClient) read(ctx context.Context) {
 
 func (c *rcClient) write(ctx context.Context) {
 
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(c.config.PingPeriod)
 
 	defer func() {
 		c.socket.Close()
@@ -124,7 +101,7 @@ func (c *rcClient) write(ctx context.Context) {
 			log.Println("Websocket writer needs to send msg:", msg)
 
 			payloadMessage, messageID, err := protocol.BuildPayloadMessage(
-				receptorControllerNodeId,
+				c.config.ReceptorControllerNodeId,
 				msg.Recipient,
 				msg.RouteList,
 				"directive",
@@ -132,7 +109,7 @@ func (c *rcClient) write(ctx context.Context) {
 				msg.Payload)
 			log.Printf("Sending PayloadMessage - %s\n", *messageID)
 
-			c.socket.SetWriteDeadline(time.Now().Add(writeWait))
+			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			w, err := c.socket.NextWriter(websocket.BinaryMessage)
 			if err != nil {
 				log.Println("WebSocket writer - error!  Closing connection!")
@@ -147,7 +124,7 @@ func (c *rcClient) write(ctx context.Context) {
 			w.Close()
 		case <-ticker.C:
 			log.Println("WebSocket writer - sending PingMessage")
-			c.socket.SetWriteDeadline(time.Now().Add(writeWait))
+			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println("WebSocket writer - error sending ping message!  Closing connection!")
 				return
@@ -196,11 +173,11 @@ func (c *rcClient) consume(ctx context.Context) {
 	}
 }
 
-func performHandshake(socket *websocket.Conn) (string, error) {
+func (c *rcClient) performHandshake() (string, error) {
 
-	socket.SetReadDeadline(time.Now().Add(pongWait))
+	c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 
-	messageType, r, err := socket.NextReader()
+	messageType, r, err := c.socket.NextReader()
 	log.Println("WebSocket reader got a message...")
 	if err != nil {
 		log.Println("WebSocket reader - error: ", err)
@@ -235,8 +212,8 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 
 	log.Println("WebSocket writer - sending HI")
 
-	socket.SetWriteDeadline(time.Now().Add(writeWait))
-	w, err := socket.NextWriter(websocket.BinaryMessage)
+	c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
+	w, err := c.socket.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		log.Println("WebSocket writer - error getting next writer: ", err)
 		return "", err
@@ -244,7 +221,7 @@ func performHandshake(socket *websocket.Conn) (string, error) {
 
 	defer w.Close()
 
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: receptorControllerNodeId}
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: c.config.ReceptorControllerNodeId}
 
 	err = protocol.WriteMessage(w, &responseHiMessage)
 	if err != nil {
