@@ -14,7 +14,6 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
-	github.com/tidwall/gjson v1.4.0
 	go.uber.org/goleak v1.0.0
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect

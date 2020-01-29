@@ -64,6 +64,12 @@ The receptor controller will utilize two kafka topics:
   - Consume jobs from: `platform.receptor-controller.jobs`
   - Produce job responses to: `platform.receptor-controller.responses`
 
+The response will contain the following information:
+
+  - response key: MessageID
+  - response value: json containing Account, Sender, MessageID, and Payload
+  - example response from a ping: `426f674d-42d5-11ea-bea3-54e1ad81c0b2: {"account":"0000001","sender":"node-a","message_id":"426f674d-42d5-11ea-bea3-54e1ad81c0b2","payload":"{\"initial_time\": \"2020-01-29T20:23:49,811218829+00:00\", \"response_time\": \"2020-01-29 20:23:49.830491\", \"active_work\": []}"}`
+
 ### Development
 
 Install the project dependencies:
