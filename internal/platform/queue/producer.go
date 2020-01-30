@@ -8,6 +8,7 @@ import (
 
 func StartProducer(cfg *ProducerConfig) *kafka.Writer {
 	log.Println("Starting a new Kafka producer..")
+	log.Println("Kafka producer configuration: ", cfg)
 
 	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: cfg.Brokers,
