@@ -28,14 +28,14 @@ func main() {
 
 	wsMux := mux.NewRouter()
 	cm := c.NewConnectionManager()
-	rc := ws.NewReceptorController(wsConfig, cm, wsMux)
+	kw := queue.StartProducer(queue.GetProducer())
+	rc := ws.NewReceptorController(wsConfig, cm, wsMux, kw)
 	rc.Routes()
 
 	mgmtMux := mux.NewRouter()
 	mgmtServer := c.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
 
-	kw := queue.StartProducer(queue.Get())
 	jr := c.NewJobReceiver(cm, mgmtMux, kw)
 	jr.Routes()
 

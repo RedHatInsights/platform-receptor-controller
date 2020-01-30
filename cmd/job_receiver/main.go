@@ -24,7 +24,7 @@ func main() {
 	mgmtServer := c.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
 
-	kw := queue.StartProducer(queue.Get())
+	kw := queue.StartProducer(queue.GetProducer())
 
 	jr := c.NewJobReceiver(cm, mgmtMux, kw)
 	jr.Routes()

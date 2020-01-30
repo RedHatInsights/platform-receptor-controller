@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+	"github.com/segmentio/kafka-go"
 	"go.uber.org/goleak"
 
 	. "github.com/onsi/ginkgo"
@@ -51,6 +53,7 @@ var _ = Describe("WsController", func() {
 		cm       *controller.ConnectionManager
 		config   *WebSocketConfig
 		rc       *ReceptorController
+		kw       *kafka.Writer
 		d        *websocket.Dialer
 		header   http.Header
 	)
@@ -59,7 +62,8 @@ var _ = Describe("WsController", func() {
 		wsMux = mux.NewRouter()
 		config = GetWebSocketConfig()
 		cm = controller.NewConnectionManager()
-		rc = NewReceptorController(config, cm, wsMux)
+		kw = queue.StartProducer(queue.GetProducer())
+		rc = NewReceptorController(config, cm, wsMux, kw)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)
@@ -70,6 +74,7 @@ var _ = Describe("WsController", func() {
 	})
 
 	AfterEach(func() {
+		kw.Close()
 		fmt.Println("Checking for leaky goroutines...")
 		Eventually(leaks).ShouldNot(HaveOccurred())
 	})
