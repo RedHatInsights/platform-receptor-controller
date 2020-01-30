@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
+	"github.com/segmentio/kafka-go"
 )
 
 const (
@@ -49,6 +51,8 @@ type rcClient struct {
 	send chan controller.Work
 
 	cancel context.CancelFunc
+
+	writer *kafka.Writer
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
@@ -67,10 +71,12 @@ func (c *rcClient) Close() {
 }
 
 func (c *rcClient) read(ctx context.Context) {
-	defer c.socket.Close()
+	defer func() {
+		c.socket.Close()
+		log.Println("WebSocket reader leaving!")
+	}()
 
 	go c.write(ctx)
-
 	// go c.consume(ctx)
 
 	c.socket.SetReadDeadline(time.Now().Add(pongWait))
@@ -91,18 +97,18 @@ func (c *rcClient) read(ctx context.Context) {
 			log.Println("WebSocket reader got a error: ", err)
 			return
 		}
-		log.Println("messageType:", messageType)
 
 		message, err := protocol.ReadMessage(r)
 		if err != nil {
 			log.Println("WebSocket reader got a error: ", err)
 			return
 		}
+
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
-	}
 
-	log.Println("WebSocket reader leaving!")
+		c.produce(ctx, message)
+	}
 }
 
 func (c *rcClient) write(ctx context.Context) {
@@ -154,12 +160,10 @@ func (c *rcClient) write(ctx context.Context) {
 			}
 		}
 	}
-
-	log.Println("WebSocket writer leaving!")
 }
 
 func (c *rcClient) consume(ctx context.Context) {
-	r := queue.StartConsumer(queue.Get())
+	r := queue.StartConsumer(queue.GetConsumer())
 
 	defer func() {
 		err := r.Close()
@@ -179,7 +183,7 @@ func (c *rcClient) consume(ctx context.Context) {
 			break
 		}
 
-		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s = %s\n",
+		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s: %s\n",
 			m.Topic,
 			m.Partition,
 			m.Offset,
@@ -194,6 +198,59 @@ func (c *rcClient) consume(ctx context.Context) {
 			log.Println("Kafka job reader - received message but did not send. Account number not found.")
 		}
 	}
+}
+
+func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
+	type ResponseMessage struct {
+		Account   string      `json:"account"`
+		Sender    string      `json:"sender"`
+		MessageID string      `json:"message_id"`
+		Payload   interface{} `json:"payload"`
+	}
+
+	if m.Type() != protocol.PayloadMessageType {
+		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
+		return nil
+	}
+
+	payloadMessage, ok := m.(*protocol.PayloadMessage)
+	if !ok {
+		log.Println("Unable to convert message into PayloadMessage")
+		return nil
+	}
+
+	// verify this message was meant for this receptor/peer (probably want a uuid here)
+	if payloadMessage.RoutingInfo.Recipient != receptorControllerNodeId {
+		log.Println("Recieved message that was not intended for this node")
+		return nil
+	}
+
+	messageId := payloadMessage.Data.InResponseTo
+
+	responseMessage := ResponseMessage{
+		Account:   c.account,
+		Sender:    payloadMessage.RoutingInfo.Sender,
+		MessageID: messageId,
+		Payload:   payloadMessage.Data.RawPayload,
+	}
+
+	log.Println("Dispatching response:", responseMessage)
+
+	jsonResponseMessage, err := json.Marshal(responseMessage)
+	if err != nil {
+		log.Println("JSON marshal of ResponseMessage failed, err:", err)
+		return nil
+	}
+
+	log.Println("Dispatching response:", jsonResponseMessage)
+
+	c.writer.WriteMessages(ctx,
+		kafka.Message{
+			Key:   []byte(messageId),
+			Value: jsonResponseMessage,
+		})
+
+	return nil
 }
 
 func performHandshake(socket *websocket.Conn) (string, error) {
