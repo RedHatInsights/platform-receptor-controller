@@ -2,7 +2,9 @@
 
 set -e
 
-INSTALL_DIR=/opt/app-root/src/bin
+BASE_DIR=/opt/app-root/src
+INSTALL_DIR=$BASE_DIR/bin
+API_SPEC_DIR=$BASE_DIR/apispec
 
 echo
 echo "===> Build started at $(date)"
@@ -28,6 +30,10 @@ echo "---> Copying binaries into place..."
 mkdir -p $INSTALL_DIR
 cp gateway $INSTALL_DIR
 cp job-receiver $INSTALL_DIR
+
+echo "---> Copying openapi spec into place..."
+mkdir -p $API_SPEC_DIR
+cp internal/controller/apispec/api.spec.json $API_SPEC
 
 echo
 echo "===> Build completed at $(date)"
