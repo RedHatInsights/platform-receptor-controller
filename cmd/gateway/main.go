@@ -10,9 +10,11 @@ import (
 	"syscall"
 
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
-
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -28,16 +30,23 @@ func main() {
 	rc := ws.NewReceptorController(cm, wsMux, kw)
 	rc.Routes()
 
-	mgmtMux := mux.NewRouter()
-	mgmtServer := c.NewManagementServer(cm, mgmtMux)
+	apiMux := mux.NewRouter()
+
+	apiSpecServer := api.NewApiSpecServer(apiMux)
+	apiSpecServer.Routes()
+
+	securedApiMux := apiMux.PathPrefix("/").Subrouter()
+	securedApiMux.Use(identity.EnforceIdentity)
+
+	mgmtServer := api.NewManagementServer(cm, securedApiMux)
 	mgmtServer.Routes()
 
-	jr := c.NewJobReceiver(cm, mgmtMux, kw)
+	jr := api.NewJobReceiver(cm, securedApiMux, kw)
 	jr.Routes()
 
 	go func() {
 		log.Println("Starting management web server on", *mgmtAddr)
-		if err := http.ListenAndServe(*mgmtAddr, handlers.LoggingHandler(os.Stdout, mgmtMux)); err != nil {
+		if err := http.ListenAndServe(*mgmtAddr, handlers.LoggingHandler(os.Stdout, apiMux)); err != nil {
 			log.Fatal("ListenAndServe:", err)
 		}
 	}()

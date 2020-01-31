@@ -1,4 +1,4 @@
-package controller
+package api
 
 import (
 	"encoding/json"
@@ -7,16 +7,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+
 	"github.com/gorilla/mux"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
 type ManagementServer struct {
-	connectionMgr *ConnectionManager
+	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 }
 
-func NewManagementServer(cm *ConnectionManager, r *mux.Router) *ManagementServer {
+func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
@@ -26,7 +27,6 @@ func NewManagementServer(cm *ConnectionManager, r *mux.Router) *ManagementServer
 func (s *ManagementServer) Routes() {
 	s.router.HandleFunc("/connection/disconnect", s.handleDisconnect())
 	s.router.HandleFunc("/connection/status", s.handleConnectionStatus())
-	s.router.Use(identity.EnforceIdentity)
 }
 
 type connectionID struct {
