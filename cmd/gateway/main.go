@@ -22,10 +22,14 @@ func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
 	flag.Parse()
 
+	wsConfig := ws.GetWebSocketConfig()
+	log.Println("WebSocket configuration:")
+	log.Println(wsConfig)
+
 	wsMux := mux.NewRouter()
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
-	rc := ws.NewReceptorController(cm, wsMux, kw)
+	rc := ws.NewReceptorController(wsConfig, cm, wsMux, kw)
 	rc.Routes()
 
 	mgmtMux := mux.NewRouter()
