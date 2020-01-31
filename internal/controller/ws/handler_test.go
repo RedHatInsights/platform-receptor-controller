@@ -51,6 +51,7 @@ var _ = Describe("WsController", func() {
 		identity string
 		wsMux    *mux.Router
 		cm       *controller.ConnectionManager
+		config   *WebSocketConfig
 		rc       *ReceptorController
 		kw       *kafka.Writer
 		d        *websocket.Dialer
@@ -59,9 +60,10 @@ var _ = Describe("WsController", func() {
 
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
+		config = GetWebSocketConfig()
 		cm = controller.NewConnectionManager()
 		kw = queue.StartProducer(queue.GetProducer())
-		rc = NewReceptorController(cm, wsMux, kw)
+		rc = NewReceptorController(config, cm, wsMux, kw)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)
