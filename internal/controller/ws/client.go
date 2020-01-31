@@ -56,13 +56,7 @@ func (c *rcClient) read(ctx context.Context) {
 	go c.write(ctx)
 	// go c.consume(ctx)
 
-	c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
-
-	c.socket.SetPongHandler(func(data string) error {
-		log.Println("WebSocket reader - got a pong")
-		c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
-		return nil
-	})
+	c.configurePongHandler()
 
 	for {
 		log.Println("WebSocket reader waiting for message...")
@@ -88,12 +82,29 @@ func (c *rcClient) read(ctx context.Context) {
 	}
 }
 
+func (c *rcClient) configurePongHandler() {
+
+	if c.config.PongWait > 0 {
+		log.Println("Configuring a pong handler with a deadline of ", c.config.PongWait)
+		c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
+
+		c.socket.SetPongHandler(func(data string) error {
+			log.Println("WebSocket reader - got a pong")
+			c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
+			return nil
+		})
+	} else {
+		log.Println("Pong handler has been disabled")
+	}
+}
+
 func (c *rcClient) write(ctx context.Context) {
 
-	ticker := time.NewTicker(c.config.PingPeriod)
+	pingTicker := c.configurePingTicker()
 
 	defer func() {
 		c.socket.Close()
+		pingTicker.Stop()
 		log.Println("WebSocket writer leaving!")
 	}()
 
@@ -128,7 +139,7 @@ func (c *rcClient) write(ctx context.Context) {
 				return
 			}
 			w.Close()
-		case <-ticker.C:
+		case <-pingTicker.C:
 			log.Println("WebSocket writer - sending PingMessage")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -136,6 +147,20 @@ func (c *rcClient) write(ctx context.Context) {
 				return
 			}
 		}
+	}
+}
+
+func (c *rcClient) configurePingTicker() *time.Ticker {
+
+	if c.config.PingPeriod > 0 {
+		log.Println("Configuring a ping to fire every ", c.config.PingPeriod)
+		return time.NewTicker(c.config.PingPeriod)
+	} else {
+		log.Println("Pings are disabled")
+		// To disable sending ping messages, we create a ticker that doesn't ever fire
+		ticker := time.NewTicker(40 * 60 * time.Minute)
+		ticker.Stop()
+		return ticker
 	}
 }
 
@@ -179,7 +204,8 @@ func (c *rcClient) consume(ctx context.Context) {
 
 func (c *rcClient) performHandshake() (string, error) {
 
-	c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
+	c.socket.SetReadDeadline(time.Now().Add(c.config.HandshakeReadWait))
+	defer c.socket.SetReadDeadline(time.Time{})
 
 	messageType, r, err := c.socket.NextReader()
 	log.Println("WebSocket reader got a message...")
@@ -237,6 +263,7 @@ func (c *rcClient) performHandshake() (string, error) {
 
 	return hiMessage.ID, nil
 }
+
 func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
 	type ResponseMessage struct {
 		Account   string      `json:"account"`
