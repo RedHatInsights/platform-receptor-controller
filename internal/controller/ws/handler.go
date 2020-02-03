@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
-	"github.com/segmentio/kafka-go"
 )
 
 const (
@@ -18,18 +17,18 @@ const (
 )
 
 type ReceptorController struct {
-	connectionMgr *controller.ConnectionManager
-	router        *mux.Router
-	config        *WebSocketConfig
-	writer        *kafka.Writer
+	connectionMgr             *controller.ConnectionManager
+	router                    *mux.Router
+	config                    *WebSocketConfig
+	responseDispatcherFactory *controller.ResponseDispatcherFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
-		connectionMgr: cm,
-		router:        r,
-		writer:        kw,
-		config:        wsc,
+		connectionMgr:             cm,
+		router:                    r,
+		config:                    wsc,
+		responseDispatcherFactory: rd,
 	}
 }
 
@@ -60,8 +59,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan controller.Work, messageBufferSize),
-			writer:  rc.writer,
 		}
+
+		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
 		ctx, cancel := context.WithCancel(ctx)

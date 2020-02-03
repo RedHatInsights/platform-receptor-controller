@@ -2,7 +2,6 @@ package ws
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
-	"github.com/segmentio/kafka-go"
 )
 
 type rcClient struct {
@@ -29,7 +27,7 @@ type rcClient struct {
 
 	config *WebSocketConfig
 
-	writer *kafka.Writer
+	responseDispatcher *controller.ResponseDispatcher
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
@@ -78,7 +76,7 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		c.produce(ctx, message)
+		c.responseDispatcher.Dispatch(ctx, message, c.config.ReceptorControllerNodeId)
 	}
 }
 
@@ -200,57 +198,6 @@ func (c *rcClient) consume(ctx context.Context) {
 			log.Println("Kafka job reader - received message but did not send. Account number not found.")
 		}
 	}
-}
-
-func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
-	type ResponseMessage struct {
-		Account   string      `json:"account"`
-		Sender    string      `json:"sender"`
-		MessageID string      `json:"message_id"`
-		Payload   interface{} `json:"payload"`
-	}
-
-	if m.Type() != protocol.PayloadMessageType {
-		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
-		return nil
-	}
-
-	payloadMessage, ok := m.(*protocol.PayloadMessage)
-	if !ok {
-		log.Println("Unable to convert message into PayloadMessage")
-		return nil
-	}
-
-	// verify this message was meant for this receptor/peer (probably want a uuid here)
-	if payloadMessage.RoutingInfo.Recipient != c.config.ReceptorControllerNodeId {
-		log.Println("Recieved message that was not intended for this node")
-		return nil
-	}
-
-	messageId := payloadMessage.Data.InResponseTo
-
-	responseMessage := ResponseMessage{
-		Account:   c.account,
-		Sender:    payloadMessage.RoutingInfo.Sender,
-		MessageID: messageId,
-		Payload:   payloadMessage.Data.RawPayload,
-	}
-
-	log.Println("Dispatching response:", responseMessage)
-
-	jsonResponseMessage, err := json.Marshal(responseMessage)
-	if err != nil {
-		log.Println("JSON marshal of ResponseMessage failed, err:", err)
-		return nil
-	}
-
-	c.writer.WriteMessages(ctx,
-		kafka.Message{
-			Key:   []byte(messageId),
-			Value: jsonResponseMessage,
-		})
-
-	return nil
 }
 
 func (c *rcClient) performHandshake() (string, error) {
