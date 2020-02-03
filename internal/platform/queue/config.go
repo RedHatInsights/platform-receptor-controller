@@ -33,7 +33,7 @@ func (cc *ConsumerConfig) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", BROKERS, cc.Brokers)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, cc.Topic)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, cc.GroupID)
-	fmt.Fprintf(&b, "%s: %d\n", JOBS_CONSUMER_OFFSET, cc.ConsumerOffset)
+	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, cc.ConsumerOffset)
 	return b.String()
 }
 
@@ -45,7 +45,7 @@ type ProducerConfig struct {
 func (pc *ProducerConfig) String() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s: %s\n", BROKERS, pc.Brokers)
-	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, pc.Topic)
+	fmt.Fprintf(&b, "%s: %s", RESPONSES_TOPIC, pc.Topic)
 	return b.String()
 }
 

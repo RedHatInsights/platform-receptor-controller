@@ -244,8 +244,6 @@ func (c *rcClient) produce(ctx context.Context, m protocol.Message) error {
 		return nil
 	}
 
-	log.Println("Dispatching response:", jsonResponseMessage)
-
 	c.writer.WriteMessages(ctx,
 		kafka.Message{
 			Key:   []byte(messageId),
