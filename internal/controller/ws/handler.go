@@ -18,16 +18,18 @@ const (
 )
 
 type ReceptorController struct {
-	connectionMgr *controller.ConnectionManager
-	router        *mux.Router
-	writer        *kafka.Writer
+	connectionMgr             *controller.ConnectionManager
+	router                    *mux.Router
+	writer                    *kafka.Writer
+	responseDispatcherFactory *controller.ResponseDispatcherFactory
 }
 
-func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer) *ReceptorController {
+func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, rd *controller.ResponseDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
-		connectionMgr: cm,
-		router:        r,
-		writer:        kw,
+		connectionMgr:             cm,
+		router:                    r,
+		writer:                    kw,
+		responseDispatcherFactory: rd,
 	}
 }
 
@@ -57,8 +59,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan controller.Work, messageBufferSize),
-			writer:  rc.writer,
 		}
+
+		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
 		ctx, cancel := context.WithCancel(ctx)
