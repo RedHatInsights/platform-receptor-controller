@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/gorilla/mux"
@@ -21,12 +22,12 @@ func main() {
 
 	cm := c.NewConnectionManager()
 	mgmtMux := mux.NewRouter()
-	mgmtServer := c.NewManagementServer(cm, mgmtMux)
+	mgmtServer := api.NewManagementServer(cm, mgmtMux)
 	mgmtServer.Routes()
 
 	kw := queue.StartProducer(queue.GetProducer())
 
-	jr := c.NewJobReceiver(cm, mgmtMux, kw)
+	jr := api.NewJobReceiver(cm, mgmtMux, kw)
 	jr.Routes()
 
 	go func() {

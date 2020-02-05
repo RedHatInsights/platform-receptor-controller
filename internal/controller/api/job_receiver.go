@@ -1,8 +1,7 @@
-package controller
+package api
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	//	"context"
 	"encoding/json"
@@ -13,16 +12,18 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+
 	kafka "github.com/segmentio/kafka-go"
 )
 
 type JobReceiver struct {
-	connectionMgr *ConnectionManager
+	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 	producer      *kafka.Writer
 }
 
-func NewJobReceiver(cm *ConnectionManager, r *mux.Router, kw *kafka.Writer) *JobReceiver {
+func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
@@ -32,7 +33,6 @@ func NewJobReceiver(cm *ConnectionManager, r *mux.Router, kw *kafka.Writer) *Job
 
 func (jr *JobReceiver) Routes() {
 	jr.router.HandleFunc("/job", jr.handleJob())
-	jr.router.Use(identity.EnforceIdentity)
 }
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
@@ -75,7 +75,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		log.Println("jobRequest:", jobRequest)
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
-		var client Client
+		var client controller.Client
 		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
 			// FIXME: the connection to the client was not available
@@ -94,7 +94,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		workRequest := Work{MessageID: jobID.String(),
+		workRequest := controller.Work{MessageID: jobID.String(),
 			Recipient: jobRequest.Recipient,
 			RouteList: []string{"node-b", "node-a"},
 			Payload:   jobRequest.Payload,

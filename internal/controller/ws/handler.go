@@ -19,14 +19,16 @@ const (
 type ReceptorController struct {
 	connectionMgr             *controller.ConnectionManager
 	router                    *mux.Router
+  config                    *WebSocketConfig
 	responseDispatcherFactory *controller.ResponseDispatcherFactory
 }
 
-func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:             cm,
 		router:                    r,
 		responseDispatcherFactory: rd,
+    config:                    wsc,
 	}
 }
 
@@ -53,6 +55,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		log.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
+			config:  rc.config,
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan controller.Work, messageBufferSize),
@@ -65,11 +68,11 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		defer cancel()
 		client.cancel = cancel
 
-		socket.SetReadLimit(maxMessageSize)
+		socket.SetReadLimit(rc.config.MaxMessageSize)
 
 		defer socket.Close()
 
-		peerID, err := performHandshake(client.socket)
+		peerID, err := client.performHandshake()
 		if err != nil {
 			log.Println("Error during handshake:", err)
 			return
