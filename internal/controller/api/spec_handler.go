@@ -9,12 +9,14 @@ import (
 )
 
 type ApiSpecServer struct {
-	router *mux.Router
+	router       *mux.Router
+	specFileName string
 }
 
-func NewApiSpecServer(r *mux.Router) *ApiSpecServer {
+func NewApiSpecServer(r *mux.Router, f string) *ApiSpecServer {
 	return &ApiSpecServer{
-		router: r,
+		router:       r,
+		specFileName: f,
 	}
 }
 
@@ -25,10 +27,9 @@ func (s *ApiSpecServer) Routes() {
 func (s *ApiSpecServer) handleApiSpec() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		apiSpecFileName := "/opt/apt-root/src/apispec/api.spec.json"
-		file, err := ioutil.ReadFile(apiSpecFileName)
+		file, err := ioutil.ReadFile(s.specFileName)
 		if err != nil {
-			log.Printf("Unable to read API spec file (%s): %s", apiSpecFileName, err)
+			log.Printf("Unable to read API spec file (%s): %s", s.specFileName, err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

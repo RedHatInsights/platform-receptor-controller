@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -32,7 +33,9 @@ func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.W
 }
 
 func (jr *JobReceiver) Routes() {
-	jr.router.HandleFunc("/job", jr.handleJob())
+	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
+	securedSubRouter.Use(identity.EnforceIdentity)
+	securedSubRouter.HandleFunc("/job", jr.handleJob())
 }
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {

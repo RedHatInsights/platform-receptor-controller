@@ -13,10 +13,13 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+)
+
+const (
+	OPENAPI_SPEC_FILE = "/opt/app-root/src/apispec/api.spec.file"
 )
 
 func main() {
@@ -29,6 +32,7 @@ func main() {
 	log.Println(wsConfig)
 
 	wsMux := mux.NewRouter()
+
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
 	d := c.NewResponseDispatcherFactory(kw)
@@ -37,16 +41,13 @@ func main() {
 
 	apiMux := mux.NewRouter()
 
-	apiSpecServer := api.NewApiSpecServer(apiMux)
+	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
 
-	securedApiMux := apiMux.PathPrefix("/").Subrouter()
-	securedApiMux.Use(identity.EnforceIdentity)
-
-	mgmtServer := api.NewManagementServer(cm, securedApiMux)
+	mgmtServer := api.NewManagementServer(cm, apiMux)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, securedApiMux, kw)
+	jr := api.NewJobReceiver(cm, apiMux, kw)
 	jr.Routes()
 
 	go func() {
