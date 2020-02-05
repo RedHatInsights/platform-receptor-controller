@@ -1,8 +1,12 @@
-GATEWAY_BINARY=receptor-controller-gateway
+GATEWAY_BINARY=gateway
+JOB_RECEIVER_BINARY=job-receiver
 
 DOCKER_COMPOSE_CFG=docker-compose.yml
 
-.PHONY: test clean deps coverage $(GATEWAY_BINARY)
+COVERAGE_OUTPUT=coverage.out
+COVERAGE_HTML=coverage.html
+
+.PHONY: test clean deps coverage $(GATEWAY_BINARY) $(JOB_RECEIVER_BINARY)
 
 build:
 	go build -o gateway cmd/gateway/main.go
@@ -17,9 +21,9 @@ test:
 	go test $(TEST_ARGS) ./...
 
 coverage:
-	go test -v -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
-	@echo "file://$(PWD)/coverage.html"
+	go test -v -coverprofile=$(COVERAGE_OUTPUT) ./...
+	go tool cover -html=$(COVERAGE_OUTPUT) -o $(COVERAGE_HTML)
+	@echo "file://$(PWD)/$(COVERAGE_HTML)"
 
 start-test-env:
 	docker-compose -f $(DOCKER_COMPOSE_CFG) up
@@ -35,4 +39,5 @@ lint:
 
 clean:
 	go clean
-	rm -f $(GATEWAY_BINARY)
+	rm -f $(GATEWAY_BINARY) $(JOB_RECEIVER_BINARY)
+	rm -f $(COVERAGE_OUTPUT) $(COVERAGE_HTML)
