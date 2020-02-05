@@ -25,9 +25,9 @@ type rcClient struct {
 
 	cancel context.CancelFunc
 
-	config *WebSocketConfig
-
 	responseDispatcher *controller.ResponseDispatcher
+
+	config *WebSocketConfig
 }
 
 func (c *rcClient) SendWork(w controller.Work) {
