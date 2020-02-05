@@ -116,6 +116,7 @@ func (c *rcClient) write(ctx context.Context) {
 			log.Println("Websocket writer needs to send msg:", msg)
 
 			payloadMessage, messageID, err := protocol.BuildPayloadMessage(
+				msg.MessageID,
 				c.config.ReceptorControllerNodeId,
 				msg.Recipient,
 				msg.RouteList,

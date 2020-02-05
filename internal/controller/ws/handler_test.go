@@ -16,6 +16,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/posener/wstest"
@@ -171,7 +172,10 @@ var _ = Describe("WsController", func() {
 				// client is nil below.
 				client := rc.connectionMgr.GetConnection("540155", nodeID)
 
-				workRequest := controller.Work{MessageID: "123",
+				messageID, err := uuid.NewRandom()
+				Expect(err).NotTo(HaveOccurred())
+
+				workRequest := controller.Work{MessageID: messageID,
 					Recipient: "TestClient",
 					RouteList: []string{"test-b", "test-a"},
 					Payload:   "hello",

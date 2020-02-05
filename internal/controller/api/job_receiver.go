@@ -87,7 +87,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			return
 		}
 
-		jobID, err := uuid.NewUUID()
+		jobID, err := uuid.NewRandom()
 		if err != nil {
 			log.Println("Unable to generate UUID for routing the job...cannot proceed")
 			return
@@ -97,7 +97,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		workRequest := controller.Work{MessageID: jobID.String(),
+		workRequest := controller.Work{MessageID: jobID,
 			Recipient: jobRequest.Recipient,
 			RouteList: []string{"node-b", "node-a"},
 			Payload:   jobRequest.Payload,
