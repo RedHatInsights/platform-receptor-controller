@@ -8,8 +8,14 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	"github.com/gorilla/mux"
+)
+
+const (
+	CONNECTED_STATUS    = "connected"
+	DISCONNECTED_STATUS = "disconnected"
 )
 
 type ManagementServer struct {
@@ -25,8 +31,10 @@ func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router) *Manag
 }
 
 func (s *ManagementServer) Routes() {
-	s.router.HandleFunc("/connection/disconnect", s.handleDisconnect())
-	s.router.HandleFunc("/connection/status", s.handleConnectionStatus())
+	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
+	securedSubRouter.Use(identity.EnforceIdentity)
+	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect())
+	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus())
 }
 
 type connectionID struct {
@@ -58,11 +66,9 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			}
 		}
 
-		log.Println(connID)
-
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			log.Printf("No connection to the customer (%+v)...\n", connID)
 			return
 		}
@@ -70,7 +76,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 		client.DisconnectReceptorNetwork()
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(connID); err != nil {
 			panic(err)
 		}
@@ -100,7 +106,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 		if err := json.Unmarshal(body, &connID); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(422) // unprocessable entity
+			w.WriteHeader(http.StatusUnprocessableEntity)
 			if err := json.NewEncoder(w).Encode(err); err != nil {
 				panic(err)
 			}
@@ -112,13 +118,13 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client != nil {
-			connectionStatus.Status = "connected"
+			connectionStatus.Status = CONNECTED_STATUS
 		} else {
-			connectionStatus.Status = "disconnected"
+			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(connectionStatus); err != nil {
 			panic(err)
 		}

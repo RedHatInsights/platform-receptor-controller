@@ -36,8 +36,9 @@ func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManage
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
 
 func (rc *ReceptorController) Routes() {
-	rc.router.HandleFunc("/wss/receptor-controller/gateway", rc.handleWebSocket())
-	rc.router.Use(identity.EnforceIdentity)
+	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
+	router.Use(identity.EnforceIdentity)
+	router.HandleFunc("/gateway", rc.handleWebSocket())
 }
 
 func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
