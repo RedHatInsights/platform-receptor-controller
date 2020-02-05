@@ -34,8 +34,6 @@ cp gateway $INSTALL_DIR
 cp job-receiver $INSTALL_DIR
 
 echo "---> Copying openapi spec into place..."
-pwd
-find .
 mkdir -p $API_SPEC_DIR
 cp $API_SPEC_FILE_SOURCE $API_SPEC_FILE_DESTINATION
 
