@@ -4,9 +4,9 @@ set -e
 
 BASE_DIR=/opt/app-root/src
 INSTALL_DIR=$BASE_DIR/bin
-API_SPEC_DIR=$BASE_DIR/apispec
+API_SPEC_DIR=$BASE_DIR/api
 API_SPEC_FILE_SOURCE="internal/controller/api/api.spec.json"
-API_SPEC_FILE_DESTINATION="/opt/app-root/src/api/api.spec.file"
+API_SPEC_FILE_DESTINATION="$API_SPEC_DIR/api.spec.file"
 
 echo
 echo "===> Build started at $(date)"
