@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
-	"github.com/segmentio/kafka-go"
 )
 
 const (
@@ -20,15 +19,13 @@ const (
 type ReceptorController struct {
 	connectionMgr             *controller.ConnectionManager
 	router                    *mux.Router
-	writer                    *kafka.Writer
 	responseDispatcherFactory *controller.ResponseDispatcherFactory
 }
 
-func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, rd *controller.ResponseDispatcherFactory) *ReceptorController {
+func NewReceptorController(cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:             cm,
 		router:                    r,
-		writer:                    kw,
 		responseDispatcherFactory: rd,
 	}
 }

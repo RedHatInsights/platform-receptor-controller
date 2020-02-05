@@ -26,7 +26,7 @@ func main() {
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
 	d := c.NewResponseDispatcherFactory(kw)
-	rc := ws.NewReceptorController(cm, wsMux, kw, d)
+	rc := ws.NewReceptorController(cm, wsMux, d)
 	rc.Routes()
 
 	mgmtMux := mux.NewRouter()
