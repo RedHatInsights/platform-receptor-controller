@@ -7,16 +7,9 @@
     }
   ],
   "info": {
-    "description": "Service for routing work requests originating from within cloud.redhat.com to receptor nodes within a customer's environment\n",
+    "description": "Receptor-Controller Service",
     "version": "1.0.0",
-    "title": "Receptor-Controller",
-    "contact": {
-      "email": "dehort@redhat.com"
-    },
-    "license": {
-      "name": "Apache 2.0",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-    }
+    "title": "Receptor-Controller"
   },
   "tags": [
     {
