@@ -5,6 +5,7 @@ set -e
 BASE_DIR=/opt/app-root/src
 INSTALL_DIR=$BASE_DIR/bin
 API_SPEC_DIR=$BASE_DIR/apispec
+API_SPEC_FILE_DESTINATION="/opt/app-root/src/apispec/api.spec.file"
 
 echo
 echo "===> Build started at $(date)"
@@ -33,7 +34,7 @@ cp job-receiver $INSTALL_DIR
 
 echo "---> Copying openapi spec into place..."
 mkdir -p $API_SPEC_DIR
-cp internal/controller/apispec/api.spec.json $API_SPEC
+cp internal/controller/apispec/api.spec.json $API_SPEC_FILE_DESTINATION
 
 echo
 echo "===> Build completed at $(date)"
