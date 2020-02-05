@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	OPENAPI_SPEC_FILE = "/opt/app-root/src/apispec/api.spec.file"
+	OPENAPI_SPEC_FILE = "/opt/app-root/src/api/api.spec.file"
 )
 
 func main() {
