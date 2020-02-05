@@ -2,10 +2,12 @@ package controller
 
 import (
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Work struct {
-	MessageID string
+	MessageID uuid.UUID
 	Recipient string
 	RouteList []string
 	Payload   interface{}

@@ -322,17 +322,11 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func BuildPayloadMessage(sender string, recipient string, route []string,
+func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, route []string,
 	messageType string, directive string, payload interface{}) (Message, *uuid.UUID, error) {
 	routingMessage := RoutingMessage{Sender: sender,
 		Recipient: recipient,
 		RouteList: route,
-	}
-
-	messageId, err := uuid.NewUUID()
-	if err != nil {
-		log.Println("unable to generate uuid for message:", err)
-		return nil, nil, err
 	}
 
 	innerMessage := InnerEnvelope{
