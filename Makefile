@@ -9,8 +9,8 @@ COVERAGE_HTML=coverage.html
 .PHONY: test clean deps coverage $(GATEWAY_BINARY) $(JOB_RECEIVER_BINARY)
 
 build:
-	go build -o gateway cmd/gateway/main.go
-	go build -o job-receiver cmd/job_receiver/main.go
+	go build -o $(GATEWAY_BINARY) cmd/gateway/main.go
+	go build -o $(JOB_RECEIVER_BINARY) cmd/job_receiver/main.go
 
 deps:
 	go get -u golang.org/x/lint/golint
