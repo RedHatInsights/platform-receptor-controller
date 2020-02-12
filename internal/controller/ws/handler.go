@@ -79,11 +79,13 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			return
 		}
 
-		rc.connectionMgr.Register(client.account, peerID, client)
+		client.node_id = peerID
+
+		rc.connectionMgr.Register(client.account, client.node_id, client)
 
 		// once this go routine exits...notify the connection manager of the clients departure
 		defer func() {
-			rc.connectionMgr.Unregister(client.account, peerID)
+			rc.connectionMgr.Unregister(client.account, client.node_id)
 			log.Println("Websocket server - account unregistered from connection manager")
 		}()
 
