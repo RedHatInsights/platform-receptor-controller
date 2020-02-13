@@ -99,7 +99,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		workRequest := controller.Work{MessageID: jobID,
 			Recipient: jobRequest.Recipient,
-			RouteList: []string{"node-b", "node-a"},
+			RouteList: []string{jobRequest.Recipient},
 			Payload:   jobRequest.Payload,
 			Directive: jobRequest.Directive}
 
