@@ -21,14 +21,16 @@ type ReceptorController struct {
 	router                    *mux.Router
 	config                    *WebSocketConfig
 	responseDispatcherFactory *controller.ResponseDispatcherFactory
+	workDispatcherFactory     *controller.WorkDispatcherFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory, wd *controller.WorkDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:             cm,
 		router:                    r,
 		config:                    wsc,
 		responseDispatcherFactory: rd,
+		workDispatcherFactory:     wd,
 	}
 }
 
@@ -63,6 +65,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		}
 
 		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
+		client.workDispatcher = rc.workDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
 		ctx, cancel := context.WithCancel(ctx)
@@ -89,6 +92,8 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
+		go client.workDispatcher.Dispatch(ctx, client.send)
+		go client.write(ctx)
 		client.read(ctx)
 	}
 }

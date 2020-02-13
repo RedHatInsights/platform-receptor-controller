@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -93,34 +95,68 @@ func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, 
 }
 
 type WorkDispatcherFactory struct {
-	reader *kafka.Reader
+	readerConfig *queue.ConsumerConfig
 }
 
-func NewWorkDispatcherFactory(reader *kafka.Reader) *WorkDispatcherFactory {
+func NewWorkDispatcherFactory(cfg *queue.ConsumerConfig) *WorkDispatcherFactory {
 	return &WorkDispatcherFactory{
-		reader: reader,
+		readerConfig: cfg,
 	}
 }
 
 func (fact *WorkDispatcherFactory) NewDispatcher(account, nodeID string) *WorkDispatcher {
 	log.Println("Creating a new work dispatcher")
 	return &WorkDispatcher{
-		account: account,
-		nodeID:  nodeID,
-		reader:  fact.reader,
+		account:      account,
+		nodeID:       nodeID,
+		readerConfig: fact.readerConfig,
 	}
 }
 
 type WorkDispatcher struct {
-	account string
-	nodeID  string
-	reader  *kafka.Reader
+	account      string
+	nodeID       string
+	readerConfig *queue.ConsumerConfig
 }
 
 func (wd *WorkDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", wd.account, wd.nodeID)
 }
 
-func (wd *WorkDispatcher) Dispatch(ctx context.Context) {
-	fmt.Println("This is when the work dispatcher would consume a job from the jobs kafka topic")
+func (wd *WorkDispatcher) Dispatch(ctx context.Context, c chan<- Work) {
+	r := queue.StartConsumer(wd.readerConfig)
+
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			log.Println("Kafka job reader - error closing consumer: ", err)
+			return
+		}
+		log.Println("Kafka job reader leaving...")
+	}()
+
+	for {
+		log.Printf("Kafka job reader - waiting on a message from kafka...")
+		m, err := r.ReadMessage(ctx)
+		if err != nil {
+			// FIXME:  do we need to call cancel here??
+			log.Println("Kafka job reader - error reading message: ", err)
+			break
+		}
+
+		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s: %s\n",
+			m.Topic,
+			m.Partition,
+			m.Offset,
+			string(m.Key),
+			string(m.Value))
+
+		if string(m.Key) == wd.GetKey() {
+			// FIXME:
+			w := Work{}
+			c <- w
+		} else {
+			log.Println("Kafka job reader - received message but did not send. Account number not found.")
+		}
+	}
 }
