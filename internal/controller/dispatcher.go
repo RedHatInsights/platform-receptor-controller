@@ -73,15 +73,13 @@ func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, 
 		Payload:   payloadMessage.Data.RawPayload,
 	}
 
-	log.Println("Dispatching response:", responseMessage)
+	log.Printf("Dispatching response:%+v", responseMessage)
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
 		log.Println("JSON marshal of ResponseMessage failed, err:", err)
 		return nil
 	}
-
-	log.Println("Dispatching response:", jsonResponseMessage)
 
 	rd.writer.WriteMessages(ctx,
 		kafka.Message{
