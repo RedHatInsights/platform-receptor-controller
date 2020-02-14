@@ -175,15 +175,15 @@ var _ = Describe("WsController", func() {
 				messageID, err := uuid.NewRandom()
 				Expect(err).NotTo(HaveOccurred())
 
-				workRequest := controller.Work{MessageID: messageID,
+				workRequest := controller.Message{MessageID: messageID,
 					Recipient: "TestClient",
 					RouteList: []string{"test-b", "test-a"},
 					Payload:   "hello",
 					Directive: "receptor:ping"}
 
-				client.SendWork(workRequest)
+				client.SendMessage(workRequest)
 
-				m := readSocket(c, 4)      // read response from SendWork request and verify it is a PayloadMessage
+				m := readSocket(c, 4)      // read response from SendMessage request and verify it is a PayloadMessage
 				jm, err := json.Marshal(m) // m's marshal/unmarshal functions are private and can't be used here
 
 				// FIXME: Need a better way to verify the message

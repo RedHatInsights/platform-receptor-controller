@@ -90,35 +90,35 @@ func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, 
 	return nil
 }
 
-type WorkDispatcherFactory struct {
+type MessageDispatcherFactory struct {
 	reader *kafka.Reader
 }
 
-func NewWorkDispatcherFactory(reader *kafka.Reader) *WorkDispatcherFactory {
-	return &WorkDispatcherFactory{
+func NewMessageDispatcherFactory(reader *kafka.Reader) *MessageDispatcherFactory {
+	return &MessageDispatcherFactory{
 		reader: reader,
 	}
 }
 
-func (fact *WorkDispatcherFactory) NewDispatcher(account, nodeID string) *WorkDispatcher {
+func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {
 	log.Println("Creating a new work dispatcher")
-	return &WorkDispatcher{
+	return &MessageDispatcher{
 		account: account,
 		nodeID:  nodeID,
 		reader:  fact.reader,
 	}
 }
 
-type WorkDispatcher struct {
+type MessageDispatcher struct {
 	account string
 	nodeID  string
 	reader  *kafka.Reader
 }
 
-func (wd *WorkDispatcher) GetKey() string {
+func (wd *MessageDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", wd.account, wd.nodeID)
 }
 
-func (wd *WorkDispatcher) Dispatch(ctx context.Context) {
+func (wd *MessageDispatcher) Dispatch(ctx context.Context) {
 	fmt.Println("This is when the work dispatcher would consume a job from the jobs kafka topic")
 }
