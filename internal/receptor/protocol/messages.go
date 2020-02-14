@@ -292,6 +292,7 @@ type InnerEnvelope struct {
 	RawPayload   interface{} `json:"raw_payload"`
 	Directive    string      `json:"directive"`
 	InResponseTo string      `json:"in_response_to"`
+	Code         int         `json:"code"`
 }
 
 type Time struct {
