@@ -94,39 +94,39 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 	return nil
 }
 
-type WorkDispatcherFactory struct {
+type MessageDispatcherFactory struct {
 	readerConfig *queue.ConsumerConfig
 }
 
-func NewWorkDispatcherFactory(cfg *queue.ConsumerConfig) *WorkDispatcherFactory {
-	return &WorkDispatcherFactory{
+func NewMessageDispatcherFactory(cfg *queue.ConsumerConfig) *MessageDispatcherFactory {
+	return &MessageDispatcherFactory{
 		readerConfig: cfg,
 	}
 }
 
-func (fact *WorkDispatcherFactory) NewDispatcher(account, nodeID string) *WorkDispatcher {
+func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {
 	log.Println("Creating a new work dispatcher")
 	r := queue.StartConsumer(fact.readerConfig)
-	return &WorkDispatcher{
+	return &MessageDispatcher{
 		account: account,
 		nodeID:  nodeID,
 		reader:  r,
 	}
 }
 
-type WorkDispatcher struct {
+type MessageDispatcher struct {
 	account string
 	nodeID  string
 	reader  *kafka.Reader
 }
 
-func (wd *WorkDispatcher) GetKey() string {
-	return fmt.Sprintf("%s:%s", wd.account, wd.nodeID)
+func (md *MessageDispatcher) GetKey() string {
+	return fmt.Sprintf("%s:%s", md.account, md.nodeID)
 }
 
-func (wd *WorkDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Work) {
+func (md *MessageDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Work) {
 	defer func() {
-		err := wd.reader.Close()
+		err := md.reader.Close()
 		if err != nil {
 			log.Println("Kafka job reader - error closing consumer: ", err)
 			return
@@ -136,7 +136,7 @@ func (wd *WorkDispatcher) StartDispatchingMessages(ctx context.Context, c chan<-
 
 	for {
 		log.Printf("Kafka job reader - waiting on a message from kafka...")
-		m, err := wd.reader.ReadMessage(ctx)
+		m, err := md.reader.ReadMessage(ctx)
 		if err != nil {
 			// FIXME:  do we need to call cancel here??
 			log.Println("Kafka job reader - error reading message: ", err)
@@ -150,7 +150,7 @@ func (wd *WorkDispatcher) StartDispatchingMessages(ctx context.Context, c chan<-
 			string(m.Key),
 			string(m.Value))
 
-		if string(m.Key) == wd.GetKey() {
+		if string(m.Key) == md.GetKey() {
 			// FIXME:
 			var w Work
 			if err := json.Unmarshal(m.Value, &w); err != nil {

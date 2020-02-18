@@ -37,8 +37,8 @@ func main() {
 	kw := queue.StartProducer(queue.GetProducer())
 	kc := queue.GetConsumer()
 	rd := c.NewResponseDispatcherFactory(kw)
-	wd := c.NewWorkDispatcherFactory(kc)
-	rc := ws.NewReceptorController(wsConfig, cm, wsMux, rd, wd)
+	md := c.NewMessageDispatcherFactory(kc)
+	rc := ws.NewReceptorController(wsConfig, cm, wsMux, rd, md)
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
