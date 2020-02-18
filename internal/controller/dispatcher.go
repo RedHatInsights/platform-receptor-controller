@@ -43,10 +43,12 @@ func (rd *ResponseDispatcher) GetKey() string {
 
 func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.Message, receptorID string) error {
 	type ResponseMessage struct {
-		Account   string      `json:"account"`
-		Sender    string      `json:"sender"`
-		MessageID string      `json:"message_id"`
-		Payload   interface{} `json:"payload"`
+		Account     string      `json:"account"`
+		Sender      string      `json:"sender"`
+		MessageType string      `json:"message_type"`
+		MessageID   string      `json:"message_id"`
+		Payload     interface{} `json:"payload"`
+		Code        int         `json:"code"`
 	}
 
 	if m.Type() != protocol.PayloadMessageType {
@@ -69,21 +71,21 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 	messageID := payloadMessage.Data.InResponseTo
 
 	responseMessage := ResponseMessage{
-		Account:   rd.account,
-		Sender:    payloadMessage.RoutingInfo.Sender,
-		MessageID: messageID,
-		Payload:   payloadMessage.Data.RawPayload,
+		Account:     rd.account,
+		Sender:      payloadMessage.RoutingInfo.Sender,
+		MessageID:   messageID,
+		MessageType: payloadMessage.Data.MessageType,
+		Payload:     payloadMessage.Data.RawPayload,
+		Code:        payloadMessage.Data.Code,
 	}
 
-	log.Println("Dispatching response:", responseMessage)
+	log.Printf("Dispatching response:%+v", responseMessage)
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
 		log.Println("JSON marshal of ResponseMessage failed, err:", err)
 		return nil
 	}
-
-	log.Println("Dispatching response:", jsonResponseMessage)
 
 	rd.writer.WriteMessages(ctx,
 		kafka.Message{
@@ -101,7 +103,6 @@ type MessageDispatcherFactory struct {
 func NewMessageDispatcherFactory(cfg *queue.ConsumerConfig) *MessageDispatcherFactory {
 	return &MessageDispatcherFactory{
 		readerConfig: cfg,
-	}
 }
 
 func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {

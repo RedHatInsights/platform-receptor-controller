@@ -425,7 +425,7 @@ func TestInnerEnvelopeMarshalling(t *testing.T) {
 	}
 
 	if marshalledInnerEnvelope != unmarshalledInnerEnvelope {
-		t.Fatalf("marshalled/unmarshalled InnerEnvelopes are different, expected: %s got %s\n",
+		t.Fatalf("marshalled/unmarshalled InnerEnvelopes are different, expected: %+v got %+v\n",
 			marshalledInnerEnvelope,
 			unmarshalledInnerEnvelope)
 	}

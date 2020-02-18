@@ -97,13 +97,13 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		workRequest := controller.Work{MessageID: jobID,
+		workRequest := controller.Message{MessageID: jobID,
 			Recipient: jobRequest.Recipient,
-			RouteList: []string{"node-b", "node-a"},
+			RouteList: []string{jobRequest.Recipient},
 			Payload:   jobRequest.Payload,
 			Directive: jobRequest.Directive}
 
-		client.SendWork(workRequest)
+		client.SendMessage(workRequest)
 
 		/*
 			// dispatch job via kafka queue

@@ -22,7 +22,7 @@ const (
 type MockClient struct {
 }
 
-func (mc MockClient) SendWork(w controller.Work) {
+func (mc MockClient) SendMessage(w controller.Message) {
 }
 
 func (mc MockClient) Close() {

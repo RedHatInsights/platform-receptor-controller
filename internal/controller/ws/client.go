@@ -20,7 +20,7 @@ type rcClient struct {
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan controller.Work
+	send chan controller.Message
 
 	cancel context.CancelFunc
 
@@ -31,7 +31,7 @@ type rcClient struct {
 	config *WebSocketConfig
 }
 
-func (c *rcClient) SendWork(w controller.Work) {
+func (c *rcClient) SendMessage(w controller.Message) {
 	c.send <- w
 }
 
