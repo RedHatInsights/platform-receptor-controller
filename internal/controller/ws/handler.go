@@ -65,7 +65,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		}
 
 		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
-		// client.messageDispatcher = rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
+		messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
 		ctx, cancel := context.WithCancel(ctx)
@@ -94,7 +94,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
-		// go client.messageDispatcher.StartDispatchingMessages(ctx, client.send)
+		go messageDispatcher.StartDispatchingMessages(ctx, client.send)
 		go client.write(ctx)
 		client.read(ctx)
 	}

@@ -103,6 +103,7 @@ type MessageDispatcherFactory struct {
 func NewMessageDispatcherFactory(cfg *queue.ConsumerConfig) *MessageDispatcherFactory {
 	return &MessageDispatcherFactory{
 		readerConfig: cfg,
+	}
 }
 
 func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {
@@ -125,7 +126,7 @@ func (md *MessageDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", md.account, md.nodeID)
 }
 
-func (md *MessageDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Work) {
+func (md *MessageDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Message) {
 	defer func() {
 		err := md.reader.Close()
 		if err != nil {
@@ -153,7 +154,7 @@ func (md *MessageDispatcher) StartDispatchingMessages(ctx context.Context, c cha
 
 		if string(m.Key) == md.GetKey() {
 			// FIXME:
-			var w Work
+			var w Message
 			if err := json.Unmarshal(m.Value, &w); err != nil {
 				log.Println("Unable to unmarshal message from kafka queue")
 				continue

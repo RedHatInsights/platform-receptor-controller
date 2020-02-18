@@ -26,8 +26,6 @@ type rcClient struct {
 
 	responseDispatcher *controller.ResponseDispatcher
 
-	messageDispatcher *controller.MessageDispatcher
-
 	config *WebSocketConfig
 }
 
