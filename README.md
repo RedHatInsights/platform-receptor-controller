@@ -68,7 +68,9 @@ The response will contain the following information:
 
   - response key: MessageID
   - response value: json containing Account, Sender, MessageID, and Payload
-  - example response from a ping: `426f674d-42d5-11ea-bea3-54e1ad81c0b2: {"account":"0000001","sender":"node-a","message_id":"426f674d-42d5-11ea-bea3-54e1ad81c0b2","payload":"{\"initial_time\": \"2020-01-29T20:23:49,811218829+00:00\", \"response_time\": \"2020-01-29 20:23:49.830491\", \"active_work\": []}"}`
+  - example response from a ping: `426f674d-42d5-11ea-bea3-54e1ad81c0b2: {"account":"0000001","sender":"node-a","message_id":"426f674d-42d5-11ea-bea3-54e1ad81c0b2","code": 0,"message_type": "response","payload":"{\"initial_time\": \"2020-01-29T20:23:49,811218829+00:00\", \"response_time\": \"2020-01-29 20:23:49.830491\", \"active_work\": []}"}`
+
+  The _code_ and _message\_type_ field as passed as is from the receptor mesh network.  The _code_ can be used to determine if the message was able to be handed over to a plugin and processed successfully or if the plugin failed to process the message.
 
 ### Development
 
