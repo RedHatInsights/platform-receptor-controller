@@ -2,20 +2,10 @@ package controller
 
 import (
 	"sync"
-
-	"github.com/google/uuid"
 )
 
-type Work struct {
-	MessageID uuid.UUID
-	Recipient string
-	RouteList []string
-	Payload   interface{}
-	Directive string
-}
-
 type Client interface {
-	SendWork(Work)
+	SendMessage(Message)
 	Close()
 	DisconnectReceptorNetwork()
 }

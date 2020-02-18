@@ -59,7 +59,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			config:  rc.config,
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
-			send:    make(chan controller.Work, messageBufferSize),
+			send:    make(chan controller.Message, messageBufferSize),
 		}
 
 		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
