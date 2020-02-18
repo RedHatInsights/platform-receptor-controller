@@ -92,7 +92,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
-		go client.workDispatcher.Dispatch(ctx, client.send)
+		go client.workDispatcher.StartDispatchingMessages(ctx, client.send)
 		go client.write(ctx)
 		client.read(ctx)
 	}

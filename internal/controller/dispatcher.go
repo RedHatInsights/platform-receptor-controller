@@ -41,7 +41,7 @@ func (rd *ResponseDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
 }
 
-func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, receptorID string) error {
+func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.Message, receptorID string) error {
 	type ResponseMessage struct {
 		Account   string      `json:"account"`
 		Sender    string      `json:"sender"`
@@ -106,28 +106,27 @@ func NewWorkDispatcherFactory(cfg *queue.ConsumerConfig) *WorkDispatcherFactory 
 
 func (fact *WorkDispatcherFactory) NewDispatcher(account, nodeID string) *WorkDispatcher {
 	log.Println("Creating a new work dispatcher")
+	r := queue.StartConsumer(fact.readerConfig)
 	return &WorkDispatcher{
-		account:      account,
-		nodeID:       nodeID,
-		readerConfig: fact.readerConfig,
+		account: account,
+		nodeID:  nodeID,
+		reader:  r,
 	}
 }
 
 type WorkDispatcher struct {
-	account      string
-	nodeID       string
-	readerConfig *queue.ConsumerConfig
+	account string
+	nodeID  string
+	reader  *kafka.Reader
 }
 
 func (wd *WorkDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", wd.account, wd.nodeID)
 }
 
-func (wd *WorkDispatcher) Dispatch(ctx context.Context, c chan<- Work) {
-	r := queue.StartConsumer(wd.readerConfig)
-
+func (wd *WorkDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Work) {
 	defer func() {
-		err := r.Close()
+		err := wd.reader.Close()
 		if err != nil {
 			log.Println("Kafka job reader - error closing consumer: ", err)
 			return
@@ -137,7 +136,7 @@ func (wd *WorkDispatcher) Dispatch(ctx context.Context, c chan<- Work) {
 
 	for {
 		log.Printf("Kafka job reader - waiting on a message from kafka...")
-		m, err := r.ReadMessage(ctx)
+		m, err := wd.reader.ReadMessage(ctx)
 		if err != nil {
 			// FIXME:  do we need to call cancel here??
 			log.Println("Kafka job reader - error reading message: ", err)
@@ -153,7 +152,11 @@ func (wd *WorkDispatcher) Dispatch(ctx context.Context, c chan<- Work) {
 
 		if string(m.Key) == wd.GetKey() {
 			// FIXME:
-			w := Work{}
+			var w Work
+			if err := json.Unmarshal(m.Value, &w); err != nil {
+				log.Println("Unable to unmarshal message from kafka queue")
+				continue
+			}
 			c <- w
 		} else {
 			log.Println("Kafka job reader - received message but did not send. Account number not found.")

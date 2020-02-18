@@ -74,7 +74,7 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		c.responseDispatcher.Dispatch(ctx, message, c.config.ReceptorControllerNodeId)
+		c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
 	}
 }
 
