@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -39,7 +41,7 @@ func (rd *ResponseDispatcher) GetKey() string {
 	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
 }
 
-func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, receptorID string) error {
+func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.Message, receptorID string) error {
 	type ResponseMessage struct {
 		Account     string      `json:"account"`
 		Sender      string      `json:"sender"`
@@ -95,21 +97,21 @@ func (rd *ResponseDispatcher) Dispatch(ctx context.Context, m protocol.Message, 
 }
 
 type MessageDispatcherFactory struct {
-	reader *kafka.Reader
+	readerConfig *queue.ConsumerConfig
 }
 
-func NewMessageDispatcherFactory(reader *kafka.Reader) *MessageDispatcherFactory {
+func NewMessageDispatcherFactory(cfg *queue.ConsumerConfig) *MessageDispatcherFactory {
 	return &MessageDispatcherFactory{
-		reader: reader,
-	}
+		readerConfig: cfg,
 }
 
 func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {
 	log.Println("Creating a new work dispatcher")
+	r := queue.StartConsumer(fact.readerConfig)
 	return &MessageDispatcher{
 		account: account,
 		nodeID:  nodeID,
-		reader:  fact.reader,
+		reader:  r,
 	}
 }
 
@@ -119,10 +121,46 @@ type MessageDispatcher struct {
 	reader  *kafka.Reader
 }
 
-func (wd *MessageDispatcher) GetKey() string {
-	return fmt.Sprintf("%s:%s", wd.account, wd.nodeID)
+func (md *MessageDispatcher) GetKey() string {
+	return fmt.Sprintf("%s:%s", md.account, md.nodeID)
 }
 
-func (wd *MessageDispatcher) Dispatch(ctx context.Context) {
-	fmt.Println("This is when the work dispatcher would consume a job from the jobs kafka topic")
+func (md *MessageDispatcher) StartDispatchingMessages(ctx context.Context, c chan<- Work) {
+	defer func() {
+		err := md.reader.Close()
+		if err != nil {
+			log.Println("Kafka job reader - error closing consumer: ", err)
+			return
+		}
+		log.Println("Kafka job reader leaving...")
+	}()
+
+	for {
+		log.Printf("Kafka job reader - waiting on a message from kafka...")
+		m, err := md.reader.ReadMessage(ctx)
+		if err != nil {
+			// FIXME:  do we need to call cancel here??
+			log.Println("Kafka job reader - error reading message: ", err)
+			break
+		}
+
+		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s: %s\n",
+			m.Topic,
+			m.Partition,
+			m.Offset,
+			string(m.Key),
+			string(m.Value))
+
+		if string(m.Key) == md.GetKey() {
+			// FIXME:
+			var w Work
+			if err := json.Unmarshal(m.Value, &w); err != nil {
+				log.Println("Unable to unmarshal message from kafka queue")
+				continue
+			}
+			c <- w
+		} else {
+			log.Println("Kafka job reader - received message but did not send. Account number not found.")
+		}
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
@@ -26,6 +25,8 @@ type rcClient struct {
 	cancel context.CancelFunc
 
 	responseDispatcher *controller.ResponseDispatcher
+
+	messageDispatcher *controller.MessageDispatcher
 
 	config *WebSocketConfig
 }
@@ -51,9 +52,6 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Println("WebSocket reader leaving!")
 	}()
 
-	go c.write(ctx)
-	// go c.consume(ctx)
-
 	c.configurePongHandler()
 
 	for {
@@ -76,7 +74,7 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		c.responseDispatcher.Dispatch(ctx, message, c.config.ReceptorControllerNodeId)
+		c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
 	}
 }
 
@@ -160,44 +158,6 @@ func (c *rcClient) configurePingTicker() *time.Ticker {
 		ticker := time.NewTicker(40 * 60 * time.Minute)
 		ticker.Stop()
 		return ticker
-	}
-}
-
-func (c *rcClient) consume(ctx context.Context) {
-	r := queue.StartConsumer(queue.GetConsumer())
-
-	defer func() {
-		err := r.Close()
-		if err != nil {
-			log.Println("Kafka job reader - error closing consumer: ", err)
-			return
-		}
-		log.Println("Kafka job reader leaving...")
-	}()
-
-	for {
-		log.Printf("Kafka job reader - waiting on a message from kafka...")
-		m, err := r.ReadMessage(ctx)
-		if err != nil {
-			// FIXME:  do we need to call cancel here??
-			log.Println("Kafka job reader - error reading message: ", err)
-			break
-		}
-
-		log.Printf("Kafka job reader - received message from %s-%d [%d]: %s: %s\n",
-			m.Topic,
-			m.Partition,
-			m.Offset,
-			string(m.Key),
-			string(m.Value))
-
-		if string(m.Key) == c.account {
-			// FIXME:
-			w := controller.Message{}
-			c.SendMessage(w)
-		} else {
-			log.Println("Kafka job reader - received message but did not send. Account number not found.")
-		}
 	}
 }
 
