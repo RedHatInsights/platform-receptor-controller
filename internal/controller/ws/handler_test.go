@@ -65,7 +65,8 @@ var _ = Describe("WsController", func() {
 		cm = controller.NewConnectionManager()
 		kw = queue.StartProducer(queue.GetProducer())
 		rd := controller.NewResponseDispatcherFactory(kw)
-		rc = NewReceptorController(config, cm, wsMux, rd)
+		md := controller.NewMessageDispatcherFactory(queue.GetConsumer())
+		rc = NewReceptorController(config, cm, wsMux, rd, md)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)
