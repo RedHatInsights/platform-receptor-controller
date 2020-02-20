@@ -50,6 +50,7 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 		Payload      interface{} `json:"payload"`
 		Code         int         `json:"code"`
 		InResponseTo string      `json:"in_response_to"`
+		Serial       int         `json:"serial"`
 	}
 
 	if m.Type() != protocol.PayloadMessageType {
@@ -77,6 +78,7 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 		Payload:      payloadMessage.Data.RawPayload,
 		Code:         payloadMessage.Data.Code,
 		InResponseTo: payloadMessage.Data.InResponseTo,
+		Serial:       payloadMessage.Data.Serial,
 	}
 
 	log.Printf("Dispatching response:%+v", responseMessage)
