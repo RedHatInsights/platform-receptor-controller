@@ -81,13 +81,14 @@ func (rd *ResponseDispatcher) Run(ctx context.Context) {
 }
 
 type PayloadHandler struct {
-	account string
-	nodeID  string
-	writer  *kafka.Writer
+	Account    string
+	NodeID     string
+	Writer     *kafka.Writer
+	ReceptorSM *ReceptorStateMachine
 }
 
 func (rd *PayloadHandler) GetKey() string {
-	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
+	return fmt.Sprintf("%s:%s", rd.Account, rd.NodeID)
 }
 
 func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /*, receptorID string*/) error {
@@ -123,7 +124,7 @@ func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /
 	*/
 
 	responseMessage := ResponseMessage{
-		Account:      rd.account,
+		Account:      rd.Account,
 		Sender:       payloadMessage.RoutingInfo.Sender,
 		MessageID:    payloadMessage.Data.MessageID,
 		MessageType:  payloadMessage.Data.MessageType,
@@ -141,7 +142,7 @@ func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /
 		return nil
 	}
 
-	rd.writer.WriteMessages(ctx,
+	rd.Writer.WriteMessages(ctx,
 		kafka.Message{
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
@@ -151,9 +152,19 @@ func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /
 }
 
 type RouteTableHandler struct {
+	ReceptorSM *ReceptorStateMachine
 }
 
-func (rd RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+
+	log.Printf("inside RouteTableHandler...statemachine:%+v", rth.ReceptorSM)
+
+	if rth.ReceptorSM.handshakeComplete == false {
+		log.Println("Received ROUTE message before handshake was complete")
+		// FIXME:  send an error on the ErrorChannel and shutdown connection?!?!
+		return nil
+	}
+
 	if m.Type() != protocol.RouteTableMessageType {
 		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
 		return nil
@@ -167,12 +178,15 @@ func (rd RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Messag
 
 	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
 
+	rth.ReceptorSM.routingTableReceived = true
+
 	return nil
 }
 
 type HandshakeHandler struct {
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
+	ReceptorSM     *ReceptorStateMachine
 }
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
@@ -193,6 +207,8 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
 
 	hh.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
+
+	hh.ReceptorSM.handshakeComplete = true
 
 	return nil
 }
