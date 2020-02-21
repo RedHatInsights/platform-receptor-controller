@@ -54,18 +54,30 @@ func (rd *ResponseDispatcher) RegisterHandler(msgType protocol.NetworkMessageTyp
 	rd.handlers[msgType] = handler
 }
 
-func (rd *ResponseDispatcher) Run() {
-	for msg := range rd.recv {
-		log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)
+func (rd *ResponseDispatcher) Run(ctx context.Context) {
+	defer func() {
+		log.Println("ResponseDispatcher leaving!")
+	}()
 
-		handler, exists := rd.handlers[msg.Type()]
-		if exists == false {
-			log.Printf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
-			continue
+	for {
+		log.Println("WebSocket writer - Waiting for something to send")
+
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-rd.recv:
+			log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)
+
+			handler, exists := rd.handlers[msg.Type()]
+			if exists == false {
+				log.Printf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
+				continue
+			}
+
+			handler.HandleMessage(msg)
 		}
-
-		handler.HandleMessage(msg)
 	}
+
 }
 
 type PayloadHandler struct {

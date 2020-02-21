@@ -67,6 +67,11 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			recv:           make(chan protocol.Message, messageBufferSize),
 		}
 
+		ctx := req.Context()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		client.cancel = cancel
+
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
 		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv, client.account, client.node_id)
@@ -84,26 +89,13 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		payloadHandler := controller.PayloadHandler{ /*receptor*/ }
 		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
-		go responseDispatcher.Run()
+		go responseDispatcher.Run(ctx)
 
 		// messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
-
-		ctx := req.Context()
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		client.cancel = cancel
 
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 
 		defer socket.Close()
-
-		/*
-			peerID, err := client.performHandshake()
-			if err != nil {
-				log.Println("Error during handshake:", err)
-				return
-			}
-		*/
 
 		client.node_id = "peerID"
 
