@@ -22,9 +22,10 @@ type rcClient struct {
 	// send is a channel on which messages are sent.
 	send chan controller.Message
 
-	cancel context.CancelFunc
+	// recv is a channel on which responses are sent.
+	recv chan protocol.Message
 
-	responseDispatcher *controller.ResponseDispatcher
+	cancel context.CancelFunc
 
 	config *WebSocketConfig
 }
@@ -69,10 +70,10 @@ func (c *rcClient) read(ctx context.Context) {
 			return
 		}
 
-		log.Printf("Websocket reader message: %+v\n", message)
-		log.Println("Websocket reader message type:", message.Type())
+		//log.Printf("Websocket reader message: %+v\n", message)
+		//log.Println("Websocket reader message type:", message.Type())
 
-		c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
+		c.recv <- message
 	}
 }
 

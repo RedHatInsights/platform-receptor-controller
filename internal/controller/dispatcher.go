@@ -12,6 +12,14 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
+type IMessageHandler interface {
+	HandleMessage(protocol.Message) error // FIXME: don't need error??  need context??
+}
+
+type IResponseDispatcher interface {
+	RegisterHandler(protocol.NetworkMessageType, IMessageHandler)
+}
+
 type ResponseDispatcherFactory struct {
 	writer *kafka.Writer
 }
@@ -22,26 +30,55 @@ func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFacto
 	}
 }
 
-func (fact *ResponseDispatcherFactory) NewDispatcher(account, nodeID string) *ResponseDispatcher {
+func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message, account, nodeID string) *ResponseDispatcher {
+
 	log.Println("Creating a new response dispatcher")
 	return &ResponseDispatcher{
-		account: account,
-		nodeID:  nodeID,
-		writer:  fact.writer,
+		account:  account,
+		nodeID:   nodeID,
+		writer:   fact.writer,
+		recv:     recv,
+		handlers: make(map[protocol.NetworkMessageType]IMessageHandler),
 	}
 }
 
 type ResponseDispatcher struct {
+	account  string
+	nodeID   string
+	writer   *kafka.Writer
+	recv     chan protocol.Message
+	handlers map[protocol.NetworkMessageType]IMessageHandler
+}
+
+func (rd *ResponseDispatcher) RegisterHandler(msgType protocol.NetworkMessageType, handler IMessageHandler) {
+	rd.handlers[msgType] = handler
+}
+
+func (rd *ResponseDispatcher) Run() {
+	for msg := range rd.recv {
+		log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)
+
+		handler, exists := rd.handlers[msg.Type()]
+		if exists == false {
+			log.Printf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
+			continue
+		}
+
+		handler.HandleMessage(msg)
+	}
+}
+
+type PayloadHandler struct {
 	account string
 	nodeID  string
 	writer  *kafka.Writer
 }
 
-func (rd *ResponseDispatcher) GetKey() string {
+func (rd *PayloadHandler) GetKey() string {
 	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
 }
 
-func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.Message, receptorID string) error {
+func (rd PayloadHandler) HandleMessage( /*ctx context.Context,*/ m protocol.Message /*, receptorID string*/) error {
 	type ResponseMessage struct {
 		Account      string      `json:"account"`
 		Sender       string      `json:"sender"`
@@ -52,6 +89,9 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 		InResponseTo string      `json:"in_response_to"`
 		Serial       int         `json:"serial"`
 	}
+
+	// FIXME:
+	ctx := context.Background()
 
 	if m.Type() != protocol.PayloadMessageType {
 		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
@@ -64,11 +104,14 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 		return nil
 	}
 
-	// verify this message was meant for this receptor/peer (probably want a uuid here)
-	if payloadMessage.RoutingInfo.Recipient != receptorID {
-		log.Println("Recieved message that was not intended for this node")
-		return nil
-	}
+	// FIXME:
+	/*
+		// verify this message was meant for this receptor/peer (probably want a uuid here)
+		if payloadMessage.RoutingInfo.Recipient != receptorID {
+			log.Println("Recieved message that was not intended for this node")
+			return nil
+		}
+	*/
 
 	responseMessage := ResponseMessage{
 		Account:      rd.account,
@@ -94,6 +137,26 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
 		})
+
+	return nil
+}
+
+type RouteTableHandler struct {
+}
+
+func (rd RouteTableHandler) HandleMessage(m protocol.Message) error {
+	if m.Type() != protocol.RouteTableMessageType {
+		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
+		return nil
+	}
+
+	routingTableMessage, ok := m.(*protocol.RouteTableMessage)
+	if !ok {
+		log.Println("Unable to convert message into RouteTableMessage")
+		return nil
+	}
+
+	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
 
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
@@ -62,9 +63,24 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			account: rhIdentity.Identity.AccountNumber,
 			socket:  socket,
 			send:    make(chan controller.Message, messageBufferSize),
+			recv:    make(chan protocol.Message, messageBufferSize),
 		}
 
-		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
+		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
+
+		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv, client.account, client.node_id)
+
+		//receptor := controller.Receptor{}
+
+		// FIXME: Register the concrete event handlers with the responseDispatcher
+		payloadHandler := controller.PayloadHandler{ /*receptor*/ }
+		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
+
+		routeTableHandler := controller.RouteTableHandler{ /*receptor*/ }
+		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
+
+		go responseDispatcher.Run()
+
 		// messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
