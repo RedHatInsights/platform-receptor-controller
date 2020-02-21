@@ -172,17 +172,18 @@ func (rd RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Messag
 
 type HandshakeHandler struct {
 	ControlChannel chan protocol.Message
+	ErrorChannel   chan error
 }
 
-func (hi HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 	if m.Type() != protocol.HiMessageType {
-		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
+		hh.ErrorChannel <- fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m)
 		return nil
 	}
 
 	hiMessage, ok := m.(*protocol.HiMessage)
 	if !ok {
-		log.Println("Unable to convert message into HiMessage")
+		hh.ErrorChannel <- fmt.Errorf("Unable to convert message into HiMessage")
 		return nil
 	}
 
@@ -191,7 +192,7 @@ func (hi HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	// FIXME: pass the read node name over to the client
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
 
-	hi.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
+	hh.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
 
 	return nil
 }

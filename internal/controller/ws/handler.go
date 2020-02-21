@@ -64,6 +64,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			socket:         socket,
 			send:           make(chan controller.Message, messageBufferSize),
 			controlChannel: make(chan protocol.Message, messageBufferSize),
+			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
 		}
 
@@ -80,7 +81,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// FIXME: Register the concrete event handlers with the responseDispatcher
 
-		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel /*receptor*/}
+		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel,
+			ErrorChannel: client.errorChannel,
+			/*receptor*/}
 		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
 		routeTableHandler := controller.RouteTableHandler{ /*receptor*/ }
