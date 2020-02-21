@@ -80,8 +80,8 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// FIXME: Register the concrete event handlers with the responseDispatcher
 
-		hiHandler := controller.HiHandler{ControlChannel: client.controlChannel /*receptor*/}
-		responseDispatcher.RegisterHandler(protocol.HiMessageType, hiHandler)
+		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel /*receptor*/}
+		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
 		routeTableHandler := controller.RouteTableHandler{ /*receptor*/ }
 		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)

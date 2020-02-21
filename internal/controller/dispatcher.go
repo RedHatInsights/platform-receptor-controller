@@ -13,7 +13,7 @@ import (
 )
 
 type IMessageHandler interface {
-	HandleMessage(protocol.Message) error // FIXME: don't need error??  need context??
+	HandleMessage(context.Context, protocol.Message) error // FIXME: don't need error??  need context??
 }
 
 type IResponseDispatcher interface {
@@ -74,7 +74,7 @@ func (rd *ResponseDispatcher) Run(ctx context.Context) {
 				continue
 			}
 
-			handler.HandleMessage(msg)
+			handler.HandleMessage(ctx, msg)
 		}
 	}
 
@@ -90,7 +90,7 @@ func (rd *PayloadHandler) GetKey() string {
 	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
 }
 
-func (rd PayloadHandler) HandleMessage( /*ctx context.Context,*/ m protocol.Message /*, receptorID string*/) error {
+func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /*, receptorID string*/) error {
 	type ResponseMessage struct {
 		Account      string      `json:"account"`
 		Sender       string      `json:"sender"`
@@ -101,9 +101,6 @@ func (rd PayloadHandler) HandleMessage( /*ctx context.Context,*/ m protocol.Mess
 		InResponseTo string      `json:"in_response_to"`
 		Serial       int         `json:"serial"`
 	}
-
-	// FIXME:
-	ctx := context.Background()
 
 	if m.Type() != protocol.PayloadMessageType {
 		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
@@ -156,7 +153,7 @@ func (rd PayloadHandler) HandleMessage( /*ctx context.Context,*/ m protocol.Mess
 type RouteTableHandler struct {
 }
 
-func (rd RouteTableHandler) HandleMessage(m protocol.Message) error {
+func (rd RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 	if m.Type() != protocol.RouteTableMessageType {
 		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
 		return nil
@@ -173,11 +170,11 @@ func (rd RouteTableHandler) HandleMessage(m protocol.Message) error {
 	return nil
 }
 
-type HiHandler struct {
+type HandshakeHandler struct {
 	ControlChannel chan protocol.Message
 }
 
-func (hi HiHandler) HandleMessage(m protocol.Message) error {
+func (hi HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 	if m.Type() != protocol.HiMessageType {
 		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
 		return nil
@@ -191,6 +188,7 @@ func (hi HiHandler) HandleMessage(m protocol.Message) error {
 
 	log.Printf("**** got hi message!!  %+v", hiMessage)
 
+	// FIXME: pass the read node name over to the client
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
 
 	hi.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
