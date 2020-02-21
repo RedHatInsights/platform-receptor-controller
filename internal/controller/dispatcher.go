@@ -161,6 +161,31 @@ func (rd RouteTableHandler) HandleMessage(m protocol.Message) error {
 	return nil
 }
 
+type HiHandler struct {
+	ControlChannel chan protocol.Message
+}
+
+func (hi HiHandler) HandleMessage(m protocol.Message) error {
+	if m.Type() != protocol.HiMessageType {
+		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
+		return nil
+	}
+
+	hiMessage, ok := m.(*protocol.HiMessage)
+	if !ok {
+		log.Println("Unable to convert message into HiMessage")
+		return nil
+	}
+
+	log.Printf("**** got hi message!!  %+v", hiMessage)
+
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
+
+	hi.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
+
+	return nil
+}
+
 type MessageDispatcherFactory struct {
 	readerConfig *queue.ConsumerConfig
 }

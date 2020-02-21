@@ -59,11 +59,12 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		log.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
-			config:  rc.config,
-			account: rhIdentity.Identity.AccountNumber,
-			socket:  socket,
-			send:    make(chan controller.Message, messageBufferSize),
-			recv:    make(chan protocol.Message, messageBufferSize),
+			config:         rc.config,
+			account:        rhIdentity.Identity.AccountNumber,
+			socket:         socket,
+			send:           make(chan controller.Message, messageBufferSize),
+			controlChannel: make(chan protocol.Message, messageBufferSize),
+			recv:           make(chan protocol.Message, messageBufferSize),
 		}
 
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
@@ -73,11 +74,15 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		//receptor := controller.Receptor{}
 
 		// FIXME: Register the concrete event handlers with the responseDispatcher
-		payloadHandler := controller.PayloadHandler{ /*receptor*/ }
-		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
+
+		hiHandler := controller.HiHandler{ControlChannel: client.controlChannel /*receptor*/}
+		responseDispatcher.RegisterHandler(protocol.HiMessageType, hiHandler)
 
 		routeTableHandler := controller.RouteTableHandler{ /*receptor*/ }
 		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
+
+		payloadHandler := controller.PayloadHandler{ /*receptor*/ }
+		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
 		go responseDispatcher.Run()
 
@@ -92,13 +97,15 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		defer socket.Close()
 
-		peerID, err := client.performHandshake()
-		if err != nil {
-			log.Println("Error during handshake:", err)
-			return
-		}
+		/*
+			peerID, err := client.performHandshake()
+			if err != nil {
+				log.Println("Error during handshake:", err)
+				return
+			}
+		*/
 
-		client.node_id = peerID
+		client.node_id = "peerID"
 
 		rc.connectionMgr.Register(client.account, client.node_id, client)
 
