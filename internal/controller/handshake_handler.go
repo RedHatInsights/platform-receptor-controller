@@ -36,7 +36,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
 	// FIXME:  this shouldn't be required
-	//	hh.Receptor.HandshakeComplete = true
+	hh.Receptor.HandshakeComplete = true
 
 	return nil
 }
