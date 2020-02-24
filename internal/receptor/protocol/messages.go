@@ -293,6 +293,7 @@ type InnerEnvelope struct {
 	Directive    string      `json:"directive"`
 	InResponseTo string      `json:"in_response_to"`
 	Code         int         `json:"code"`
+	Serial       int         `json:"serial"`
 }
 
 type Time struct {

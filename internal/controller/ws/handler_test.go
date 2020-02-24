@@ -135,7 +135,6 @@ var _ = Describe("WsController", func() {
 	Describe("Connecting to the receptor controller and sending a routing message", func() {
 		Context("With an open connection and successful handshake", func() {
 			It("Should send a routing message and close the connection gracefully", func() {
-
 				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
 				Expect(err).NotTo(HaveOccurred())
 				defer c.Close()
@@ -162,7 +161,7 @@ var _ = Describe("WsController", func() {
 
 				log.Println("Sent routing message to the gateway...")
 
-				// FIXME: The gateway currently does not respond to a routing message. This will change in th future.
+				// FIXME: The gateway currently does not respond to a routing message. This will change in the future.
 			})
 		})
 	})

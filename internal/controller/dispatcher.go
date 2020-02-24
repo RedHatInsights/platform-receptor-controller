@@ -43,12 +43,14 @@ func (rd *ResponseDispatcher) GetKey() string {
 
 func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.Message, receptorID string) error {
 	type ResponseMessage struct {
-		Account     string      `json:"account"`
-		Sender      string      `json:"sender"`
-		MessageType string      `json:"message_type"`
-		MessageID   string      `json:"message_id"`
-		Payload     interface{} `json:"payload"`
-		Code        int         `json:"code"`
+		Account      string      `json:"account"`
+		Sender       string      `json:"sender"`
+		MessageType  string      `json:"message_type"`
+		MessageID    string      `json:"message_id"`
+		Payload      interface{} `json:"payload"`
+		Code         int         `json:"code"`
+		InResponseTo string      `json:"in_response_to"`
+		Serial       int         `json:"serial"`
 	}
 
 	if m.Type() != protocol.PayloadMessageType {
@@ -68,15 +70,15 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 		return nil
 	}
 
-	messageID := payloadMessage.Data.InResponseTo
-
 	responseMessage := ResponseMessage{
-		Account:     rd.account,
-		Sender:      payloadMessage.RoutingInfo.Sender,
-		MessageID:   messageID,
-		MessageType: payloadMessage.Data.MessageType,
-		Payload:     payloadMessage.Data.RawPayload,
-		Code:        payloadMessage.Data.Code,
+		Account:      rd.account,
+		Sender:       payloadMessage.RoutingInfo.Sender,
+		MessageID:    payloadMessage.Data.MessageID,
+		MessageType:  payloadMessage.Data.MessageType,
+		Payload:      payloadMessage.Data.RawPayload,
+		Code:         payloadMessage.Data.Code,
+		InResponseTo: payloadMessage.Data.InResponseTo,
+		Serial:       payloadMessage.Data.Serial,
 	}
 
 	log.Printf("Dispatching response:%+v", responseMessage)
@@ -89,7 +91,7 @@ func (rd *ResponseDispatcher) DispatchResponse(ctx context.Context, m protocol.M
 
 	rd.writer.WriteMessages(ctx,
 		kafka.Message{
-			Key:   []byte(messageID),
+			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
 		})
 
