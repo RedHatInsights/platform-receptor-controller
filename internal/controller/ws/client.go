@@ -114,7 +114,7 @@ func (c *rcClient) write(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case err := <-c.errorChannel:
-			log.Println("Websocket writer - shutting down ... got an error:", err)
+			log.Println("Websocket writer - got an error - shutting down:", err)
 			return
 		case msg := <-c.controlChannel:
 			log.Println("Websocket writer needs to send msg:", msg)

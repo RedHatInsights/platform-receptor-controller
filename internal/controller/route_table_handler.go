@@ -2,22 +2,24 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 )
 
 type RouteTableHandler struct {
-	ReceptorSM *ReceptorStateMachine
+	ControlChannel chan protocol.Message
+	ErrorChannel   chan error
+	Receptor       *Receptor
 }
 
 func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 
-	log.Printf("inside RouteTableHandler...statemachine:%+v", rth.ReceptorSM)
+	log.Printf("inside RouteTableHandler...receptor:%+v", rth.Receptor)
 
-	if rth.ReceptorSM.handshakeComplete == false {
-		log.Println("Received ROUTE message before handshake was complete")
-		// FIXME:  send an error on the ErrorChannel and shutdown connection?!?!
+	if rth.Receptor.HandshakeComplete == false {
+		rth.ErrorChannel <- fmt.Errorf("Received ROUTE message before handshake was complete")
 		return nil
 	}
 
@@ -34,7 +36,9 @@ func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Messa
 
 	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
 
-	rth.ReceptorSM.routingTableReceived = true
+	rth.Receptor.UpdateRoutingTable(
+		fmt.Sprintf("%s", routingTableMessage.Edges),
+		fmt.Sprintf("%s", routingTableMessage.Seen))
 
 	return nil
 }

@@ -11,17 +11,20 @@ import (
 )
 
 type PayloadHandler struct {
-	Account    string
-	NodeID     string
-	Writer     *kafka.Writer
-	ReceptorSM *ReceptorStateMachine
+	Account string
+	NodeID  string
+	Writer  *kafka.Writer
+
+	ControlChannel chan protocol.Message
+	ErrorChannel   chan error
+	Receptor       *Receptor
 }
 
-func (rd *PayloadHandler) GetKey() string {
-	return fmt.Sprintf("%s:%s", rd.Account, rd.NodeID)
+func (ph *PayloadHandler) GetKey() string {
+	return fmt.Sprintf("%s:%s", ph.Account, ph.NodeID)
 }
 
-func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /*, receptorID string*/) error {
+func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 	type ResponseMessage struct {
 		Account      string      `json:"account"`
 		Sender       string      `json:"sender"`
@@ -44,17 +47,14 @@ func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /
 		return nil
 	}
 
-	// FIXME:
-	/*
-		// verify this message was meant for this receptor/peer (probably want a uuid here)
-		if payloadMessage.RoutingInfo.Recipient != receptorID {
-			log.Println("Recieved message that was not intended for this node")
-			return nil
-		}
-	*/
+	// verify this message was meant for this receptor/peer (probably want a uuid here)
+	if payloadMessage.RoutingInfo.Recipient != ph.Receptor.NodeID {
+		log.Println("Recieved message that was not intended for this node")
+		return nil
+	}
 
 	responseMessage := ResponseMessage{
-		Account:      rd.Account,
+		Account:      ph.Account,
 		Sender:       payloadMessage.RoutingInfo.Sender,
 		MessageID:    payloadMessage.Data.MessageID,
 		MessageType:  payloadMessage.Data.MessageType,
@@ -72,7 +72,7 @@ func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /
 		return nil
 	}
 
-	rd.Writer.WriteMessages(ctx,
+	ph.Writer.WriteMessages(ctx,
 		kafka.Message{
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,

@@ -77,18 +77,26 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv, client.account, client.node_id)
 
-		receptorStateMachine := controller.ReceptorStateMachine{}
+		receptor := controller.Receptor{NodeID: rc.config.ReceptorControllerNodeId}
 
 		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel,
 			ErrorChannel: client.errorChannel,
-			ReceptorSM:   &receptorStateMachine,
+			Receptor:     &receptor,
 		}
 		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
-		routeTableHandler := controller.RouteTableHandler{&receptorStateMachine}
+		routeTableHandler := controller.RouteTableHandler{Receptor: &receptor,
+			ControlChannel: client.controlChannel,
+			ErrorChannel:   client.errorChannel,
+		}
+
 		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
 
-		payloadHandler := controller.PayloadHandler{ReceptorSM: &receptorStateMachine}
+		payloadHandler := controller.PayloadHandler{Account: rhIdentity.Identity.AccountNumber,
+			ControlChannel: client.controlChannel,
+			ErrorChannel:   client.errorChannel,
+			Receptor:       &receptor,
+		}
 		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
 		go responseDispatcher.Run(ctx)

@@ -1,21 +1,36 @@
 package controller
 
-type MeshConnection struct {
-	peerNodeID string
-}
+import (
+	"log"
+)
 
-type ReceptorStateMachine struct {
-	handshakeComplete    bool
-	routingTableReceived bool
+type Receptor struct {
+	HandshakeComplete bool
 
-	account    string
-	peerNodeID string
+	Account    string
+	NodeID     string
+	PeerNodeID string
 
-	connections map[string]MeshConnection
+	Metadata interface{}
 
-	capabilities interface{}
 	/*
 	   edges
 	   seen
 	*/
+}
+
+func (r *Receptor) RegisterConnection(peerNodeID string, metadata interface{}) error {
+	log.Printf("Registering a connection to node %s", peerNodeID)
+
+	r.PeerNodeID = peerNodeID
+	r.Metadata = metadata
+
+	return nil
+}
+
+func (r *Receptor) UpdateRoutingTable(edges string, seen string) error {
+	log.Println("edges:", edges)
+	log.Println("seen:", seen)
+
+	return nil
 }

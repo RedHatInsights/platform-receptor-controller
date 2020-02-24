@@ -11,7 +11,7 @@ import (
 type HandshakeHandler struct {
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
-	ReceptorSM     *ReceptorStateMachine
+	Receptor       *Receptor
 }
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
@@ -28,29 +28,15 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	log.Printf("**** got hi message!!  %+v", hiMessage)
 
-	// FIXME: pass the read node name over to the client
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.Receptor.NodeID}
 
 	// FIXME:  this can block...add a timeout and a select here???
 	hh.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
 
-	hh.ReceptorSM.handshakeComplete = true
-	hh.ReceptorSM.peerNodeID = hiMessage.ID
+	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
-	// FIXME: Move the capabilities parsing into the protocol!!!
-	capMaps, ok := hiMessage.Metadata.(map[string]interface{})
-	if ok != true {
-		log.Println("Unable to parse capabilities")
-		// FIXME:  just ignore that there are not any
-		return nil
-	}
-
-	for name, value := range capMaps {
-		if name == "capabilities" {
-			log.Printf("*** %s:%s", name, value)
-			hh.ReceptorSM.capabilities = value
-		}
-	}
+	// FIXME:  this shouldn't be required
+	//	hh.Receptor.HandshakeComplete = true
 
 	return nil
 }
