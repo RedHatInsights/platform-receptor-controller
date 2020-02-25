@@ -63,9 +63,15 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	}
 	hh.Dispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
-	// Start the message dispatcher
-	messageDispatcher := hh.MessageDispatcherFactory.NewDispatcher(hh.AccountNumber, hiMessage.ID)
-	messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
+	/**** FIXME:
+	         1) I think we need to build a Receptor service object that gets created here.
+	            The MessageDispatcher likely needs to be created by the Receptor service object
+	         2) The MessageDispatcher needs to be disabled until we split the service apart.
+
+		// Start the message dispatcher
+		messageDispatcher := hh.MessageDispatcherFactory.NewDispatcher(hh.AccountNumber, hiMessage.ID)
+		messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
+	*/
 
 	return nil
 }
