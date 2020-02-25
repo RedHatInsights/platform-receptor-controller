@@ -2,8 +2,7 @@ package ws
 
 import (
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -16,31 +15,31 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/posener/wstest"
 )
 
-func readSocket(c *websocket.Conn, mt protocol.NetworkMessageType) protocol.Message {
-	mtype, r, _ := c.NextReader()
+func readSocket(c *websocket.Conn, mt protocol.NetworkMessageType) (protocol.Message, error) {
+	mtype, r, err := c.NextReader()
 	Expect(mtype).Should(Equal(websocket.BinaryMessage))
 
-	fmt.Println("TestClient reading response from receptor-controller")
-	m, _ := protocol.ReadMessage(r)
+	log.Println("TestClient reading response from receptor-controller")
+	m, err := protocol.ReadMessage(r)
 	Expect(m.Type()).Should(Equal(mt))
 
-	return m
+	return m, err
 }
 
-func writeSocket(c *websocket.Conn, message protocol.Message) {
+func writeSocket(c *websocket.Conn, message protocol.Message) error {
 	w, err := c.NextWriter(websocket.BinaryMessage)
 	Expect(err).NotTo(HaveOccurred())
 
-	fmt.Println("TestClient writing to receptor-controller")
+	log.Println("TestClient writing to receptor-controller")
 	err = protocol.WriteMessage(w, message)
 	Expect(err).NotTo(HaveOccurred())
 	w.Close()
+	return err
 }
 
 func leaks() error {
@@ -63,9 +62,10 @@ var _ = Describe("WsController", func() {
 		wsMux = mux.NewRouter()
 		config = GetWebSocketConfig()
 		cm = controller.NewConnectionManager()
+		kc := queue.GetConsumer()
+		md := controller.NewMessageDispatcherFactory(kc)
 		kw = queue.StartProducer(queue.GetProducer())
 		rd := controller.NewResponseDispatcherFactory(kw)
-		md := controller.NewMessageDispatcherFactory(queue.GetConsumer())
 		rc = NewReceptorController(config, cm, wsMux, rd, md)
 		rc.Routes()
 
@@ -78,7 +78,7 @@ var _ = Describe("WsController", func() {
 
 	AfterEach(func() {
 		kw.Close()
-		fmt.Println("Checking for leaky goroutines...")
+		log.Println("Checking for leaky goroutines...")
 		Eventually(leaks).ShouldNot(HaveOccurred())
 	})
 
@@ -126,8 +126,42 @@ var _ = Describe("WsController", func() {
 				hiMessage := protocol.HiMessage{Command: "HI", ID: "TestClient"}
 				writeSocket(c, &hiMessage)
 
-				m := readSocket(c, 1)
+				m, _ := readSocket(c, 1)
 				Expect(m.Type()).To(Equal(protocol.HiMessageType))
+			})
+		})
+	})
+
+	Describe("Connecting to the receptor controller and sending a routing message", func() {
+		Context("With an open connection and successful handshake", func() {
+			It("Should send a routing message and close the connection gracefully", func() {
+				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+
+				nodeID := "TestClient"
+
+				handshakeMessage := protocol.HiMessage{Command: "HI", ID: nodeID}
+				writeSocket(c, &handshakeMessage)
+
+				handshakeResponse, _ := readSocket(c, 1)
+				log.Println("Handshake response: ", handshakeResponse)
+
+				seen := []string{"test-node-a", "test-node-b"}
+				edges := [][]interface{}{{"node-a", "node-b", 1}, {"3f4b831d-3c50-4230-925f-7cfc7f00bf8b", "node-a", 1}, {"node-a", "node-golang", 1}}
+
+				routingMessage := protocol.RouteTableMessage{
+					Command: "ROUTE",
+					ID:      nodeID,
+					Edges:   edges,
+					Seen:    seen,
+				}
+
+				writeSocket(c, &routingMessage)
+
+				log.Println("Sent routing message to the gateway...")
+
+				// FIXME: The gateway currently does not respond to a routing message. This will change in the future.
 			})
 		})
 	})
@@ -145,52 +179,6 @@ var _ = Describe("WsController", func() {
 				c.SetReadDeadline(time.Now().Add(2 * time.Second))
 				_, _, err = c.NextReader()
 				Expect(err).Should(MatchError(&websocket.CloseError{Code: 1006, Text: "unexpected EOF"}))
-			})
-		})
-	})
-
-	Describe("Connecting to the receptor controller and sending work", func() {
-		Context("With an open connection", func() {
-			It("Should send a ping directive", func() {
-
-				Skip("Skipping for now.  This test is broken due to a race condition.")
-
-				c, _, err := d.Dial("ws://localhost:8080/wss/receptor-controller/gateway", header)
-				Expect(err).NotTo(HaveOccurred())
-				defer c.Close()
-
-				nodeID := "TestClient"
-
-				hiMessage := protocol.HiMessage{Command: "HI", ID: nodeID}
-				writeSocket(c, &hiMessage)
-
-				_ = readSocket(c, 1)
-
-				// FIXME: The test fails here.  The issue is that the go routine that handles the
-				// web socket performs the handshake...which sends a HiMessage back to the client
-				// BEFORE the connection is registered with the connection manager.  This means that
-				// if the timing is right and this client code runs as a different go routine, then
-				// client is nil below.
-				client := rc.connectionMgr.GetConnection("540155", nodeID)
-
-				messageID, err := uuid.NewRandom()
-				Expect(err).NotTo(HaveOccurred())
-
-				workRequest := controller.Message{MessageID: messageID,
-					Recipient: "TestClient",
-					RouteList: []string{"test-b", "test-a"},
-					Payload:   "hello",
-					Directive: "receptor:ping"}
-
-				client.SendMessage(workRequest)
-
-				m := readSocket(c, 4)      // read response from SendMessage request and verify it is a PayloadMessage
-				jm, err := json.Marshal(m) // m's marshal/unmarshal functions are private and can't be used here
-
-				// FIXME: Need a better way to verify the message
-				Expect(string(jm)).To(ContainSubstring("\"sender\":\"node-cloud-receptor-controller\""))
-				Expect(string(jm)).To(ContainSubstring("\"recipient\":\"TestClient\""))
-				Expect(string(jm)).To(ContainSubstring("\"directive\":\"receptor:ping\""))
 			})
 		})
 	})
