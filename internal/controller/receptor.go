@@ -5,8 +5,6 @@ import (
 )
 
 type Receptor struct {
-	HandshakeComplete bool
-
 	Account    string
 	NodeID     string
 	PeerNodeID string

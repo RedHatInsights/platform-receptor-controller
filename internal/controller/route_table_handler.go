@@ -18,11 +18,6 @@ func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Messa
 
 	log.Printf("inside RouteTableHandler...receptor:%+v", rth.Receptor)
 
-	if rth.Receptor.HandshakeComplete == false {
-		rth.ErrorChannel <- fmt.Errorf("Received ROUTE message before handshake was complete")
-		return nil
-	}
-
 	if m.Type() != protocol.RouteTableMessageType {
 		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
 		return nil

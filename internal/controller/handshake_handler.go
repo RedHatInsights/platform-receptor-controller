@@ -47,9 +47,6 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	}
 	hh.Dispatcher.RegisterHandler(protocol.DisconnectMessageType, disconnectHandler)
 
-	// FIXME:  this shouldn't be required
-	hh.Receptor.HandshakeComplete = true
-
 	routeTableHandler := RouteTableHandler{
 		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
 		ControlChannel: hh.ControlChannel,
