@@ -2,10 +2,12 @@ package controller
 
 import (
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Receptor interface {
-	SendMessage(Message)
+	SendMessage(string, []string, interface{}, string) (*uuid.UUID, error)
 	Close()
 	DisconnectReceptorNetwork()
 }

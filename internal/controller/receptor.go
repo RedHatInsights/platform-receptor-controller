@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
+	"github.com/google/uuid"
 )
 
 type ReceptorService struct {
@@ -40,8 +42,23 @@ func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
 	return nil
 }
 
-func (r *ReceptorService) SendMessage(msg Message) {
+func (r *ReceptorService) SendMessage(recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+
+	jobID, err := uuid.NewRandom()
+	if err != nil {
+		log.Println("Unable to generate UUID for routing the job...cannot proceed")
+		return nil, err
+	}
+
+	msg := Message{MessageID: jobID,
+		Recipient: recipient,
+		RouteList: route,
+		Payload:   payload,
+		Directive: directive}
+
 	r.SendChannel <- msg
+
+	return &jobID, nil
 }
 
 func (r *ReceptorService) Close() {
