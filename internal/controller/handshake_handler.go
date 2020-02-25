@@ -9,9 +9,12 @@ import (
 )
 
 type HandshakeHandler struct {
+	AccountNumber  string
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
 	Receptor       *Receptor
+	Dispatcher     IResponseDispatcher
+	ConnectionMgr  *ConnectionManager
 }
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
@@ -35,8 +38,31 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
+	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, nil) // FIXME:
+
+	disconnectHandler := DisconnectHandler{
+		AccountNumber: hh.AccountNumber,
+		NodeID:        hiMessage.ID,
+		ConnectionMgr: hh.ConnectionMgr,
+	}
+	hh.Dispatcher.RegisterHandler(protocol.DisconnectMessageType, disconnectHandler)
+
 	// FIXME:  this shouldn't be required
 	hh.Receptor.HandshakeComplete = true
+
+	routeTableHandler := RouteTableHandler{
+		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
+		ControlChannel: hh.ControlChannel,
+		ErrorChannel:   hh.ErrorChannel,
+	}
+	hh.Dispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
+
+	payloadHandler := PayloadHandler{AccountNumber: hh.AccountNumber,
+		ControlChannel: hh.ControlChannel,
+		ErrorChannel:   hh.ErrorChannel,
+		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
+	}
+	hh.Dispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
 	return nil
 }

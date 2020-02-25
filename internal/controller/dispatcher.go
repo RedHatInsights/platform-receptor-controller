@@ -34,8 +34,6 @@ func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message,
 
 	log.Println("Creating a new response dispatcher")
 	return &ResponseDispatcher{
-		account:  account,
-		nodeID:   nodeID,
 		writer:   fact.writer,
 		recv:     recv,
 		handlers: make(map[protocol.NetworkMessageType]IMessageHandler),
@@ -43,8 +41,6 @@ func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message,
 }
 
 type ResponseDispatcher struct {
-	account  string
-	nodeID   string
 	writer   *kafka.Writer
 	recv     chan protocol.Message
 	handlers map[protocol.NetworkMessageType]IMessageHandler

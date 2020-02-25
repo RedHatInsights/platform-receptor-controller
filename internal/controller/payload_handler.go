@@ -11,9 +11,9 @@ import (
 )
 
 type PayloadHandler struct {
-	Account string
-	NodeID  string
-	Writer  *kafka.Writer
+	AccountNumber string
+	NodeID        string
+	Writer        *kafka.Writer
 
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
@@ -21,19 +21,19 @@ type PayloadHandler struct {
 }
 
 func (ph *PayloadHandler) GetKey() string {
-	return fmt.Sprintf("%s:%s", ph.Account, ph.NodeID)
+	return fmt.Sprintf("%s:%s", ph.AccountNumber, ph.NodeID)
 }
 
 func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
 	type ResponseMessage struct {
-		Account      string      `json:"account"`
-		Sender       string      `json:"sender"`
-		MessageType  string      `json:"message_type"`
-		MessageID    string      `json:"message_id"`
-		Payload      interface{} `json:"payload"`
-		Code         int         `json:"code"`
-		InResponseTo string      `json:"in_response_to"`
-		Serial       int         `json:"serial"`
+		AccountNumber string      `json:"account"`
+		Sender        string      `json:"sender"`
+		MessageType   string      `json:"message_type"`
+		MessageID     string      `json:"message_id"`
+		Payload       interface{} `json:"payload"`
+		Code          int         `json:"code"`
+		InResponseTo  string      `json:"in_response_to"`
+		Serial        int         `json:"serial"`
 	}
 
 	if m.Type() != protocol.PayloadMessageType {
@@ -54,14 +54,14 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 	}
 
 	responseMessage := ResponseMessage{
-		Account:      ph.Account,
-		Sender:       payloadMessage.RoutingInfo.Sender,
-		MessageID:    payloadMessage.Data.MessageID,
-		MessageType:  payloadMessage.Data.MessageType,
-		Payload:      payloadMessage.Data.RawPayload,
-		Code:         payloadMessage.Data.Code,
-		InResponseTo: payloadMessage.Data.InResponseTo,
-		Serial:       payloadMessage.Data.Serial,
+		AccountNumber: ph.AccountNumber,
+		Sender:        payloadMessage.RoutingInfo.Sender,
+		MessageID:     payloadMessage.Data.MessageID,
+		MessageType:   payloadMessage.Data.MessageType,
+		Payload:       payloadMessage.Data.RawPayload,
+		Code:          payloadMessage.Data.Code,
+		InResponseTo:  payloadMessage.Data.InResponseTo,
+		Serial:        payloadMessage.Data.Serial,
 	}
 
 	log.Printf("Dispatching response:%+v", responseMessage)

@@ -60,7 +60,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		client := &rcClient{
 			config:         rc.config,
-			account:        rhIdentity.Identity.AccountNumber,
 			socket:         socket,
 			send:           make(chan controller.Message, messageBufferSize),
 			controlChannel: make(chan protocol.Message, messageBufferSize),
@@ -80,24 +79,13 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		receptor := controller.Receptor{NodeID: rc.config.ReceptorControllerNodeId}
 
 		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel,
-			ErrorChannel: client.errorChannel,
-			Receptor:     &receptor,
+			ErrorChannel:  client.errorChannel,
+			Receptor:      &receptor,
+			Dispatcher:    responseDispatcher,
+			AccountNumber: rhIdentity.Identity.AccountNumber,
+			ConnectionMgr: rc.connectionMgr,
 		}
 		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
-
-		routeTableHandler := controller.RouteTableHandler{Receptor: &receptor,
-			ControlChannel: client.controlChannel,
-			ErrorChannel:   client.errorChannel,
-		}
-
-		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
-
-		payloadHandler := controller.PayloadHandler{Account: rhIdentity.Identity.AccountNumber,
-			ControlChannel: client.controlChannel,
-			ErrorChannel:   client.errorChannel,
-			Receptor:       &receptor,
-		}
-		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
 		go responseDispatcher.Run(ctx)
 
@@ -106,16 +94,6 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 
 		defer socket.Close()
-
-		client.node_id = "peerID"
-
-		rc.connectionMgr.Register(client.account, client.node_id, client)
-
-		// once this go routine exits...notify the connection manager of the clients departure
-		defer func() {
-			rc.connectionMgr.Unregister(client.account, client.node_id)
-			log.Println("Websocket server - account unregistered from connection manager")
-		}()
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
