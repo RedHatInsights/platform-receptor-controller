@@ -9,12 +9,14 @@ import (
 )
 
 type HandshakeHandler struct {
-	AccountNumber  string
-	ControlChannel chan protocol.Message
-	ErrorChannel   chan error
-	Receptor       *Receptor
-	Dispatcher     IResponseDispatcher
-	ConnectionMgr  *ConnectionManager
+	AccountNumber            string
+	Send                     chan<- Message
+	ControlChannel           chan protocol.Message
+	ErrorChannel             chan error
+	Receptor                 *Receptor
+	Dispatcher               IResponseDispatcher
+	ConnectionMgr            *ConnectionManager
+	MessageDispatcherFactory *MessageDispatcherFactory
 }
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
@@ -60,6 +62,10 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
 	}
 	hh.Dispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
+
+	// Start the message dispatcher
+	messageDispatcher := hh.MessageDispatcherFactory.NewDispatcher(hh.AccountNumber, hiMessage.ID)
+	messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
 
 	return nil
 }

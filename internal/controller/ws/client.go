@@ -12,9 +12,6 @@ import (
 )
 
 type rcClient struct {
-	account string
-
-	node_id string
 
 	// socket is the web socket for this client.
 	socket *websocket.Conn

@@ -74,22 +74,23 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
-		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv, client.account, client.node_id)
+		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv)
 
 		receptor := controller.Receptor{NodeID: rc.config.ReceptorControllerNodeId}
 
-		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel,
-			ErrorChannel:  client.errorChannel,
-			Receptor:      &receptor,
-			Dispatcher:    responseDispatcher,
-			AccountNumber: rhIdentity.Identity.AccountNumber,
-			ConnectionMgr: rc.connectionMgr,
+		handshakeHandler := controller.HandshakeHandler{
+			Send:                     client.send,
+			ControlChannel:           client.controlChannel,
+			ErrorChannel:             client.errorChannel,
+			Receptor:                 &receptor,
+			Dispatcher:               responseDispatcher,
+			AccountNumber:            rhIdentity.Identity.AccountNumber,
+			ConnectionMgr:            rc.connectionMgr,
+			MessageDispatcherFactory: rc.messageDispatcherFactory,
 		}
 		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
 		go responseDispatcher.Run(ctx)
-
-		// messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 

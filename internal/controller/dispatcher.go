@@ -30,7 +30,7 @@ func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFacto
 	}
 }
 
-func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message, account, nodeID string) *ResponseDispatcher {
+func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message) *ResponseDispatcher {
 
 	log.Println("Creating a new response dispatcher")
 	return &ResponseDispatcher{
