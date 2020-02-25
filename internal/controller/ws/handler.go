@@ -76,7 +76,12 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv)
 
-		receptor := controller.ReceptorService{NodeID: rc.config.ReceptorControllerNodeId}
+		receptor := controller.ReceptorService{
+			NodeID:         rc.config.ReceptorControllerNodeId,
+			SendChannel:    client.send,
+			ControlChannel: client.controlChannel,
+			ErrorChannel:   client.errorChannel,
+		}
 
 		handshakeHandler := controller.HandshakeHandler{
 			Send:                     client.send,

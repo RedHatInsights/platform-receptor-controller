@@ -2,6 +2,8 @@ package controller
 
 import (
 	"log"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 )
 
 type ReceptorService struct {
@@ -10,6 +12,11 @@ type ReceptorService struct {
 	PeerNodeID string
 
 	Metadata interface{}
+
+	// FIXME:  Move the channels into a Transport object/struct
+	SendChannel    chan<- Message
+	ControlChannel chan<- protocol.Message
+	ErrorChannel   chan<- error
 
 	/*
 	   edges
@@ -33,7 +40,8 @@ func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
 	return nil
 }
 
-func (r *ReceptorService) SendMessage(Message) {
+func (r *ReceptorService) SendMessage(msg Message) {
+	r.SendChannel <- msg
 }
 
 func (r *ReceptorService) Close() {
