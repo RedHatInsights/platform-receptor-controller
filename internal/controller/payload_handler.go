@@ -17,7 +17,7 @@ type PayloadHandler struct {
 
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
-	Receptor       *Receptor
+	Receptor       *ReceptorService
 }
 
 func (ph *PayloadHandler) GetKey() string {

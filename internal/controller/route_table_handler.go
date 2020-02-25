@@ -11,7 +11,7 @@ import (
 type RouteTableHandler struct {
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
-	Receptor       *Receptor
+	Receptor       *ReceptorService
 }
 
 func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {

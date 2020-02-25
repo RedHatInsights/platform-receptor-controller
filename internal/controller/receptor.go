@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-type Receptor struct {
+type ReceptorService struct {
 	Account    string
 	NodeID     string
 	PeerNodeID string
@@ -17,7 +17,7 @@ type Receptor struct {
 	*/
 }
 
-func (r *Receptor) RegisterConnection(peerNodeID string, metadata interface{}) error {
+func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
 	log.Printf("Registering a connection to node %s", peerNodeID)
 
 	r.PeerNodeID = peerNodeID
@@ -26,9 +26,18 @@ func (r *Receptor) RegisterConnection(peerNodeID string, metadata interface{}) e
 	return nil
 }
 
-func (r *Receptor) UpdateRoutingTable(edges string, seen string) error {
+func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
 	log.Println("edges:", edges)
 	log.Println("seen:", seen)
 
 	return nil
+}
+
+func (r *ReceptorService) SendMessage(Message) {
+}
+
+func (r *ReceptorService) Close() {
+}
+
+func (r *ReceptorService) DisconnectReceptorNetwork() {
 }
