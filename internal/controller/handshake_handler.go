@@ -38,6 +38,9 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	// FIXME:  this can block...add a timeout and a select here???
 	hh.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
 
+	// FIXME:  What if this account number and node id are already registered?
+	//  abort the connection??
+
 	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
 	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, nil) // FIXME:
