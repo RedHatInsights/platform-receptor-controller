@@ -1,22 +1,79 @@
 package api
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/gorilla/mux"
 
 	//	"context"
 	"encoding/json"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/google/uuid"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/go-playground/validator/v10"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	kafka "github.com/segmentio/kafka-go"
 )
+
+type badRequest struct {
+	status int
+	msg    string
+}
+
+func (br *badRequest) Error() string {
+	return fmt.Sprintf("%d: %s", br.status, br.msg)
+}
+
+func decodeJSON(w http.ResponseWriter, req *http.Request, job interface{}) error {
+	req.Body = http.MaxBytesReader(w, req.Body, 1048576)
+
+	dec := json.NewDecoder(req.Body)
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(&job); err != nil {
+		// FIXME: More specific error handling needed
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		if strings.HasPrefix(err.Error(), "json: unknown field") {
+			w.WriteHeader(http.StatusBadRequest)
+			return &badRequest{status: http.StatusBadRequest, msg: "Request body includes unknown fields. Expected fields are account, recipient, payload, and directive"}
+		}
+
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+
+		return &badRequest{status: http.StatusUnprocessableEntity, msg: "Request body includes malformed json"}
+	}
+
+	v := validator.New()
+
+	if err := v.Struct(job); err != nil {
+		for _, e := range err.(validator.ValidationErrors) {
+			log.Println(e)
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+
+		return &badRequest{status: http.StatusBadRequest, msg: "Request body is missing required fields"}
+	}
+
+	if dec.More() {
+		return &badRequest{status: http.StatusBadRequest, msg: "Request body must only contain one json object"}
+	}
+
+	return nil
+}
 
 type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
@@ -41,10 +98,10 @@ func (jr *JobReceiver) Routes() {
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 	type JobRequest struct {
-		Account   string      `json:"account"`
-		Recipient string      `json:"recipient"`
-		Payload   interface{} `json:"payload"`
-		Directive string      `json:"directive"`
+		Account   string      `json:"account" validate:"required"`
+		Recipient string      `json:"recipient" validate:"required"`
+		Payload   interface{} `json:"payload" validate:"required"`
+		Directive string      `json:"directive" validate:"required"`
 	}
 
 	type JobResponse struct {
@@ -57,22 +114,9 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		var jobRequest JobRequest
 
-		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
-
-		if err != nil {
-			panic(err)
-		}
-
-		if err := req.Body.Close(); err != nil {
-			panic(err)
-		}
-
-		if err := json.Unmarshal(body, &jobRequest); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+		if err := decodeJSON(w, req, &jobRequest); err != nil {
+			log.Println(err)
+			return
 		}
 
 		log.Println("jobRequest:", jobRequest)
