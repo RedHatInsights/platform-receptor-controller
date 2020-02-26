@@ -12,7 +12,7 @@ type DisconnectHandler struct {
 	NodeID         string
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
-	Receptor       *Receptor
+	Receptor       *ReceptorService
 	Dispatcher     IResponseDispatcher
 	ConnectionMgr  *ConnectionManager
 }

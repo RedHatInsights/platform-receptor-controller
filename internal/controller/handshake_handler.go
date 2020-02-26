@@ -13,7 +13,7 @@ type HandshakeHandler struct {
 	Send                     chan<- Message
 	ControlChannel           chan protocol.Message
 	ErrorChannel             chan error
-	Receptor                 *Receptor
+	Receptor                 *ReceptorService
 	Dispatcher               IResponseDispatcher
 	ConnectionMgr            *ConnectionManager
 	MessageDispatcherFactory *MessageDispatcherFactory
@@ -43,7 +43,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
-	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, nil) // FIXME:
+	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, hh.Receptor)
 
 	disconnectHandler := DisconnectHandler{
 		AccountNumber: hh.AccountNumber,

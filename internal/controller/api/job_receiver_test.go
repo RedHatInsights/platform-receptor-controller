@@ -12,6 +12,7 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -22,7 +23,9 @@ const (
 type MockClient struct {
 }
 
-func (mc MockClient) SendMessage(w controller.Message) {
+func (mc MockClient) SendMessage(recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+	myUUID, _ := uuid.NewRandom()
+	return &myUUID, nil
 }
 
 func (mc MockClient) Close() {

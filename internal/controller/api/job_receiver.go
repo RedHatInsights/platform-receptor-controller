@@ -10,8 +10,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 
@@ -78,7 +76,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		log.Println("jobRequest:", jobRequest)
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
-		var client controller.Client
+		var client controller.Receptor
 		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
 			// FIXME: the connection to the client was not available
@@ -87,33 +85,24 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			return
 		}
 
-		jobID, err := uuid.NewRandom()
+		log.Println("job request:", jobRequest)
+
+		jobID, err := client.SendMessage(jobRequest.Recipient,
+			[]string{jobRequest.Recipient},
+			jobRequest.Payload,
+			jobRequest.Directive)
+
 		if err != nil {
-			log.Println("Unable to generate UUID for routing the job...cannot proceed")
-			return
+			// FIXME:  Handle this better!?!?
+			log.Println("Error passing message to receptor: ", err)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				panic(err)
+			}
 		}
 
 		jobResponse := JobResponse{jobID.String()}
-
-		log.Println("job request:", jobRequest)
-
-		workRequest := controller.Message{MessageID: jobID,
-			Recipient: jobRequest.Recipient,
-			RouteList: []string{jobRequest.Recipient},
-			Payload:   jobRequest.Payload,
-			Directive: jobRequest.Directive}
-
-		client.SendMessage(workRequest)
-
-		/*
-			// dispatch job via kafka queue
-			jobRequestJSON, err := json.Marshal(jobRequest)
-			jr.producer.WriteMessages(context.Background(),
-				kafka.Message{
-					Key:   []byte(jobRequest.Account),
-					Value: []byte(jobRequestJSON),
-				})
-		*/
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)

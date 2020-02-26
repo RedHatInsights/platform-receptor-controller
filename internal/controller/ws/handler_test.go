@@ -16,7 +16,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/posener/wstest"
@@ -173,16 +172,7 @@ var _ = Describe("WsController", func() {
 				// client is nil below.
 				client := rc.connectionMgr.GetConnection("540155", nodeID)
 
-				messageID, err := uuid.NewRandom()
-				Expect(err).NotTo(HaveOccurred())
-
-				workRequest := controller.Message{MessageID: messageID,
-					Recipient: "TestClient",
-					RouteList: []string{"test-b", "test-a"},
-					Payload:   "hello",
-					Directive: "receptor:ping"}
-
-				client.SendMessage(workRequest)
+				client.SendMessage("TestClient", []string{"test-b", "test-a"}, "hello", "receptor:ping")
 
 				m := readSocket(c, 4)      // read response from SendMessage request and verify it is a PayloadMessage
 				jm, err := json.Marshal(m) // m's marshal/unmarshal functions are private and can't be used here

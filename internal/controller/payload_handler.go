@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -13,11 +14,10 @@ import (
 type PayloadHandler struct {
 	AccountNumber string
 	NodeID        string
-	Writer        *kafka.Writer
 
 	ControlChannel chan protocol.Message
 	ErrorChannel   chan error
-	Receptor       *Receptor
+	Receptor       *ReceptorService
 }
 
 func (ph *PayloadHandler) GetKey() string {
@@ -72,7 +72,8 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 		return nil
 	}
 
-	ph.Writer.WriteMessages(ctx,
+	kw := queue.StartProducer(queue.GetProducer())
+	kw.WriteMessages(ctx,
 		kafka.Message{
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
