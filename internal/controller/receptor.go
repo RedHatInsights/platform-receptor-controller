@@ -66,3 +66,23 @@ func (r *ReceptorService) Close() {
 
 func (r *ReceptorService) DisconnectReceptorNetwork() {
 }
+
+func (r *ReceptorService) GetCapabilities() interface{} {
+	emptyCapabilities := struct{}{}
+
+	if r.Metadata == nil {
+		return emptyCapabilities
+	}
+
+	metadata, ok := r.Metadata.(map[string]interface{})
+	if ok != true {
+		return emptyCapabilities
+	}
+
+	capabilities, exist := metadata["capabilities"]
+	if exist != true {
+		return emptyCapabilities
+	}
+
+	return capabilities
+}

@@ -34,6 +34,10 @@ func (mc MockClient) Close() {
 func (mc MockClient) DisconnectReceptorNetwork() {
 }
 
+func (mc MockClient) GetCapabilities() interface{} {
+	return struct{}{}
+}
+
 var _ = Describe("JobReciever", func() {
 
 	var (
