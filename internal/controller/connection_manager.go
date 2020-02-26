@@ -10,6 +10,7 @@ type Receptor interface {
 	SendMessage(string, []string, interface{}, string) (*uuid.UUID, error)
 	Close()
 	DisconnectReceptorNetwork()
+	GetCapabilities() interface{}
 }
 
 type ConnectionKey struct {

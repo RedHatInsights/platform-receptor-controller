@@ -87,7 +87,8 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 	type connectionStatusResponse struct {
-		Status string `json:"status"`
+		Status       string      `json:"status"`
+		Capabilities interface{} `json:"capabilities"`
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -119,6 +120,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client != nil {
 			connectionStatus.Status = CONNECTED_STATUS
+			connectionStatus.Capabilities = client.GetCapabilities()
 		} else {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}
