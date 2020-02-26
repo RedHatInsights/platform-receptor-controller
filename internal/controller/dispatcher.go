@@ -12,12 +12,13 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-type IMessageHandler interface {
-	HandleMessage(context.Context, protocol.Message) error // FIXME: don't need error??  need context??
+type MessageHandler interface {
+	HandleMessage(context.Context, protocol.Message)
 }
 
-type IResponseDispatcher interface {
-	RegisterHandler(protocol.NetworkMessageType, IMessageHandler)
+type ResponseDispatcher interface {
+	RegisterHandler(protocol.NetworkMessageType, MessageHandler)
+	Run(context.Context)
 }
 
 type ResponseDispatcherFactory struct {
@@ -30,33 +31,33 @@ func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFacto
 	}
 }
 
-func (fact *ResponseDispatcherFactory) NewDispatcher(recv <-chan protocol.Message) *ResponseDispatcher {
+func (fact *ResponseDispatcherFactory) NewDispatcher(recv <-chan protocol.Message) ResponseDispatcher {
 
 	log.Println("Creating a new response dispatcher")
-	return &ResponseDispatcher{
+	return &ResponseDispatcherImpl{
 		writer:   fact.writer,
 		recv:     recv,
-		handlers: make(map[protocol.NetworkMessageType]IMessageHandler),
+		handlers: make(map[protocol.NetworkMessageType]MessageHandler),
 	}
 }
 
-type ResponseDispatcher struct {
+type ResponseDispatcherImpl struct {
 	writer   *kafka.Writer
 	recv     <-chan protocol.Message
-	handlers map[protocol.NetworkMessageType]IMessageHandler
+	handlers map[protocol.NetworkMessageType]MessageHandler
 }
 
-func (rd *ResponseDispatcher) RegisterHandler(msgType protocol.NetworkMessageType, handler IMessageHandler) {
+func (rd *ResponseDispatcherImpl) RegisterHandler(msgType protocol.NetworkMessageType, handler MessageHandler) {
 	rd.handlers[msgType] = handler
 }
 
-func (rd *ResponseDispatcher) Run(ctx context.Context) {
+func (rd *ResponseDispatcherImpl) Run(ctx context.Context) {
 	defer func() {
 		log.Println("ResponseDispatcher leaving!")
 	}()
 
 	for {
-		log.Println("WebSocket writer - Waiting for something to send")
+		log.Println("ResponseDispatcherImpl - Waiting for something to send")
 
 		select {
 		case <-ctx.Done():

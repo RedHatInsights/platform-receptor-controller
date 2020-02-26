@@ -14,21 +14,21 @@ type HandshakeHandler struct {
 	ControlChannel           chan<- protocol.Message
 	ErrorChannel             chan<- error
 	Receptor                 *ReceptorService
-	Dispatcher               IResponseDispatcher
+	Dispatcher               ResponseDispatcher
 	ConnectionMgr            *ConnectionManager
 	MessageDispatcherFactory *MessageDispatcherFactory
 }
 
-func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	if m.Type() != protocol.HiMessageType {
 		hh.ErrorChannel <- fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m)
-		return nil
+		return
 	}
 
 	hiMessage, ok := m.(*protocol.HiMessage)
 	if !ok {
 		hh.ErrorChannel <- fmt.Errorf("Unable to convert message into HiMessage")
-		return nil
+		return
 	}
 
 	log.Printf("**** got hi message!!  %+v", hiMessage)
@@ -76,5 +76,5 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
 	*/
 
-	return nil
+	return
 }

@@ -24,7 +24,7 @@ func (ph *PayloadHandler) GetKey() string {
 	return fmt.Sprintf("%s:%s", ph.AccountNumber, ph.NodeID)
 }
 
-func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	type ResponseMessage struct {
 		AccountNumber string      `json:"account"`
 		Sender        string      `json:"sender"`
@@ -38,19 +38,19 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 
 	if m.Type() != protocol.PayloadMessageType {
 		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
-		return nil
+		return
 	}
 
 	payloadMessage, ok := m.(*protocol.PayloadMessage)
 	if !ok {
 		log.Println("Unable to convert message into PayloadMessage")
-		return nil
+		return
 	}
 
 	// verify this message was meant for this receptor/peer (probably want a uuid here)
 	if payloadMessage.RoutingInfo.Recipient != ph.Receptor.NodeID {
 		log.Println("Recieved message that was not intended for this node")
-		return nil
+		return
 	}
 
 	responseMessage := ResponseMessage{
@@ -69,7 +69,7 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
 		log.Println("JSON marshal of ResponseMessage failed, err:", err)
-		return nil
+		return
 	}
 
 	kw := queue.StartProducer(queue.GetProducer())
@@ -79,5 +79,5 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 			Value: jsonResponseMessage,
 		})
 
-	return nil
+	return
 }

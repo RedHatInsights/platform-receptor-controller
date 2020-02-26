@@ -14,19 +14,19 @@ type RouteTableHandler struct {
 	Receptor       *ReceptorService
 }
 
-func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 
 	log.Printf("inside RouteTableHandler...receptor:%+v", rth.Receptor)
 
 	if m.Type() != protocol.RouteTableMessageType {
 		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
-		return nil
+		return
 	}
 
 	routingTableMessage, ok := m.(*protocol.RouteTableMessage)
 	if !ok {
 		log.Println("Unable to convert message into RouteTableMessage")
-		return nil
+		return
 	}
 
 	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
@@ -35,5 +35,5 @@ func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Messa
 		fmt.Sprintf("%s", routingTableMessage.Edges),
 		fmt.Sprintf("%s", routingTableMessage.Seen))
 
-	return nil
+	return
 }

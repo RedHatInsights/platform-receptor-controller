@@ -11,12 +11,12 @@ type DisconnectHandler struct {
 	AccountNumber string
 	NodeID        string
 	Receptor      *ReceptorService
-	Dispatcher    IResponseDispatcher
+	Dispatcher    ResponseDispatcher
 	ConnectionMgr *ConnectionManager
 }
 
-func (dh DisconnectHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
+func (dh DisconnectHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	dh.ConnectionMgr.Unregister(dh.AccountNumber, dh.NodeID)
 	log.Println("DisconnectHandler - account unregistered from connection manager")
-	return nil
+	return
 }
