@@ -30,7 +30,7 @@ func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFacto
 	}
 }
 
-func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message) *ResponseDispatcher {
+func (fact *ResponseDispatcherFactory) NewDispatcher(recv <-chan protocol.Message) *ResponseDispatcher {
 
 	log.Println("Creating a new response dispatcher")
 	return &ResponseDispatcher{
@@ -42,7 +42,7 @@ func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message)
 
 type ResponseDispatcher struct {
 	writer   *kafka.Writer
-	recv     chan protocol.Message
+	recv     <-chan protocol.Message
 	handlers map[protocol.NetworkMessageType]IMessageHandler
 }
 

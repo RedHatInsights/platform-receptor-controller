@@ -8,13 +8,11 @@ import (
 )
 
 type DisconnectHandler struct {
-	AccountNumber  string
-	NodeID         string
-	ControlChannel chan protocol.Message
-	ErrorChannel   chan error
-	Receptor       *ReceptorService
-	Dispatcher     IResponseDispatcher
-	ConnectionMgr  *ConnectionManager
+	AccountNumber string
+	NodeID        string
+	Receptor      *ReceptorService
+	Dispatcher    IResponseDispatcher
+	ConnectionMgr *ConnectionManager
 }
 
 func (dh DisconnectHandler) HandleMessage(ctx context.Context, m protocol.Message) error {

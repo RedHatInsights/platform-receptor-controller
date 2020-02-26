@@ -11,8 +11,8 @@ import (
 type HandshakeHandler struct {
 	AccountNumber            string
 	Send                     chan<- Message
-	ControlChannel           chan protocol.Message
-	ErrorChannel             chan error
+	ControlChannel           chan<- protocol.Message
+	ErrorChannel             chan<- error
 	Receptor                 *ReceptorService
 	Dispatcher               IResponseDispatcher
 	ConnectionMgr            *ConnectionManager

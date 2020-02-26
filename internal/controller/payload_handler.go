@@ -15,8 +15,8 @@ type PayloadHandler struct {
 	AccountNumber string
 	NodeID        string
 
-	ControlChannel chan protocol.Message
-	ErrorChannel   chan error
+	ControlChannel chan<- protocol.Message
+	ErrorChannel   chan<- error
 	Receptor       *ReceptorService
 }
 
