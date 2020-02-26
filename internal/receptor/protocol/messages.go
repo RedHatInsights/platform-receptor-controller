@@ -19,6 +19,7 @@ var (
 type NetworkMessageType int
 
 const (
+	DisconnectMessageType NetworkMessageType = -255
 	HiMessageType         NetworkMessageType = 1
 	RouteTableMessageType NetworkMessageType = 2
 	RoutingMessageType    NetworkMessageType = 3

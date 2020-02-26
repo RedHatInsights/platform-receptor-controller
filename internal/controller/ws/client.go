@@ -12,9 +12,6 @@ import (
 )
 
 type rcClient struct {
-	account string
-
-	node_id string
 
 	// socket is the web socket for this client.
 	socket *websocket.Conn
@@ -23,6 +20,8 @@ type rcClient struct {
 	send chan controller.Message
 
 	controlChannel chan protocol.Message
+
+	errorChannel chan error
 
 	// recv is a channel on which responses are sent.
 	recv chan protocol.Message
@@ -110,6 +109,9 @@ func (c *rcClient) write(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
+			return
+		case err := <-c.errorChannel:
+			log.Println("Websocket writer - got an error - shutting down:", err)
 			return
 		case msg := <-c.controlChannel:
 			log.Println("Websocket writer needs to send msg:", msg)

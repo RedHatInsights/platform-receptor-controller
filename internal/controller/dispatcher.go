@@ -30,12 +30,10 @@ func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFacto
 	}
 }
 
-func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message, account, nodeID string) *ResponseDispatcher {
+func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message) *ResponseDispatcher {
 
 	log.Println("Creating a new response dispatcher")
 	return &ResponseDispatcher{
-		account:  account,
-		nodeID:   nodeID,
 		writer:   fact.writer,
 		recv:     recv,
 		handlers: make(map[protocol.NetworkMessageType]IMessageHandler),
@@ -43,8 +41,6 @@ func (fact *ResponseDispatcherFactory) NewDispatcher(recv chan protocol.Message,
 }
 
 type ResponseDispatcher struct {
-	account  string
-	nodeID   string
 	writer   *kafka.Writer
 	recv     chan protocol.Message
 	handlers map[protocol.NetworkMessageType]IMessageHandler
@@ -78,122 +74,6 @@ func (rd *ResponseDispatcher) Run(ctx context.Context) {
 		}
 	}
 
-}
-
-type PayloadHandler struct {
-	account string
-	nodeID  string
-	writer  *kafka.Writer
-}
-
-func (rd *PayloadHandler) GetKey() string {
-	return fmt.Sprintf("%s:%s", rd.account, rd.nodeID)
-}
-
-func (rd PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message /*, receptorID string*/) error {
-	type ResponseMessage struct {
-		Account      string      `json:"account"`
-		Sender       string      `json:"sender"`
-		MessageType  string      `json:"message_type"`
-		MessageID    string      `json:"message_id"`
-		Payload      interface{} `json:"payload"`
-		Code         int         `json:"code"`
-		InResponseTo string      `json:"in_response_to"`
-		Serial       int         `json:"serial"`
-	}
-
-	if m.Type() != protocol.PayloadMessageType {
-		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
-		return nil
-	}
-
-	payloadMessage, ok := m.(*protocol.PayloadMessage)
-	if !ok {
-		log.Println("Unable to convert message into PayloadMessage")
-		return nil
-	}
-
-	// FIXME:
-	/*
-		// verify this message was meant for this receptor/peer (probably want a uuid here)
-		if payloadMessage.RoutingInfo.Recipient != receptorID {
-			log.Println("Recieved message that was not intended for this node")
-			return nil
-		}
-	*/
-
-	responseMessage := ResponseMessage{
-		Account:      rd.account,
-		Sender:       payloadMessage.RoutingInfo.Sender,
-		MessageID:    payloadMessage.Data.MessageID,
-		MessageType:  payloadMessage.Data.MessageType,
-		Payload:      payloadMessage.Data.RawPayload,
-		Code:         payloadMessage.Data.Code,
-		InResponseTo: payloadMessage.Data.InResponseTo,
-		Serial:       payloadMessage.Data.Serial,
-	}
-
-	log.Printf("Dispatching response:%+v", responseMessage)
-
-	jsonResponseMessage, err := json.Marshal(responseMessage)
-	if err != nil {
-		log.Println("JSON marshal of ResponseMessage failed, err:", err)
-		return nil
-	}
-
-	rd.writer.WriteMessages(ctx,
-		kafka.Message{
-			Key:   []byte(payloadMessage.Data.InResponseTo),
-			Value: jsonResponseMessage,
-		})
-
-	return nil
-}
-
-type RouteTableHandler struct {
-}
-
-func (rd RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
-	if m.Type() != protocol.RouteTableMessageType {
-		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
-		return nil
-	}
-
-	routingTableMessage, ok := m.(*protocol.RouteTableMessage)
-	if !ok {
-		log.Println("Unable to convert message into RouteTableMessage")
-		return nil
-	}
-
-	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
-
-	return nil
-}
-
-type HandshakeHandler struct {
-	ControlChannel chan protocol.Message
-}
-
-func (hi HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) error {
-	if m.Type() != protocol.HiMessageType {
-		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
-		return nil
-	}
-
-	hiMessage, ok := m.(*protocol.HiMessage)
-	if !ok {
-		log.Println("Unable to convert message into HiMessage")
-		return nil
-	}
-
-	log.Printf("**** got hi message!!  %+v", hiMessage)
-
-	// FIXME: pass the read node name over to the client
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: "c.config.ReceptorControllerNodeId"}
-
-	hi.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
-
-	return nil
 }
 
 type MessageDispatcherFactory struct {

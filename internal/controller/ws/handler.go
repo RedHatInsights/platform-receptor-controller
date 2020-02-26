@@ -60,10 +60,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		client := &rcClient{
 			config:         rc.config,
-			account:        rhIdentity.Identity.AccountNumber,
 			socket:         socket,
 			send:           make(chan controller.Message, messageBufferSize),
 			controlChannel: make(chan protocol.Message, messageBufferSize),
+			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
 		}
 
@@ -74,38 +74,27 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
-		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv, client.account, client.node_id)
+		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv)
 
-		//receptor := controller.Receptor{}
+		receptor := controller.Receptor{NodeID: rc.config.ReceptorControllerNodeId}
 
-		// FIXME: Register the concrete event handlers with the responseDispatcher
-
-		handshakeHandler := controller.HandshakeHandler{ControlChannel: client.controlChannel /*receptor*/}
+		handshakeHandler := controller.HandshakeHandler{
+			Send:                     client.send,
+			ControlChannel:           client.controlChannel,
+			ErrorChannel:             client.errorChannel,
+			Receptor:                 &receptor,
+			Dispatcher:               responseDispatcher,
+			AccountNumber:            rhIdentity.Identity.AccountNumber,
+			ConnectionMgr:            rc.connectionMgr,
+			MessageDispatcherFactory: rc.messageDispatcherFactory,
+		}
 		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
-		routeTableHandler := controller.RouteTableHandler{ /*receptor*/ }
-		responseDispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
-
-		payloadHandler := controller.PayloadHandler{ /*receptor*/ }
-		responseDispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
-
 		go responseDispatcher.Run(ctx)
-
-		// messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 
 		defer socket.Close()
-
-		client.node_id = "peerID"
-
-		rc.connectionMgr.Register(client.account, client.node_id, client)
-
-		// once this go routine exits...notify the connection manager of the clients departure
-		defer func() {
-			rc.connectionMgr.Unregister(client.account, client.node_id)
-			log.Println("Websocket server - account unregistered from connection manager")
-		}()
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
