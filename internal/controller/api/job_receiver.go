@@ -87,17 +87,10 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		payload, err := client.SendMessageSync(req.Context(), jobRequest.Recipient,
+		jobID, err := client.SendMessage(jobRequest.Recipient,
 			[]string{jobRequest.Recipient},
 			jobRequest.Payload,
 			jobRequest.Directive)
-
-		/*
-			jobID, err := client.SendMessage(jobRequest.Recipient,
-				[]string{jobRequest.Recipient},
-				jobRequest.Payload,
-				jobRequest.Directive)
-		*/
 
 		if err != nil {
 			// FIXME:  Handle this better!?!?
@@ -109,8 +102,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			}
 		}
 
-		jobResponse := payload
-		//		jobResponse := JobResponse{jobID.String()}
+		jobResponse := JobResponse{jobID.String()}
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)

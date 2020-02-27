@@ -35,6 +35,7 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.Use(identity.EnforceIdentity)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect())
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus())
+	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing())
 }
 
 type connectionID struct {
@@ -83,13 +84,13 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 	}
 }
 
+type connectionStatusResponse struct {
+	Status       string      `json:"status"`
+	Capabilities interface{} `json:"capabilities"`
+}
+
 // FIXME: This might not belong here
 func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
-
-	type connectionStatusResponse struct {
-		Status       string      `json:"status"`
-		Capabilities interface{} `json:"capabilities"`
-	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
@@ -128,6 +129,54 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(connectionStatus); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
+
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		var connID connectionID
+
+		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
+
+		if err != nil {
+			panic(err)
+		}
+
+		if err := req.Body.Close(); err != nil {
+			panic(err)
+		}
+
+		if err := json.Unmarshal(body, &connID); err != nil {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				panic(err)
+			}
+		}
+
+		log.Println(connID)
+
+		var payload interface{}
+		var connectionStatus connectionStatusResponse
+
+		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
+		if client != nil {
+			payload, _ = client.SendMessageSync(req.Context(), connID.NodeID,
+				[]string{connID.NodeID},
+				"TIME",
+				"receptor:ping")
+		} else {
+			connectionStatus.Status = DISCONNECTED_STATUS
+			payload = connectionStatus
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(payload); err != nil {
 			panic(err)
 		}
 	}
