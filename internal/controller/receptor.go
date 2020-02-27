@@ -40,16 +40,8 @@ func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interfa
 	r.Metadata = metadata
 
 	r.cbrd = &ChannelBasedResponseDispatcher{
-		//Ctx:             req.Context(),  FIXME:
-		/*
-			Register:      make(chan ResponseNotificationRegistration),
-			Unregister:    make(chan uuid.UUID),
-			Dispatch:      make(chan ResponseMessage),
-		*/
 		DispatchTable: make(map[uuid.UUID]chan ResponseMessage),
 	}
-
-	//go cbrd.Run()
 
 	return nil
 }
@@ -186,18 +178,7 @@ func (r *ReceptorService) GetCapabilities() interface{} {
 	return capabilities
 }
 
-type ResponseNotificationRegistration struct {
-	MessageID       uuid.UUID // Asynchronous Completion Token (ACT)
-	ResponseChannel chan ResponseMessage
-}
-
 type ChannelBasedResponseDispatcher struct {
-	Ctx context.Context
-	/*
-		Register      chan ResponseNotificationRegistration
-		Unregister    chan uuid.UUID
-		Dispatch      chan ResponseMessage
-	*/
 	DispatchTable map[uuid.UUID]chan ResponseMessage
 	sync.Mutex
 }
@@ -223,52 +204,3 @@ func (cbrd *ChannelBasedResponseDispatcher) GetDispatchChannel(msgID uuid.UUID) 
 
 	return dispatchChannel, nil
 }
-
-/*
-func (cbrd *ChannelBasedResponseDispatcher) Run() {
-	for {
-		log.Println("Channel Based Response Dispatcher - Waiting for something to process")
-
-		select {
-		*
-			case <-cbrd.Ctx.Done():
-				log.Println("Channel Based Response Dispatcher...Context based done...leaving")
-
-				// FIXME:  Loop through table closing channels, calling cancel??
-
-				return
-		*
-		case responseNotification := <-cbrd.Register:
-			log.Println("CBRD registering response notification handler:", responseNotification)
-
-			// Add notifier to table
-
-			cbrd.DispatchTable[responseNotification.MessageID] = responseNotification.ResponseChannel
-
-		case responseID := <-cbrd.Unregister:
-			log.Println("CBRD unregistering response notification handler:", responseID)
-
-			delete(cbrd.DispatchTable, responseID)
-
-		case responseMsgToDispatch := <-cbrd.Dispatch:
-			log.Println("CBRD needs to dispatch response:", responseMsgToDispatch)
-
-			// lookup message id...send Response down channel
-
-			messageID, err := uuid.Parse(responseMsgToDispatch.MessageID)
-			if err != nil {
-				log.Printf("Unable to parse uuid (%s) from response: %s", responseMsgToDispatch.MessageID, err)
-			}
-
-			responseChannel, exists := cbrd.DispatchTable[messageID]
-			if exists == false {
-				log.Println("Unable to locate response channel for ", responseMsgToDispatch.MessageID)
-				return
-			}
-
-			// FIXME:  dispatch to a go routine
-			responseChannel <- responseMsgToDispatch
-		}
-	}
-}
-*/
