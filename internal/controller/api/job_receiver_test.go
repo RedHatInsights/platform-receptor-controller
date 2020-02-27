@@ -117,7 +117,7 @@ var _ = Describe("JobReciever", func() {
 
 				jr.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusUnprocessableEntity))
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("Should not allow sending a job with a string instead of json", func() {
@@ -133,7 +133,7 @@ var _ = Describe("JobReciever", func() {
 
 				jr.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusUnprocessableEntity))
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("Should not allow sending a job with missing required fields", func() {
@@ -152,9 +152,9 @@ var _ = Describe("JobReciever", func() {
 				Expect(rr.Code).To(Equal(http.StatusBadRequest))
 			})
 
-			It("Should not allow sending a job with unknown fields", func() {
+			It("Should allow sending a job with unknown fields", func() {
 
-				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone, \"extra\": \"field\"}"
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\", \"extra\": \"field\"}"
 
 				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
 				Expect(err).NotTo(HaveOccurred())
@@ -165,7 +165,7 @@ var _ = Describe("JobReciever", func() {
 
 				jr.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusUnprocessableEntity))
+				Expect(rr.Code).To(Equal(http.StatusCreated))
 			})
 
 		})

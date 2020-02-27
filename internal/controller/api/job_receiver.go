@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"strings"
+	"io"
 
 	"github.com/gorilla/mux"
 
@@ -29,46 +29,20 @@ func (br *badRequest) Error() string {
 	return fmt.Sprintf("%d: %s", br.status, br.msg)
 }
 
-func decodeJSON(w http.ResponseWriter, req *http.Request, job interface{}) error {
-	req.Body = http.MaxBytesReader(w, req.Body, 1048576)
-
-	dec := json.NewDecoder(req.Body)
-	dec.DisallowUnknownFields()
-
+func decodeJSON(body io.ReadCloser, job interface{}) error {
+	dec := json.NewDecoder(body)
 	if err := dec.Decode(&job); err != nil {
-		// FIXME: More specific error handling needed
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-		if strings.HasPrefix(err.Error(), "json: unknown field") {
-			w.WriteHeader(http.StatusBadRequest)
-			return &badRequest{status: http.StatusBadRequest, msg: "Request body includes unknown fields. Expected fields are account, recipient, payload, and directive"}
-		}
-
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-
-		return &badRequest{status: http.StatusUnprocessableEntity, msg: "Request body includes malformed json"}
+		// FIXME: More specific error handling needed.. case statement for different scenarios?
+		return &badRequest{status: http.StatusBadRequest, msg: "Request body includes malformed json"}
 	}
 
 	v := validator.New()
-
 	if err := v.Struct(job); err != nil {
 		for _, e := range err.(validator.ValidationErrors) {
 			log.Println(e)
 		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-
 		return &badRequest{status: http.StatusBadRequest, msg: "Request body is missing required fields"}
-	}
-
-	if dec.More() {
+	} else if dec.More() {
 		return &badRequest{status: http.StatusBadRequest, msg: "Request body must only contain one json object"}
 	}
 
@@ -114,8 +88,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		var jobRequest JobRequest
 
-		if err := decodeJSON(w, req, &jobRequest); err != nil {
+		body := http.MaxBytesReader(w, req.Body, 1048576)
+
+		if err := decodeJSON(body, &jobRequest); err != nil {
 			log.Println(err)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				return
+			}
 			return
 		}
 
