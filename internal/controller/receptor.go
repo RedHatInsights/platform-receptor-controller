@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
@@ -16,9 +17,11 @@ type ReceptorService struct {
 	Metadata interface{}
 
 	// FIXME:  Move the channels into a Transport object/struct
-	SendChannel    chan<- Message
-	ControlChannel chan<- protocol.Message
-	ErrorChannel   chan<- error
+	TransportCtx    context.Context
+	TransportCancel context.CancelFunc
+	SendChannel     chan<- Message
+	ControlChannel  chan<- protocol.Message
+	ErrorChannel    chan<- error
 
 	/*
 	   edges
