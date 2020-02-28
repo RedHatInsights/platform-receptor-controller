@@ -87,24 +87,20 @@ func (r *ReceptorService) SendMessageSync(ctx context.Context, recipient string,
 
 	log.Println("Waiting for a sync response")
 	select {
+	// FIXME: add a case for waiting on a signal from the context from the websocket request
 	case <-ctx.Done(): // i think the context could be setup with a timeout on the other end...
-
+		log.Println("**** request cancelled")
 		r.cbrd.Unregister(*jobID)
-
-		return nil, errors.New("RECPTOR SHUTDOWN")
+		return nil, errors.New("Unable to complete the request.  Request cancelled by message submission http request")
 
 	case responseMsg := <-responseChannel:
-
 		r.cbrd.Unregister(*jobID)
-
 		return responseMsg, nil
 
-	case <-time.After(time.Second * 3):
-
+	case <-time.After(time.Second * 3): // FIXME:  add a configurable timeout
+		log.Println("**** waited too long on a message!!")
 		r.cbrd.Unregister(*jobID)
-
-		log.Printf("**** waited too long on a message!!")
-		return nil, errors.New("TIMEOUT!!")
+		return nil, errors.New("Unable to complete the request.  The response took too long")
 	}
 
 	return nil, nil
