@@ -161,9 +161,11 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 }
 
 func (r *ReceptorService) Close() {
+	r.TransportCancel()
 }
 
 func (r *ReceptorService) DisconnectReceptorNetwork() {
+	r.TransportCancel()
 }
 
 func (r *ReceptorService) GetCapabilities() interface{} {
