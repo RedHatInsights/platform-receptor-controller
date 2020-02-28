@@ -65,9 +65,11 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 }
 
 func (r *ReceptorService) Close() {
+	r.TransportCancel()
 }
 
 func (r *ReceptorService) DisconnectReceptorNetwork() {
+	r.TransportCancel()
 }
 
 func (r *ReceptorService) GetCapabilities() interface{} {
