@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -165,20 +166,37 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		var connectionStatus connectionStatusResponse
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
-		if client != nil {
-			payload, _ = client.SendMessageSync(req.Context(), connID.NodeID,
-				[]string{connID.NodeID},
-				time.Now().UTC(),
-				"receptor:ping")
-		} else {
+		if client == nil {
 			connectionStatus.Status = DISCONNECTED_STATUS
 			payload = connectionStatus
+
+			WriteJSONResponse(w, http.StatusOK, payload)
+			return
 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(payload); err != nil {
-			panic(err)
+		ctx := req.Context()
+		ctx, cancel := context.WithTimeout(ctx, time.Second*2)
+		defer cancel()
+
+		payload, err = client.SendMessageSync(ctx, connID.NodeID,
+			[]string{connID.NodeID},
+			time.Now().UTC(),
+			"receptor:ping")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusRequestTimeout)
+			return
 		}
+
+		WriteJSONResponse(w, http.StatusOK, payload)
+	}
+}
+
+func WriteJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, "Unable to encode payload!", http.StatusUnprocessableEntity)
+		log.Println("Unable to encode payload!")
+		return
 	}
 }

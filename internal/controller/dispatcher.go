@@ -71,7 +71,7 @@ func (rd *ResponseDispatcherImpl) Run(ctx context.Context) {
 				continue
 			}
 
-			handler.HandleMessage(ctx, msg)
+			go handler.HandleMessage(ctx, msg)
 		}
 	}
 

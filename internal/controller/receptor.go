@@ -14,6 +14,12 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
+var (
+	connectionToReceptorNetworkLost = errors.New("Connection to receptor network lost")
+	requestCancelledBySender        = errors.New("Unable to complete the request.  Request cancelled by message sender.")
+	requestTimedOut                 = errors.New("Unable to complete the request.  Request timed out.")
+)
+
 type ReceptorService struct {
 	AccountNumber string
 	NodeID        string
@@ -22,6 +28,7 @@ type ReceptorService struct {
 	Metadata interface{}
 
 	// FIXME:  Move the channels into a Transport object/struct
+	TransportCtx   context.Context
 	SendChannel    chan<- Message
 	ControlChannel chan<- protocol.Message
 	ErrorChannel   chan<- error
@@ -72,7 +79,7 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 	return &jobID, nil
 }
 
-func (r *ReceptorService) SendMessageSync(ctx context.Context, recipient string, route []string, payload interface{}, directive string) (interface{}, error) {
+func (r *ReceptorService) SendMessageSync(senderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (interface{}, error) {
 
 	jobID, err := r.SendMessage(recipient, route, payload, directive)
 	if err != nil {
@@ -87,20 +94,25 @@ func (r *ReceptorService) SendMessageSync(ctx context.Context, recipient string,
 
 	log.Println("Waiting for a sync response")
 	select {
-	// FIXME: add a case for waiting on a signal from the context from the websocket request
-	case <-ctx.Done(): // i think the context could be setup with a timeout on the other end...
-		log.Println("**** request cancelled")
-		r.cbrd.Unregister(*jobID)
-		return nil, errors.New("Unable to complete the request.  Request cancelled by message submission http request")
 
 	case responseMsg := <-responseChannel:
 		r.cbrd.Unregister(*jobID)
 		return responseMsg, nil
 
-	case <-time.After(time.Second * 3): // FIXME:  add a configurable timeout
-		log.Println("**** waited too long on a message!!")
+	case <-r.TransportCtx.Done():
+		log.Printf("Connection to receptor network lost")
 		r.cbrd.Unregister(*jobID)
-		return nil, errors.New("Unable to complete the request.  The response took too long")
+		return nil, connectionToReceptorNetworkLost
+
+	case <-senderCtx.Done():
+		log.Printf("Message (%s) cancelled by sender", jobID)
+		r.cbrd.Unregister(*jobID)
+		return nil, requestCancelledBySender
+
+	case <-time.After(time.Second * 10): // FIXME:  add a configurable timeout
+		log.Printf("Timed out waiting for response for message (%s)", jobID)
+		r.cbrd.Unregister(*jobID)
+		return nil, requestTimedOut
 	}
 
 	return nil, nil
@@ -139,6 +151,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 	// FIXME:
 	ctx := context.Background()
 
+	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
 	kw := queue.StartProducer(queue.GetProducer())
 	kw.WriteMessages(ctx,
 		kafka.Message{
