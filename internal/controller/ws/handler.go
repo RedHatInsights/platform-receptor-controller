@@ -77,6 +77,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv)
 
 		receptor := controller.ReceptorService{
+			AccountNumber:  rhIdentity.Identity.AccountNumber,
 			NodeID:         rc.config.ReceptorControllerNodeId,
 			SendChannel:    client.send,
 			ControlChannel: client.controlChannel,
