@@ -28,10 +28,11 @@ type ReceptorService struct {
 	Metadata interface{}
 
 	// FIXME:  Move the channels into a Transport object/struct
-	TransportCtx   context.Context
-	SendChannel    chan<- Message
-	ControlChannel chan<- protocol.Message
-	ErrorChannel   chan<- error
+	TransportCtx    context.Context
+	TransportCancel context.CancelFunc
+	SendChannel     chan<- Message
+	ControlChannel  chan<- protocol.Message
+	ErrorChannel    chan<- error
 
 	cbrd *ChannelBasedResponseDispatcher
 	/*
@@ -74,12 +75,13 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 		Payload:   payload,
 		Directive: directive}
 
+	// FIXME:  this needs to be the ControlChannel...so that we bypass queued messages
 	r.SendChannel <- msg
 
 	return &jobID, nil
 }
 
-func (r *ReceptorService) SendMessageSync(senderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (interface{}, error) {
+func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (interface{}, error) {
 
 	jobID, err := r.SendMessage(recipient, route, payload, directive)
 	if err != nil {
@@ -104,7 +106,7 @@ func (r *ReceptorService) SendMessageSync(senderCtx context.Context, recipient s
 		r.cbrd.Unregister(*jobID)
 		return nil, connectionToReceptorNetworkLost
 
-	case <-senderCtx.Done():
+	case <-msgSenderCtx.Done():
 		log.Printf("Message (%s) cancelled by sender", jobID)
 		r.cbrd.Unregister(*jobID)
 		return nil, requestCancelledBySender
@@ -148,12 +150,9 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 		return
 	}
 
-	// FIXME:
-	ctx := context.Background()
-
 	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
 	kw := queue.StartProducer(queue.GetProducer())
-	kw.WriteMessages(ctx,
+	kw.WriteMessages(r.TransportCtx,
 		kafka.Message{
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
