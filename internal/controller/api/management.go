@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -174,11 +173,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			return
 		}
 
-		ctx := req.Context()
-		ctx, cancel := context.WithTimeout(ctx, time.Second*2)
-		defer cancel()
-
-		payload, err = client.SendMessageSync(ctx, connID.NodeID,
+		payload, err = client.SendMessageSync(req.Context(), connID.NodeID,
 			[]string{connID.NodeID},
 			time.Now().UTC(),
 			"receptor:ping")
