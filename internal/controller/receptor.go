@@ -9,9 +9,9 @@ import (
 )
 
 type ReceptorService struct {
-	Account    string
-	NodeID     string
-	PeerNodeID string
+	AccountNumber string
+	NodeID        string
+	PeerNodeID    string
 
 	Metadata interface{}
 
