@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
@@ -167,7 +168,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		if client != nil {
 			payload, _ = client.SendMessageSync(req.Context(), connID.NodeID,
 				[]string{connID.NodeID},
-				"TIME",
+				time.Now().UTC(),
 				"receptor:ping")
 		} else {
 			connectionStatus.Status = DISCONNECTED_STATUS
