@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/gorilla/mux"
@@ -20,20 +20,11 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-type badRequest struct {
-	status int
-	msg    string
-}
-
-func (br *badRequest) Error() string {
-	return fmt.Sprintf("%d: %s", br.status, br.msg)
-}
-
 func decodeJSON(body io.ReadCloser, job interface{}) error {
 	dec := json.NewDecoder(body)
 	if err := dec.Decode(&job); err != nil {
 		// FIXME: More specific error handling needed.. case statement for different scenarios?
-		return &badRequest{status: http.StatusBadRequest, msg: "Request body includes malformed json"}
+		return errors.New("Request body includes malformed json")
 	}
 
 	v := validator.New()
@@ -41,9 +32,9 @@ func decodeJSON(body io.ReadCloser, job interface{}) error {
 		for _, e := range err.(validator.ValidationErrors) {
 			log.Println(e)
 		}
-		return &badRequest{status: http.StatusBadRequest, msg: "Request body is missing required fields"}
+		return errors.New("Request body is missing required fields")
 	} else if dec.More() {
-		return &badRequest{status: http.StatusBadRequest, msg: "Request body must only contain one json object"}
+		return errors.New("Request body must only contain one json object")
 	}
 
 	return nil
