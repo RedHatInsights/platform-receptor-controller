@@ -91,29 +91,29 @@ func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipien
 
 	responseChannel := make(chan ResponseMessage)
 
+	// FIXME:  Think about what happens if somehow the response is dispatched before
+	// the response channel is registered.  Think about generating the jobID, registering
+	// the channel, then sending the message.
 	log.Println("Registering a sync response handler")
 	r.cbrd.Register(*jobID, responseChannel)
+	defer r.cbrd.Unregister(*jobID)
 
 	log.Println("Waiting for a sync response")
 	select {
 
 	case responseMsg := <-responseChannel:
-		r.cbrd.Unregister(*jobID)
 		return responseMsg, nil
 
 	case <-r.TransportCtx.Done():
 		log.Printf("Connection to receptor network lost")
-		r.cbrd.Unregister(*jobID)
 		return nil, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		log.Printf("Message (%s) cancelled by sender", jobID)
-		r.cbrd.Unregister(*jobID)
 		return nil, requestCancelledBySender
 
 	case <-time.After(time.Second * 10): // FIXME:  add a configurable timeout
 		log.Printf("Timed out waiting for response for message (%s)", jobID)
-		r.cbrd.Unregister(*jobID)
 		return nil, requestTimedOut
 	}
 
