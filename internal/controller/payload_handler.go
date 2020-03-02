@@ -12,9 +12,8 @@ type PayloadHandler struct {
 	AccountNumber string
 	NodeID        string
 
-	ControlChannel chan<- protocol.Message
-	ErrorChannel   chan<- error
-	Receptor       *ReceptorService
+	Transport *Transport
+	Receptor  *ReceptorService
 }
 
 func (ph *PayloadHandler) GetKey() string {

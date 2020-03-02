@@ -10,6 +10,7 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
 	"github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -27,12 +28,7 @@ type ReceptorService struct {
 
 	Metadata interface{}
 
-	// FIXME:  Move the channels into a Transport object/struct
-	TransportCtx    context.Context
-	TransportCancel context.CancelFunc
-	SendChannel     chan<- Message
-	ControlChannel  chan<- protocol.Message
-	ErrorChannel    chan<- error
+	Transport *Transport
 
 	cbrd *ChannelBasedResponseDispatcher
 	/*
@@ -76,7 +72,7 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 		Directive: directive}
 
 	// FIXME:  this needs to be the ControlChannel...so that we bypass queued messages
-	r.SendChannel <- msg
+	r.Transport.Send <- msg
 
 	return &jobID, nil
 }
@@ -161,11 +157,11 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 }
 
 func (r *ReceptorService) Close() {
-	r.TransportCancel()
+	r.Transport.Cancel()
 }
 
 func (r *ReceptorService) DisconnectReceptorNetwork() {
-	r.TransportCancel()
+	r.Transport.Cancel()
 }
 
 func (r *ReceptorService) GetCapabilities() interface{} {
