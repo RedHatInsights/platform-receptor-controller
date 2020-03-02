@@ -1,10 +1,7 @@
 package controller
 
 import (
-	"context"
 	"log"
-
-	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
 	"github.com/google/uuid"
 )
@@ -16,12 +13,7 @@ type ReceptorService struct {
 
 	Metadata interface{}
 
-	// FIXME:  Move the channels into a Transport object/struct
-	TransportCtx    context.Context
-	TransportCancel context.CancelFunc
-	SendChannel     chan<- Message
-	ControlChannel  chan<- protocol.Message
-	ErrorChannel    chan<- error
+	Transport *Transport
 
 	/*
 	   edges
@@ -59,17 +51,17 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 		Payload:   payload,
 		Directive: directive}
 
-	r.SendChannel <- msg
+	r.Transport.Send <- msg
 
 	return &jobID, nil
 }
 
 func (r *ReceptorService) Close() {
-	r.TransportCancel()
+	r.Transport.Cancel()
 }
 
 func (r *ReceptorService) DisconnectReceptorNetwork() {
-	r.TransportCancel()
+	r.Transport.Cancel()
 }
 
 func (r *ReceptorService) GetCapabilities() interface{} {

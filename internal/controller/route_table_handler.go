@@ -9,9 +9,8 @@ import (
 )
 
 type RouteTableHandler struct {
-	ControlChannel chan<- protocol.Message
-	ErrorChannel   chan<- error
-	Receptor       *ReceptorService
+	Receptor  *ReceptorService
+	Transport *Transport
 }
 
 func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) {

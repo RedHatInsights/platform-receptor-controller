@@ -72,24 +72,26 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		defer cancel()
 		client.cancel = cancel
 
+		transport := &controller.Transport{
+			Send:           client.send,
+			Recv:           client.recv,
+			ControlChannel: client.controlChannel,
+			ErrorChannel:   client.errorChannel,
+			Cancel:         client.cancel,
+		}
+
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
-		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(client.recv)
+		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(transport.Recv)
 
 		receptor := controller.ReceptorService{
-			AccountNumber:   rhIdentity.Identity.AccountNumber,
-			NodeID:          rc.config.ReceptorControllerNodeId,
-			TransportCtx:    ctx,
-			TransportCancel: cancel,
-			SendChannel:     client.send,
-			ControlChannel:  client.controlChannel,
-			ErrorChannel:    client.errorChannel,
+			AccountNumber: rhIdentity.Identity.AccountNumber,
+			NodeID:        rc.config.ReceptorControllerNodeId,
+			Transport:     transport,
 		}
 
 		handshakeHandler := controller.HandshakeHandler{
-			Send:                     client.send,
-			ControlChannel:           client.controlChannel,
-			ErrorChannel:             client.errorChannel,
+			Transport:                transport,
 			Receptor:                 &receptor,
 			Dispatcher:               responseDispatcher,
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
