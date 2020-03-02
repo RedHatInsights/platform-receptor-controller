@@ -18,6 +18,7 @@ type MessageHandler interface {
 
 type ResponseDispatcher interface {
 	RegisterHandler(protocol.NetworkMessageType, MessageHandler)
+	RegisterDisconnectHandler(handler MessageHandler)
 	Run(context.Context)
 }
 
@@ -42,13 +43,18 @@ func (fact *ResponseDispatcherFactory) NewDispatcher(recv <-chan protocol.Messag
 }
 
 type ResponseDispatcherImpl struct {
-	writer   *kafka.Writer
-	recv     <-chan protocol.Message
-	handlers map[protocol.NetworkMessageType]MessageHandler
+	writer            *kafka.Writer
+	recv              <-chan protocol.Message
+	handlers          map[protocol.NetworkMessageType]MessageHandler
+	disconnectHandler MessageHandler
 }
 
 func (rd *ResponseDispatcherImpl) RegisterHandler(msgType protocol.NetworkMessageType, handler MessageHandler) {
 	rd.handlers[msgType] = handler
+}
+
+func (rd *ResponseDispatcherImpl) RegisterDisconnectHandler(handler MessageHandler) {
+	rd.disconnectHandler = handler
 }
 
 func (rd *ResponseDispatcherImpl) Run(ctx context.Context) {
@@ -61,6 +67,10 @@ func (rd *ResponseDispatcherImpl) Run(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
+			log.Println("**** dispatching disconnect")
+			if rd.disconnectHandler != nil {
+				rd.disconnectHandler.HandleMessage(ctx, nil)
+			}
 			return
 		case msg := <-rd.recv:
 			log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)

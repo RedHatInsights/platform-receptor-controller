@@ -50,7 +50,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		NodeID:        hiMessage.ID,
 		ConnectionMgr: hh.ConnectionMgr,
 	}
-	hh.Dispatcher.RegisterHandler(protocol.DisconnectMessageType, disconnectHandler)
+	hh.Dispatcher.RegisterDisconnectHandler(disconnectHandler)
 
 	routeTableHandler := RouteTableHandler{
 		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
