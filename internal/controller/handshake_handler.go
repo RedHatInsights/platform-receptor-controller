@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 )
@@ -35,8 +36,17 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.Receptor.NodeID}
 
-	// FIXME:  this can block...add a timeout and a select here???
-	hh.Transport.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
+	select {
+	case <-ctx.Done():
+		log.Println("Request cancelled during handshake")
+		return
+	case <-time.After(time.Second * 10): // FIXME:  add a configurable timeout
+		log.Println("Timed out waiting to send response to Hi message")
+		hh.Transport.Cancel()
+		return
+	case hh.Transport.ControlChannel <- &responseHiMessage: // FIXME:  Why a pointer here??
+		break
+	}
 
 	// FIXME:  What if this account number and node id are already registered?
 	//  abort the connection??
