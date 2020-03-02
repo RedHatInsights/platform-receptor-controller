@@ -9,10 +9,10 @@ import (
 )
 
 type HandshakeHandler struct {
-	AccountNumber            string
-	Send                     chan<- Message
-	ControlChannel           chan<- protocol.Message
-	ErrorChannel             chan<- error
+	AccountNumber string
+
+	Transport *Transport
+
 	Receptor                 *ReceptorService
 	Dispatcher               ResponseDispatcher
 	ConnectionMgr            *ConnectionManager
@@ -21,13 +21,13 @@ type HandshakeHandler struct {
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	if m.Type() != protocol.HiMessageType {
-		hh.ErrorChannel <- fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m)
+		hh.Transport.ErrorChannel <- fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m)
 		return
 	}
 
 	hiMessage, ok := m.(*protocol.HiMessage)
 	if !ok {
-		hh.ErrorChannel <- fmt.Errorf("Unable to convert message into HiMessage")
+		hh.Transport.ErrorChannel <- fmt.Errorf("Unable to convert message into HiMessage")
 		return
 	}
 
@@ -36,7 +36,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.Receptor.NodeID}
 
 	// FIXME:  this can block...add a timeout and a select here???
-	hh.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
+	hh.Transport.ControlChannel <- &responseHiMessage // FIXME:  Why a pointer here??
 
 	// FIXME:  What if this account number and node id are already registered?
 	//  abort the connection??
@@ -53,16 +53,14 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	hh.Dispatcher.RegisterHandler(protocol.DisconnectMessageType, disconnectHandler)
 
 	routeTableHandler := RouteTableHandler{
-		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
-		ControlChannel: hh.ControlChannel,
-		ErrorChannel:   hh.ErrorChannel,
+		Receptor:  hh.Receptor,
+		Transport: hh.Transport,
 	}
 	hh.Dispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
 
 	payloadHandler := PayloadHandler{AccountNumber: hh.AccountNumber,
-		ControlChannel: hh.ControlChannel,
-		ErrorChannel:   hh.ErrorChannel,
-		Receptor:       hh.Receptor, // FIXME: Dont care...pass in only what is required
+		Receptor:  hh.Receptor,
+		Transport: hh.Transport,
 	}
 	hh.Dispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
