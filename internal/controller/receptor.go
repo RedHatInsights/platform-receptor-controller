@@ -100,10 +100,9 @@ func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipien
 	case responseMsg := <-responseChannel:
 		return responseMsg, nil
 
-	// FIXME:  the following needs to be uncommented!!
-	//case <-r.Transport.Ctx.Done():
-	//	log.Printf("Connection to receptor network lost")
-	//	return nil, connectionToReceptorNetworkLost
+	case <-r.Transport.Ctx.Done():
+		log.Printf("Connection to receptor network lost")
+		return nil, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		log.Printf("Message (%s) cancelled by sender", jobID)
@@ -149,7 +148,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
 	kw := queue.StartProducer(queue.GetProducer())
-	kw.WriteMessages(r.TransportCtx,
+	kw.WriteMessages(r.Transport.Ctx,
 		kafka.Message{
 			Key:   []byte(payloadMessage.Data.InResponseTo),
 			Value: jsonResponseMessage,
