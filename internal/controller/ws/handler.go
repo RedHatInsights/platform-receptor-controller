@@ -18,20 +18,20 @@ const (
 )
 
 type ReceptorController struct {
-	connectionMgr             *controller.ConnectionManager
-	router                    *mux.Router
-	config                    *WebSocketConfig
-	responseDispatcherFactory *controller.ResponseDispatcherFactory
-	messageDispatcherFactory  *controller.MessageDispatcherFactory
+	connectionMgr            *controller.ConnectionManager
+	router                   *mux.Router
+	config                   *WebSocketConfig
+	responseReactorFactory   *controller.ResponseReactorFactory
+	messageDispatcherFactory *controller.MessageDispatcherFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory, md *controller.MessageDispatcherFactory) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
-		connectionMgr:             cm,
-		router:                    r,
-		config:                    wsc,
-		responseDispatcherFactory: rd,
-		messageDispatcherFactory:  md,
+		connectionMgr:            cm,
+		router:                   r,
+		config:                   wsc,
+		responseReactorFactory:   rd,
+		messageDispatcherFactory: md,
 	}
 }
 
@@ -83,7 +83,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
-		responseDispatcher := rc.responseDispatcherFactory.NewDispatcher(transport.Recv)
+		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
 
 		receptor := controller.ReceptorService{
 			AccountNumber: rhIdentity.Identity.AccountNumber,
@@ -94,14 +94,14 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		handshakeHandler := controller.HandshakeHandler{
 			Transport:                transport,
 			Receptor:                 &receptor,
-			Dispatcher:               responseDispatcher,
+			ResponseReactor:          responseReactor,
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
 			ConnectionMgr:            rc.connectionMgr,
 			MessageDispatcherFactory: rc.messageDispatcherFactory,
 		}
-		responseDispatcher.RegisterHandler(protocol.HiMessageType, handshakeHandler)
+		responseReactor.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
-		go responseDispatcher.Run(ctx)
+		go responseReactor.Run(ctx)
 
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 

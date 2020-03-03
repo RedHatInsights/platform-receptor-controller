@@ -14,7 +14,7 @@ type HandshakeHandler struct {
 	Transport *Transport
 
 	Receptor                 *ReceptorService
-	Dispatcher               ResponseDispatcher
+	ResponseReactor          ResponseReactor
 	ConnectionMgr            *ConnectionManager
 	MessageDispatcherFactory *MessageDispatcherFactory
 }
@@ -50,19 +50,19 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		NodeID:        hiMessage.ID,
 		ConnectionMgr: hh.ConnectionMgr,
 	}
-	hh.Dispatcher.RegisterDisconnectHandler(disconnectHandler)
+	hh.ResponseReactor.RegisterDisconnectHandler(disconnectHandler)
 
 	routeTableHandler := RouteTableHandler{
 		Receptor:  hh.Receptor,
 		Transport: hh.Transport,
 	}
-	hh.Dispatcher.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
+	hh.ResponseReactor.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
 
 	payloadHandler := PayloadHandler{AccountNumber: hh.AccountNumber,
 		Receptor:  hh.Receptor,
 		Transport: hh.Transport,
 	}
-	hh.Dispatcher.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
+	hh.ResponseReactor.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
 	/**** FIXME:
 	         1) I think we need to build a Receptor service object that gets created here.
