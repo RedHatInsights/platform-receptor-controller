@@ -8,84 +8,8 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	kafka "github.com/segmentio/kafka-go"
 )
-
-type MessageHandler interface {
-	HandleMessage(context.Context, protocol.Message)
-}
-
-type ResponseDispatcher interface {
-	RegisterHandler(protocol.NetworkMessageType, MessageHandler)
-	RegisterDisconnectHandler(handler MessageHandler)
-	Run(context.Context)
-}
-
-type ResponseDispatcherFactory struct {
-	writer *kafka.Writer
-}
-
-func NewResponseDispatcherFactory(writer *kafka.Writer) *ResponseDispatcherFactory {
-	return &ResponseDispatcherFactory{
-		writer: writer,
-	}
-}
-
-func (fact *ResponseDispatcherFactory) NewDispatcher(recv <-chan protocol.Message) ResponseDispatcher {
-
-	log.Println("Creating a new response dispatcher")
-	return &ResponseDispatcherImpl{
-		writer:   fact.writer,
-		recv:     recv,
-		handlers: make(map[protocol.NetworkMessageType]MessageHandler),
-	}
-}
-
-type ResponseDispatcherImpl struct {
-	writer            *kafka.Writer
-	recv              <-chan protocol.Message
-	handlers          map[protocol.NetworkMessageType]MessageHandler
-	disconnectHandler MessageHandler
-}
-
-func (rd *ResponseDispatcherImpl) RegisterHandler(msgType protocol.NetworkMessageType, handler MessageHandler) {
-	rd.handlers[msgType] = handler
-}
-
-func (rd *ResponseDispatcherImpl) RegisterDisconnectHandler(handler MessageHandler) {
-	rd.disconnectHandler = handler
-}
-
-func (rd *ResponseDispatcherImpl) Run(ctx context.Context) {
-	defer func() {
-		log.Println("ResponseDispatcher leaving!")
-	}()
-
-	for {
-		log.Println("ResponseDispatcherImpl - Waiting for something to send")
-
-		select {
-		case <-ctx.Done():
-			log.Println("**** dispatching disconnect")
-			if rd.disconnectHandler != nil {
-				rd.disconnectHandler.HandleMessage(ctx, nil)
-			}
-			return
-		case msg := <-rd.recv:
-			log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)
-
-			handler, exists := rd.handlers[msg.Type()]
-			if exists == false {
-				log.Printf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
-				continue
-			}
-
-			go handler.HandleMessage(ctx, msg)
-		}
-	}
-
-}
 
 type MessageDispatcherFactory struct {
 	readerConfig *queue.ConsumerConfig
