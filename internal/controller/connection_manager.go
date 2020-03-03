@@ -9,7 +9,7 @@ import (
 
 type Receptor interface {
 	SendMessage(string, []string, interface{}, string) (*uuid.UUID, error)
-	SendMessageSync(context.Context, string, []string, interface{}, string) (interface{}, error)
+	Ping(context.Context, string, []string) (interface{}, error)
 	Close()
 	DisconnectReceptorNetwork()
 	GetCapabilities() interface{}

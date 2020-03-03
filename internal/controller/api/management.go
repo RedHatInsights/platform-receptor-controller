@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
@@ -173,10 +172,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			return
 		}
 
-		payload, err = client.SendMessageSync(req.Context(), connID.NodeID,
-			[]string{connID.NodeID},
-			time.Now().UTC(),
-			"receptor:ping")
+		payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusRequestTimeout)
 			return

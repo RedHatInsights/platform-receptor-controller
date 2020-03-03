@@ -65,25 +65,37 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 		return nil, err
 	}
 
-	msg := Message{MessageID: jobID,
-		Recipient: recipient,
-		RouteList: route,
-		Payload:   payload,
-		Directive: directive}
+	payloadMessage, messageID, err := protocol.BuildPayloadMessage(
+		jobID,
+		r.NodeID,
+		recipient,
+		route,
+		"directive",
+		directive,
+		payload)
+	log.Printf("Sending PayloadMessage - %s\n", *messageID)
 
-	// FIXME:  this needs to be the ControlChannel...so that we bypass queued messages
-	r.Transport.Send <- msg
+	r.Transport.Send <- payloadMessage
 
 	return &jobID, nil
 }
 
-func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (interface{}, error) {
+func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, route []string) (interface{}, error) {
 
-	jobID, err := r.SendMessage(recipient, route, payload, directive)
+	jobID, err := uuid.NewRandom()
 	if err != nil {
 		log.Println("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
+
+	payloadMessage, _, err := protocol.BuildPayloadMessage(
+		jobID,
+		r.NodeID,
+		recipient,
+		route,
+		"directive",
+		"receptor:ping",
+		time.Now().UTC())
 
 	responseChannel := make(chan ResponseMessage)
 
@@ -91,8 +103,10 @@ func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipien
 	// the response channel is registered.  Think about generating the jobID, registering
 	// the channel, then sending the message.
 	log.Println("Registering a sync response handler")
-	r.responseDispatcherRegistrar.Register(*jobID, responseChannel)
-	defer r.responseDispatcherRegistrar.Unregister(*jobID)
+	r.responseDispatcherRegistrar.Register(jobID, responseChannel)
+	defer r.responseDispatcherRegistrar.Unregister(jobID)
+
+	r.Transport.ControlChannel <- payloadMessage
 
 	log.Println("Waiting for a sync response")
 	select {

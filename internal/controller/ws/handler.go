@@ -61,7 +61,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		client := &rcClient{
 			config:         rc.config,
 			socket:         socket,
-			send:           make(chan controller.Message, messageBufferSize),
+			send:           make(chan protocol.Message, messageBufferSize),
 			controlChannel: make(chan protocol.Message, messageBufferSize),
 			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
