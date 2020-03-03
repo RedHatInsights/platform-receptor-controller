@@ -30,7 +30,7 @@ type ReceptorService struct {
 
 	Transport *Transport
 
-	cbrd *ChannelBasedResponseDispatcher
+	responseDispatcherRegistrar *DispatcherTable
 	/*
 	   edges
 	   seen
@@ -43,8 +43,8 @@ func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interfa
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata
 
-	r.cbrd = &ChannelBasedResponseDispatcher{
-		DispatchTable: make(map[uuid.UUID]chan ResponseMessage),
+	r.responseDispatcherRegistrar = &DispatcherTable{
+		dispatchTable: make(map[uuid.UUID]chan ResponseMessage),
 	}
 
 	return nil
@@ -91,8 +91,8 @@ func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipien
 	// the response channel is registered.  Think about generating the jobID, registering
 	// the channel, then sending the message.
 	log.Println("Registering a sync response handler")
-	r.cbrd.Register(*jobID, responseChannel)
-	defer r.cbrd.Unregister(*jobID)
+	r.responseDispatcherRegistrar.Register(*jobID, responseChannel)
+	defer r.responseDispatcherRegistrar.Unregister(*jobID)
 
 	log.Println("Waiting for a sync response")
 	select {
@@ -131,7 +131,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	inResponseTo, _ := uuid.Parse(payloadMessage.Data.InResponseTo)
 
-	responseChannel, _ := r.cbrd.GetDispatchChannel(inResponseTo)
+	responseChannel, _ := r.responseDispatcherRegistrar.GetDispatchChannel(inResponseTo)
 
 	if responseChannel != nil {
 		responseChannel <- responseMessage
@@ -184,29 +184,29 @@ func (r *ReceptorService) GetCapabilities() interface{} {
 	return capabilities
 }
 
-type ChannelBasedResponseDispatcher struct {
-	DispatchTable map[uuid.UUID]chan ResponseMessage
+type DispatcherTable struct {
+	dispatchTable map[uuid.UUID]chan ResponseMessage
 	sync.Mutex
 }
 
-func (cbrd *ChannelBasedResponseDispatcher) Register(msgID uuid.UUID, responseChannel chan ResponseMessage) {
-	cbrd.Lock()
-	cbrd.DispatchTable[msgID] = responseChannel
-	cbrd.Unlock()
+func (dt *DispatcherTable) Register(msgID uuid.UUID, responseChannel chan ResponseMessage) {
+	dt.Lock()
+	dt.dispatchTable[msgID] = responseChannel
+	dt.Unlock()
 }
 
-func (cbrd *ChannelBasedResponseDispatcher) Unregister(msgID uuid.UUID) {
-	cbrd.Lock()
-	delete(cbrd.DispatchTable, msgID)
-	cbrd.Unlock()
+func (dt *DispatcherTable) Unregister(msgID uuid.UUID) {
+	dt.Lock()
+	delete(dt.dispatchTable, msgID)
+	dt.Unlock()
 }
 
-func (cbrd *ChannelBasedResponseDispatcher) GetDispatchChannel(msgID uuid.UUID) (chan ResponseMessage, error) {
+func (dt *DispatcherTable) GetDispatchChannel(msgID uuid.UUID) (chan ResponseMessage, error) {
 	var dispatchChannel chan ResponseMessage
 
-	cbrd.Lock()
-	dispatchChannel, _ = cbrd.DispatchTable[msgID]
-	cbrd.Unlock()
+	dt.Lock()
+	dispatchChannel, _ = dt.dispatchTable[msgID]
+	dt.Unlock()
 
 	return dispatchChannel, nil
 }
