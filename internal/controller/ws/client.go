@@ -77,7 +77,7 @@ func (c *rcClient) configurePongHandler() {
 	}
 }
 
-func writeMessageOntoWebsocket(socket *websocket.Conn, writeWait time.Duration, msg protocol.Message) error {
+func writeMessage(socket *websocket.Conn, writeWait time.Duration, msg protocol.Message) error {
 
 	socket.SetWriteDeadline(time.Now().Add(writeWait))
 	w, err := socket.NextWriter(websocket.BinaryMessage)
@@ -117,7 +117,7 @@ func (c *rcClient) write(ctx context.Context) {
 		case msg := <-c.controlChannel:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			err := writeMessageOntoWebsocket(c.socket, c.config.WriteWait, msg)
+			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
 				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
 				return
@@ -125,7 +125,7 @@ func (c *rcClient) write(ctx context.Context) {
 		case msg := <-c.send:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			err := writeMessageOntoWebsocket(c.socket, c.config.WriteWait, msg)
+			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
 				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
 				return
