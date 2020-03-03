@@ -99,14 +99,21 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 
 	responseChannel := make(chan ResponseMessage)
 
-	// FIXME:  Think about what happens if somehow the response is dispatched before
-	// the response channel is registered.  Think about generating the jobID, registering
-	// the channel, then sending the message.
 	log.Println("Registering a sync response handler")
 	r.responseDispatcherRegistrar.Register(jobID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(jobID)
 
-	r.Transport.ControlChannel <- payloadMessage
+	log.Println("Passing ping request to async layer")
+	select {
+	case r.Transport.ControlChannel <- payloadMessage:
+		break
+	case <-msgSenderCtx.Done():
+		log.Printf("Message (%s) cancelled by sender", jobID)
+		return nil, requestCancelledBySender
+	case <-time.After(time.Second * 10): // FIXME:  add a configurable timeout
+		log.Printf("Timed out waiting to pass message (%s) to async layer", jobID)
+		return nil, requestTimedOut
+	}
 
 	log.Println("Waiting for a sync response")
 	select {
