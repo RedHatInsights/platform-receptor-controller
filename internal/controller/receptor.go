@@ -100,9 +100,10 @@ func (r *ReceptorService) SendMessageSync(msgSenderCtx context.Context, recipien
 	case responseMsg := <-responseChannel:
 		return responseMsg, nil
 
-	case <-r.TransportCtx.Done():
-		log.Printf("Connection to receptor network lost")
-		return nil, connectionToReceptorNetworkLost
+	// FIXME:  the following needs to be uncommented!!
+	//case <-r.Transport.Ctx.Done():
+	//	log.Printf("Connection to receptor network lost")
+	//	return nil, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		log.Printf("Message (%s) cancelled by sender", jobID)
