@@ -9,7 +9,7 @@ import (
 type Transport struct {
 
 	// send is a channel on which messages are sent.
-	Send chan Message
+	Send chan protocol.Message
 
 	// recv is a channel on which responses are sent.
 	Recv chan protocol.Message

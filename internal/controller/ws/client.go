@@ -2,11 +2,9 @@ package ws
 
 import (
 	"context"
-	//	"errors"
 	"log"
 	"time"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
@@ -17,7 +15,7 @@ type rcClient struct {
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan controller.Message
+	send chan protocol.Message
 
 	controlChannel chan protocol.Message
 
@@ -29,21 +27,6 @@ type rcClient struct {
 	cancel context.CancelFunc
 
 	config *WebSocketConfig
-}
-
-func (c *rcClient) SendMessage(w controller.Message) {
-	c.send <- w
-}
-
-func (c *rcClient) DisconnectReceptorNetwork() {
-	log.Println("DisconnectReceptorNetwork()")
-	c.socket.Close()
-}
-
-func (c *rcClient) Close() {
-	// FIXME:  Think through this a bit more.  On close, we might need to to try
-	// send a CloseMessage to the client??
-	c.cancel()
 }
 
 func (c *rcClient) read(ctx context.Context) {
@@ -94,6 +77,24 @@ func (c *rcClient) configurePongHandler() {
 	}
 }
 
+func writeMessageOntoWebsocket(socket *websocket.Conn, writeWait time.Duration, msg protocol.Message) error {
+
+	socket.SetWriteDeadline(time.Now().Add(writeWait))
+	w, err := socket.NextWriter(websocket.BinaryMessage)
+	if err != nil {
+		return err
+	}
+
+	err = protocol.WriteMessage(w, msg)
+	if err != nil {
+		return err
+	}
+
+	w.Close()
+
+	return nil
+}
+
 func (c *rcClient) write(ctx context.Context) {
 
 	pingTicker := c.configurePingTicker()
@@ -116,46 +117,19 @@ func (c *rcClient) write(ctx context.Context) {
 		case msg := <-c.controlChannel:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
-			w, err := c.socket.NextWriter(websocket.BinaryMessage)
+			err := writeMessageOntoWebsocket(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Println("WebSocket writer - error!  Closing connection!")
+				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
 				return
 			}
-
-			err = protocol.WriteMessage(w, msg)
-			if err != nil {
-				log.Println("WebSocket writer - error writing the message!  Closing connection!")
-				return
-			}
-			w.Close()
-
 		case msg := <-c.send:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			payloadMessage, messageID, err := protocol.BuildPayloadMessage(
-				msg.MessageID,
-				c.config.ReceptorControllerNodeId,
-				msg.Recipient,
-				msg.RouteList,
-				"directive",
-				msg.Directive,
-				msg.Payload)
-			log.Printf("Sending PayloadMessage - %s\n", *messageID)
-
-			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
-			w, err := c.socket.NextWriter(websocket.BinaryMessage)
+			err := writeMessageOntoWebsocket(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Println("WebSocket writer - error!  Closing connection!")
+				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
 				return
 			}
-
-			err = protocol.WriteMessage(w, payloadMessage)
-			if err != nil {
-				log.Println("WebSocket writer - error writing the message!  Closing connection!")
-				return
-			}
-			w.Close()
 		case <-pingTicker.C:
 			log.Println("WebSocket writer - sending PingMessage")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
