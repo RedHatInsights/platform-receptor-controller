@@ -78,6 +78,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			ControlChannel: client.controlChannel,
 			ErrorChannel:   client.errorChannel,
 			Cancel:         client.cancel,
+			Ctx:            ctx,
 		}
 
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object

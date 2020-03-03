@@ -24,5 +24,6 @@ type Transport struct {
 	// to the go routine managing write side of the websocket
 	ErrorChannel chan error
 
+	Ctx    context.Context
 	Cancel context.CancelFunc
 }
