@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 )
 
 type ReceptorService struct {
@@ -45,13 +47,17 @@ func (r *ReceptorService) SendMessage(recipient string, route []string, payload 
 		return nil, err
 	}
 
-	msg := Message{MessageID: jobID,
-		Recipient: recipient,
-		RouteList: route,
-		Payload:   payload,
-		Directive: directive}
+	payloadMessage, messageID, err := protocol.BuildPayloadMessage(
+		jobID,
+		r.NodeID,
+		recipient,
+		route,
+		"directive",
+		directive,
+		payload)
+	log.Printf("Sending PayloadMessage - %s\n", *messageID)
 
-	r.Transport.Send <- msg
+	r.Transport.Send <- payloadMessage
 
 	return &jobID, nil
 }
