@@ -87,7 +87,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		log.Println("job request:", jobRequest)
 
-		jobID, err := client.SendMessage(jobRequest.Recipient,
+		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,
 			[]string{jobRequest.Recipient},
 			jobRequest.Payload,
 			jobRequest.Directive)

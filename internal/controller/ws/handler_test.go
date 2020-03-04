@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -172,7 +173,7 @@ var _ = Describe("WsController", func() {
 				// client is nil below.
 				client := rc.connectionMgr.GetConnection("540155", nodeID)
 
-				client.SendMessage("TestClient", []string{"test-b", "test-a"}, "hello", "receptor:ping")
+				client.SendMessage(context.TODO(), "TestClient", []string{"test-b", "test-a"}, "hello", "receptor:ping")
 
 				m := readSocket(c, 4)      // read response from SendMessage request and verify it is a PayloadMessage
 				jm, err := json.Marshal(m) // m's marshal/unmarshal functions are private and can't be used here
