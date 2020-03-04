@@ -40,7 +40,7 @@ The status of a connection can be checked by sending a POST to the _/connection/
   $ curl -v -X POST -d '{"account": "02", "node_id": "1234"}' -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection/status
 ```
 
-#### Connection Status Message Format
+#### Connection Status Request Message Format
 
 ```
   {
@@ -66,9 +66,18 @@ A ping request can be sent by sending a POST to the _/connection/ping_ endpoint.
   $ curl -v -X POST -d '{"account": "02", "node_id": "1234"}' -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection/ping
 ```
 
+#### Ping Request Message Format
+
+```
+  {
+    "account": <account number>,
+    "node_id": <node id of the receptor node>,
+  }
+```
+
 #### Ping Response Message Format
 
-The response from the ping is very similar to the response that is put onto the kafka message queue:
+The response from the ping is similar to the response that is put onto the kafka message queue:
 
 ```
   {
