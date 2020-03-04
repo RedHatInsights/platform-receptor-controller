@@ -63,7 +63,7 @@ var _ = Describe("WsController", func() {
 		config = GetWebSocketConfig()
 		cm = controller.NewConnectionManager()
 		kw = queue.StartProducer(queue.GetProducer())
-		rd := controller.NewResponseDispatcherFactory(kw)
+		rd := controller.NewResponseReactorFactory(kw)
 		md := controller.NewMessageDispatcherFactory(queue.GetConsumer())
 		rc = NewReceptorController(config, cm, wsMux, rd, md)
 		rc.Routes()
