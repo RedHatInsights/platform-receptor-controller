@@ -38,6 +38,12 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing())
 }
 
+type errorResponse struct {
+	Title  string `json:"title"`
+	Status int    `json:"status"`
+	Detail string `json:"detail"`
+}
+
 type connectionID struct {
 	Account string `json:"account"`
 	NodeID  string `json:"node_id"`
@@ -65,14 +71,20 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
 		}
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
-			WriteJSONResponse(w, http.StatusNotFound, connectionStatus)
 			log.Printf("No connection to the customer (%+v)...\n", connID)
+			errorResponse := errorResponse{Title: "No connection found to node",
+				Status: http.StatusBadRequest,
+				Detail: "No connection found to node"}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
@@ -99,7 +111,10 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
@@ -136,7 +151,10 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
@@ -146,14 +164,19 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
-			WriteJSONResponse(w, http.StatusOK, connectionStatus)
+			errorResponse := errorResponse{Title: "No connection found to node",
+				Status: http.StatusBadRequest,
+				Detail: "No connection found to node"}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
 		payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusRequestTimeout)
+			errorResponse := errorResponse{Title: "Ping failed",
+				Status: http.StatusBadRequest,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
