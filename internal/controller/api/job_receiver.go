@@ -56,20 +56,22 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		var jobRequest JobRequest
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
-
 		if err != nil {
-			panic(err)
+			http.Error(w, err.Error(), 500)
+			return
 		}
 
 		if err := req.Body.Close(); err != nil {
-			panic(err)
+			http.Error(w, err.Error(), 500)
+			return
 		}
 
 		if err := json.Unmarshal(body, &jobRequest); err != nil {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
+				http.Error(w, err.Error(), 500)
+				return
 			}
 		}
 
@@ -98,7 +100,9 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
+				http.Error(w, err.Error(), 500)
+				return
+
 			}
 		}
 
@@ -107,7 +111,8 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(jobResponse); err != nil {
-			panic(err)
+			http.Error(w, err.Error(), 500)
+			return
 		}
 	}
 }
