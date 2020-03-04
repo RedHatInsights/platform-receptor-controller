@@ -43,6 +43,11 @@ type connectionID struct {
 	NodeID  string `json:"node_id"`
 }
 
+type connectionStatusResponse struct {
+	Status       string      `json:"status"`
+	Capabilities interface{} `json:"capabilities,omitempty"`
+}
+
 func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -60,36 +65,23 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(422) // unprocessable entity
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
 		}
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			w.WriteHeader(http.StatusNotFound)
+			connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
+			WriteJSONResponse(w, http.StatusNotFound, connectionStatus)
 			log.Printf("No connection to the customer (%+v)...\n", connID)
 			return
 		}
 
 		client.DisconnectReceptorNetwork()
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(connID); err != nil {
-			panic(err)
-		}
+		WriteJSONResponse(w, http.StatusOK, struct{}{})
 	}
 }
 
-type connectionStatusResponse struct {
-	Status       string      `json:"status"`
-	Capabilities interface{} `json:"capabilities"`
-}
-
-// FIXME: This might not belong here
 func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -107,11 +99,8 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
+			return
 		}
 
 		log.Println(connID)
@@ -126,11 +115,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(connectionStatus); err != nil {
-			panic(err)
-		}
+		WriteJSONResponse(w, http.StatusOK, connectionStatus)
 	}
 }
 
@@ -151,24 +136,18 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+			WriteJSONResponse(w, http.StatusUnprocessableEntity, err)
+			return
 		}
 
 		log.Println(connID)
 
 		var payload interface{}
-		var connectionStatus connectionStatusResponse
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			connectionStatus.Status = DISCONNECTED_STATUS
-			payload = connectionStatus
-
-			WriteJSONResponse(w, http.StatusOK, payload)
+			connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
+			WriteJSONResponse(w, http.StatusOK, connectionStatus)
 			return
 		}
 
