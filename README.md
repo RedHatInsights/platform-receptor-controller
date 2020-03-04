@@ -59,7 +59,7 @@ The status of a connection can be checked by sending a POST to the _/connection/
 
 ### Sending a ping
 
-A ping request can be sent by sending a POST to the _/connection/status_ endpoint.
+A ping request can be sent by sending a POST to the _/connection/ping_ endpoint.
 
 
 ```
