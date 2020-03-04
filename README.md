@@ -83,13 +83,6 @@ The response from the ping is very similar to the response that is put onto the 
   }
 ```
 
-#### Connection Status Response Message Format
-
-```
-  {
-    "status":"connected" or "disconnected"
-  }
-```
 
 ### Kafka Topics
 
