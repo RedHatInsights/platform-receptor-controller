@@ -119,7 +119,7 @@ func (c *rcClient) write(ctx context.Context) {
 
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
+				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
 				return
 			}
 		case msg := <-c.send:
@@ -127,7 +127,7 @@ func (c *rcClient) write(ctx context.Context) {
 
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Printf("WebSocket writer - error!  Closing connection! err: ", err)
+				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
 				return
 			}
 		case <-pingTicker.C:
