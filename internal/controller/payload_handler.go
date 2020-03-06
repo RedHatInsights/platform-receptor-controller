@@ -2,13 +2,10 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	kafka "github.com/segmentio/kafka-go"
 )
 
 type PayloadHandler struct {
@@ -24,16 +21,6 @@ func (ph *PayloadHandler) GetKey() string {
 }
 
 func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) {
-	type ResponseMessage struct {
-		AccountNumber string      `json:"account"`
-		Sender        string      `json:"sender"`
-		MessageType   string      `json:"message_type"`
-		MessageID     string      `json:"message_id"`
-		Payload       interface{} `json:"payload"`
-		Code          int         `json:"code"`
-		InResponseTo  string      `json:"in_response_to"`
-		Serial        int         `json:"serial"`
-	}
 
 	if m.Type() != protocol.PayloadMessageType {
 		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
@@ -52,31 +39,7 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 		return
 	}
 
-	responseMessage := ResponseMessage{
-		AccountNumber: ph.AccountNumber,
-		Sender:        payloadMessage.RoutingInfo.Sender,
-		MessageID:     payloadMessage.Data.MessageID,
-		MessageType:   payloadMessage.Data.MessageType,
-		Payload:       payloadMessage.Data.RawPayload,
-		Code:          payloadMessage.Data.Code,
-		InResponseTo:  payloadMessage.Data.InResponseTo,
-		Serial:        payloadMessage.Data.Serial,
-	}
-
-	log.Printf("Dispatching response:%+v", responseMessage)
-
-	jsonResponseMessage, err := json.Marshal(responseMessage)
-	if err != nil {
-		log.Println("JSON marshal of ResponseMessage failed, err:", err)
-		return
-	}
-
-	kw := queue.StartProducer(queue.GetProducer())
-	kw.WriteMessages(ctx,
-		kafka.Message{
-			Key:   []byte(payloadMessage.Data.InResponseTo),
-			Value: jsonResponseMessage,
-		})
+	ph.Receptor.DispatchResponse(payloadMessage)
 
 	return
 }

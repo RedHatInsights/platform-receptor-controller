@@ -333,7 +333,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 }
 
 func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, route []string,
-	messageType string, directive string, payload interface{}) (Message, *uuid.UUID, error) {
+	messageType string, directive string, payload interface{}) (Message, error) {
 	routingMessage := RoutingMessage{Sender: sender,
 		Recipient: recipient,
 		RouteList: route,
@@ -351,5 +351,5 @@ func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, r
 
 	payloadMessage := &PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
 
-	return payloadMessage, &messageId, nil
+	return payloadMessage, nil
 }

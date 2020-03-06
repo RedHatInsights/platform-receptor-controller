@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -23,9 +24,13 @@ const (
 type MockClient struct {
 }
 
-func (mc MockClient) SendMessage(recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+func (mc MockClient) SendMessage(ctx context.Context, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 	myUUID, _ := uuid.NewRandom()
 	return &myUUID, nil
+}
+
+func (mc MockClient) Ping(context.Context, string, []string) (interface{}, error) {
+	return nil, nil
 }
 
 func (mc MockClient) Close() {

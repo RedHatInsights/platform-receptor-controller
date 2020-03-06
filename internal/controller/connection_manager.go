@@ -1,13 +1,15 @@
 package controller
 
 import (
+	"context"
 	"sync"
 
 	"github.com/google/uuid"
 )
 
 type Receptor interface {
-	SendMessage(string, []string, interface{}, string) (*uuid.UUID, error)
+	SendMessage(context.Context, string, []string, interface{}, string) (*uuid.UUID, error)
+	Ping(context.Context, string, []string) (interface{}, error)
 	Close()
 	DisconnectReceptorNetwork()
 	GetCapabilities() interface{}

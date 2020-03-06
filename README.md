@@ -40,7 +40,7 @@ The status of a connection can be checked by sending a POST to the _/connection/
   $ curl -v -X POST -d '{"account": "02", "node_id": "1234"}' -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection/status
 ```
 
-#### Connection Status Message Format
+#### Connection Status Request Message Format
 
 ```
   {
@@ -56,6 +56,42 @@ The status of a connection can be checked by sending a POST to the _/connection/
     "status":"connected" or "disconnected"
   }
 ```
+
+### Sending a ping
+
+A ping request can be sent by sending a POST to the _/connection/ping_ endpoint.
+
+
+```
+  $ curl -v -X POST -d '{"account": "02", "node_id": "1234"}' -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection/ping
+```
+
+#### Ping Request Message Format
+
+```
+  {
+    "account": <account number>,
+    "node_id": <node id of the receptor node>,
+  }
+```
+
+#### Ping Response Message Format
+
+The response from the ping is similar to the response that is put onto the kafka message queue:
+
+```
+  {
+    "account": <account number>,
+    "sender": <node that send the response>
+    "message_type": <message type from the receptor network, usually "response">
+    "message_id": <uuid of the message from the receptor network>
+    "payload":  <response payload from the receptor network>
+    "code": 0,
+    "in_response_to": <uuid of the message that this message is in response to>
+    "serial": 1
+  }
+```
+
 
 ### Kafka Topics
 

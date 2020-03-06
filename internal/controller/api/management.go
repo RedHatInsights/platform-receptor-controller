@@ -35,11 +35,23 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.Use(identity.EnforceIdentity)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect())
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus())
+	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing())
+}
+
+type errorResponse struct {
+	Title  string `json:"title"`
+	Status int    `json:"status"`
+	Detail string `json:"detail"`
 }
 
 type connectionID struct {
 	Account string `json:"account"`
 	NodeID  string `json:"node_id"`
+}
+
+type connectionStatusResponse struct {
+	Status       string      `json:"status"`
+	Capabilities interface{} `json:"capabilities,omitempty"`
 }
 
 func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
@@ -59,37 +71,30 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(422) // unprocessable entity
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
 		}
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			w.WriteHeader(http.StatusNotFound)
 			log.Printf("No connection to the customer (%+v)...\n", connID)
+			errorResponse := errorResponse{Title: "No connection found to node",
+				Status: http.StatusBadRequest,
+				Detail: "No connection found to node"}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
 		client.DisconnectReceptorNetwork()
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(connID); err != nil {
-			panic(err)
-		}
+		WriteJSONResponse(w, http.StatusOK, struct{}{})
 	}
 }
 
-// FIXME: This might not belong here
 func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
-
-	type connectionStatusResponse struct {
-		Status       string      `json:"status"`
-		Capabilities interface{} `json:"capabilities"`
-	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
@@ -106,11 +111,11 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		}
 
 		if err := json.Unmarshal(body, &connID); err != nil {
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				panic(err)
-			}
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
 		}
 
 		log.Println(connID)
@@ -125,10 +130,66 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(connectionStatus); err != nil {
+		WriteJSONResponse(w, http.StatusOK, connectionStatus)
+	}
+}
+
+func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
+
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		var connID connectionID
+
+		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
+
+		if err != nil {
 			panic(err)
 		}
+
+		if err := req.Body.Close(); err != nil {
+			panic(err)
+		}
+
+		if err := json.Unmarshal(body, &connID); err != nil {
+			errorResponse := errorResponse{Title: "Unable to process json input",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
+		}
+
+		log.Println(connID)
+
+		var payload interface{}
+
+		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
+		if client == nil {
+			errorResponse := errorResponse{Title: "No connection found to node",
+				Status: http.StatusBadRequest,
+				Detail: "No connection found to node"}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
+		}
+
+		payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
+		if err != nil {
+			errorResponse := errorResponse{Title: "Ping failed",
+				Status: http.StatusBadRequest,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			return
+		}
+
+		WriteJSONResponse(w, http.StatusOK, payload)
+	}
+}
+
+func WriteJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, "Unable to encode payload!", http.StatusUnprocessableEntity)
+		log.Println("Unable to encode payload!")
+		return
 	}
 }
