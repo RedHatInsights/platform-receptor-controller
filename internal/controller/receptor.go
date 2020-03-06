@@ -31,6 +31,8 @@ type ReceptorService struct {
 	Transport *Transport
 
 	responseDispatcherRegistrar *DispatcherTable
+
+	kafkaWriter *kafka.Writer
 	/*
 	   edges
 	   seen
@@ -39,6 +41,9 @@ type ReceptorService struct {
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
 	log.Printf("Registering a connection to node %s", peerNodeID)
+
+	// FIXME: this is a bad hack!!!  fix this!!
+	r.kafkaWriter = queue.StartProducer(queue.GetProducer())
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata
@@ -202,12 +207,13 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 	}
 
 	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
-	kw := queue.StartProducer(queue.GetProducer())
-	kw.WriteMessages(r.Transport.Ctx,
-		kafka.Message{
-			Key:   []byte(payloadMessage.Data.InResponseTo),
-			Value: jsonResponseMessage,
-		})
+	go func() {
+		r.kafkaWriter.WriteMessages(r.Transport.Ctx,
+			kafka.Message{
+				Key:   []byte(payloadMessage.Data.InResponseTo),
+				Value: jsonResponseMessage,
+			})
+	}()
 
 }
 
