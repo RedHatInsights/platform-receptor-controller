@@ -72,7 +72,10 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
+		// FIXME:  figure out a better way to handle the kafka writer
+		go func() {
+			c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
+		}()
 	}
 }
 
