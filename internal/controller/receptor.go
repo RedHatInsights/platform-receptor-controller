@@ -59,40 +59,40 @@ func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
 
 func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 
-	jobID, err := uuid.NewRandom()
+	messageID, err := uuid.NewRandom()
 	if err != nil {
 		log.Println("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
-	payloadMessage, messageID, err := protocol.BuildPayloadMessage(
-		jobID,
+	payloadMessage, err := protocol.BuildPayloadMessage(
+		messageID,
 		r.NodeID,
 		recipient,
 		route,
 		"directive",
 		directive,
 		payload)
-	log.Printf("Sending PayloadMessage - %s\n", *messageID)
+	log.Printf("Sending PayloadMessage - %s\n", messageID)
 
 	err = r.sendMessage(msgSenderCtx, payloadMessage, time.Second*10) // FIXME:  add a configurable timeout
 	if err != nil {
 		return nil, err
 	}
 
-	return &jobID, nil
+	return &messageID, nil
 }
 
 func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, route []string) (interface{}, error) {
 
-	jobID, err := uuid.NewRandom()
+	messageID, err := uuid.NewRandom()
 	if err != nil {
 		log.Println("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
-	payloadMessage, _, err := protocol.BuildPayloadMessage(
-		jobID,
+	payloadMessage, err := protocol.BuildPayloadMessage(
+		messageID,
 		r.NodeID,
 		recipient,
 		route,
@@ -103,8 +103,8 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	responseChannel := make(chan ResponseMessage)
 
 	log.Println("Registering a sync response handler")
-	r.responseDispatcherRegistrar.Register(jobID, responseChannel)
-	defer r.responseDispatcherRegistrar.Unregister(jobID)
+	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
+	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
 	err = r.sendControlMessage(msgSenderCtx, payloadMessage, time.Second*10) // FIXME:  add a configurable timeout
 	if err != nil {
