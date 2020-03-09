@@ -50,7 +50,7 @@ func main() {
 	mgmtServer := api.NewManagementServer(cm, apiMux)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, apiMux, kw)
+	jr := api.NewJobReceiver(cm, apiMux, kw, wsConfig.KnownSecrets)
 	jr.Routes()
 
 	go func() {
