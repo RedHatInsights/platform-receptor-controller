@@ -12,8 +12,8 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
 	"github.com/go-playground/validator/v10"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
 
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -42,19 +42,22 @@ type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 	producer      *kafka.Writer
+	secrets       map[string]interface{}
 }
 
-func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer) *JobReceiver {
+func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, secrets map[string]interface{}) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
 		producer:      kw,
+		secrets:       secrets,
 	}
 }
 
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
-	securedSubRouter.Use(identity.EnforceIdentity)
+	amw := &middlewares.AuthMiddleware{Secrets: jr.secrets}
+	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("/job", jr.handleJob())
 }
 

@@ -16,6 +16,7 @@ const (
 	PONG_WAIT           = "WebSocket_Pong_Wait"
 	PING_PERIOD         = "WebSocket_Ping_Period"
 	MAX_MESSAGE_SIZE    = "WebSocket_Max_Message_Size"
+	KNOWN_SECRETS       = "Known_Secrets"
 
 	// FIXME: I don't think this belongs here
 	NODE_ID = "ReceptorControllerNodeId"
@@ -27,6 +28,7 @@ type WebSocketConfig struct {
 	PongWait                 time.Duration
 	PingPeriod               time.Duration
 	MaxMessageSize           int64
+	KnownSecrets             map[string]interface{}
 	ReceptorControllerNodeId string
 }
 
@@ -48,6 +50,7 @@ func GetWebSocketConfig() *WebSocketConfig {
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
+	options.SetDefault(KNOWN_SECRETS, "")
 	options.SetDefault(NODE_ID, "node-cloud-receptor-controller")
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
@@ -62,6 +65,7 @@ func GetWebSocketConfig() *WebSocketConfig {
 		PongWait:                 pongWait,
 		PingPeriod:               pingPeriod,
 		MaxMessageSize:           options.GetInt64(MAX_MESSAGE_SIZE),
+		KnownSecrets:             options.GetStringMap(KNOWN_SECRETS),
 		ReceptorControllerNodeId: options.GetString(NODE_ID),
 	}
 }
