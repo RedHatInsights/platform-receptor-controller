@@ -116,6 +116,21 @@ The response will contain the following information:
 
   The _code_ and _message\_type_ field as passed as is from the receptor mesh network.  The _code_ can be used to determine if the message was able to be handed over to a plugin and processed successfully (code=0) or if the plugin failed to process the message (code=1).  The _message\_type_ field can be either "response" or "eof".  If the value is "response", then the plugin has not completed processing and more responses are expected.  If the value is "eof", then the plugin has completed processing and no more responses are expected.
 
+### Connecting via Pre-Shared Key
+
+Internal services (not going through 3scale) can authenticate via a pre-shared key by adding the following headers to a request:
+
+  - receptor-controller-client-id
+  - receptor-controller-account
+  - receptor-controller-psk
+
+If your service is internal and will not be passing requests through 3scale a psk will be provided. This psk will be unique to your service.
+
+Example work request using token auth:
+```
+  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "receptor-controller-client-id:test-client" -H "receptor-controller-account:0001" -H "receptor-controller-psk:12345" http://localhost:9090/job
+```
+
 ### Development
 
 Install the project dependencies:
