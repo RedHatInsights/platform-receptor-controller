@@ -91,7 +91,7 @@ func readFrame(r io.Reader) (*FrameHeader, error) {
 
 	_, err := io.ReadFull(r, buf)
 	if err != nil {
-		// FIXME: log err
+		log.Println("Unable to read complete frame header (short read): ", err)
 		return nil, errFrameTooShort
 	}
 
@@ -109,7 +109,7 @@ func readFrameData(r io.Reader, dataLength uint32) ([]byte, error) {
 	buf := make([]byte, dataLength)
 	_, err := io.ReadFull(r, buf)
 	if err != nil {
-		// FIXME: log err
+		log.Println("Unable to read complete frame data (short read): ", err)
 		return nil, errFrameDataTooShort
 	}
 

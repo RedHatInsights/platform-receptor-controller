@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -35,6 +36,7 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 	cm.Lock()
 	cm.connections[key] = client
 	cm.Unlock()
+	log.Printf("Registered a connection (%s, %s)", account, node_id)
 }
 
 func (cm *ConnectionManager) Unregister(account string, node_id string) {
@@ -47,6 +49,7 @@ func (cm *ConnectionManager) Unregister(account string, node_id string) {
 	conn.Close()
 	delete(cm.connections, key)
 	cm.Unlock()
+	log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }
 
 func (cm *ConnectionManager) GetConnection(account string, node_id string) Receptor {

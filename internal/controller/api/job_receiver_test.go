@@ -100,6 +100,86 @@ var _ = Describe("JobReciever", func() {
 				Expect(rr.Code).To(Equal(http.StatusNotFound))
 			})
 
+			It("Should not allow sending a job with an empty account", func() {
+
+				postBody := "{\"account\": \"\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not allow sending a job with malformed json", func() {
+
+				postBody := "{\"account\" = \"1234-bad-json\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not allow sending a job with a string instead of json", func() {
+
+				postBody := "account: 1234-string-value"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not allow sending a job with missing required fields", func() {
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"]}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should allow sending a job with unknown fields", func() {
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\", \"extra\": \"field\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusCreated))
+			})
+
 		})
 
 		Context("Without an identity header", func() {
