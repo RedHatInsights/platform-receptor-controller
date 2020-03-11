@@ -54,6 +54,9 @@ func (c *rcClient) read(ctx context.Context) {
 			return
 		}
 
+		// The read has completed...disable the read deadline
+		c.socket.SetReadDeadline(time.Time{})
+
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
