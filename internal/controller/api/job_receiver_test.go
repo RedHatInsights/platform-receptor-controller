@@ -19,9 +19,9 @@ import (
 
 const (
 	IDENTITY_HEADER_NAME      = "x-rh-identity"
-	TOKEN_HEADER_CLIENT_NAME  = "receptor-controller-client-id"
-	TOKEN_HEADER_ACCOUNT_NAME = "receptor-controller-account"
-	TOKEN_HEADER_PSK_NAME     = "receptor-controller-psk"
+	TOKEN_HEADER_CLIENT_NAME  = "x-rh-receptor-controller-client-id"
+	TOKEN_HEADER_ACCOUNT_NAME = "x-rh-receptor-controller-account"
+	TOKEN_HEADER_PSK_NAME     = "x-rh-receptor-controller-psk"
 )
 
 type MockClient struct {

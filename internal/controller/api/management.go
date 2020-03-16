@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
 
 	"github.com/gorilla/mux"
 )
@@ -21,18 +21,21 @@ const (
 type ManagementServer struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
+	secrets       map[string]interface{}
 }
 
-func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router) *ManagementServer {
+func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, secrets map[string]interface{}) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
+		secrets:       secrets,
 	}
 }
 
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
-	securedSubRouter.Use(identity.EnforceIdentity)
+	amw := &middlewares.AuthMiddleware{Secrets: s.secrets}
+	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect())
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus())
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing())

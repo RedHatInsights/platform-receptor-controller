@@ -126,6 +126,11 @@ Internal services (not going through 3scale) can authenticate via a pre-shared k
 
 If your service is internal and will not be passing requests through 3scale a psk will be provided. This psk will be unique to your service.
 
+Local testing example:
+```
+  $ export RECEPTOR_CONTROLLER_SERVICE_TO_SERVICE_CREDENTIALS='{"test_client_1": "12345", "test_client_2": "6789"}'
+```
+
 Example work request using token auth:
 ```
   $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "receptor-controller-client-id:test-client" -H "receptor-controller-account:0001" -H "receptor-controller-psk:12345" http://localhost:9090/job

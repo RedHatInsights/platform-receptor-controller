@@ -44,7 +44,7 @@ var _ = Describe("Management", func() {
 		cm = controller.NewConnectionManager()
 		mc := MockClient{}
 		cm.Register(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
-		ms = NewManagementServer(cm, apiMux)
+		ms = NewManagementServer(cm, apiMux, make(map[string]interface{}))
 		ms.Routes()
 
 		identity := `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
@@ -95,7 +95,32 @@ var _ = Describe("Management", func() {
 
 		})
 
-		Context("Without an identity header", func() {
+		Context("With valid service to service credentials", func() {
+			It("Should be able to get the status of a connected customer", func() {
+				ms.secrets["test_client_1"] = "12345"
+
+				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_STATUS_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				var m map[string]string
+				json.Unmarshal(rr.Body.Bytes(), &m)
+				Expect(m).Should(HaveKeyWithValue("status", CONNECTED_STATUS))
+
+				Expect(rr.Code).To(Equal(http.StatusOK))
+			})
+		})
+
+		Context("Without an identity header or service to service credentials", func() {
 			It("Should fail to send a job to a connected customer", func() {
 
 				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
@@ -107,7 +132,7 @@ var _ = Describe("Management", func() {
 
 				ms.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
 			})
 
 		})
@@ -152,7 +177,50 @@ var _ = Describe("Management", func() {
 
 		})
 
-		Context("Without an identity header", func() {
+		Context("With valid service to service credentials", func() {
+			It("Should be able to disconnect a connected customer", func() {
+				ms.secrets["test_client_1"] = "12345"
+
+				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusOK))
+
+				// FIXME: need to verify that diconnect is called on the client connection
+			})
+
+			It("Should not be able to dsconnect a disconnected customer", func() {
+				ms.secrets["test_client_1"] = "12345"
+
+				postBody := createConnectionStatusPostBody("1234-not-here", CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusNotFound))
+			})
+
+		})
+
+		Context("Without an identity header or service to service credentials", func() {
 			It("Should fail to send a job to a connected customer", func() {
 
 				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
@@ -164,7 +232,7 @@ var _ = Describe("Management", func() {
 
 				ms.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
 			})
 
 		})
