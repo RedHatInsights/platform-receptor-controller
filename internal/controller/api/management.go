@@ -54,6 +54,11 @@ type connectionStatusResponse struct {
 	Capabilities interface{} `json:"capabilities,omitempty"`
 }
 
+type connectionPingResponse struct {
+	Status  string      `json:"status"`
+	Payload interface{} `json:"payload"`
+}
+
 func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -160,18 +165,15 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 
 		log.Println(connID)
 
-		var payload interface{}
-
+		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			errorResponse := errorResponse{Title: "No connection found to node",
-				Status: http.StatusBadRequest,
-				Detail: "No connection found to node"}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			WriteJSONResponse(w, http.StatusOK, pingResponse)
 			return
 		}
 
-		payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
+		pingResponse.Status = CONNECTED_STATUS
+		pingResponse.Payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
 		if err != nil {
 			errorResponse := errorResponse{Title: "Ping failed",
 				Status: http.StatusBadRequest,
@@ -180,7 +182,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			return
 		}
 
-		WriteJSONResponse(w, http.StatusOK, payload)
+		WriteJSONResponse(w, http.StatusOK, pingResponse)
 	}
 }
 

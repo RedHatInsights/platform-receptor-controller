@@ -123,7 +123,6 @@
         }
       }
     }
-
   },
   "components": {
     "securitySchemes": {
@@ -176,15 +175,22 @@
         "type": "object",
         "properties": {
           "status": {
-            "type": "string",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
+            "$ref": "#/components/schemas/ConnectionStatus"
           }
         }
       },
       "ConnectionPingResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ConnectionStatus"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/Payload"
+          }
+        }
+      },
+      "Payload": {
         "type": "object",
         "properties": {
           "account": {
@@ -212,6 +218,13 @@
             "type": "integer"
           }
         }
+      },
+      "ConnectionStatus": {
+        "type": "string",
+        "enum": [
+          "connected",
+          "disconnected"
+        ]
       }
     }
   }
