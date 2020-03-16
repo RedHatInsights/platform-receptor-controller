@@ -2,46 +2,31 @@ package ws
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 )
 
 type rcClient struct {
-	account string
-
-	node_id string
 
 	// socket is the web socket for this client.
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan controller.Message
+	send chan protocol.Message
+
+	controlChannel chan protocol.Message
+
+	errorChannel chan error
+
+	// recv is a channel on which responses are sent.
+	recv chan protocol.Message
 
 	cancel context.CancelFunc
 
-	responseDispatcher *controller.ResponseDispatcher
-
 	config *WebSocketConfig
-}
-
-func (c *rcClient) SendMessage(w controller.Message) {
-	c.send <- w
-}
-
-func (c *rcClient) DisconnectReceptorNetwork() {
-	log.Println("DisconnectReceptorNetwork()")
-	c.socket.Close()
-}
-
-func (c *rcClient) Close() {
-	// FIXME:  Think through this a bit more.  On close, we might need to to try
-	// send a CloseMessage to the client??
-	c.cancel()
 }
 
 func (c *rcClient) read(ctx context.Context) {
@@ -75,10 +60,7 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
-		// FIXME:  figure out a better way to handle the kafka writer
-		go func() {
-			c.responseDispatcher.DispatchResponse(ctx, message, c.config.ReceptorControllerNodeId)
-		}()
+		c.recv <- message
 	}
 }
 
@@ -98,6 +80,24 @@ func (c *rcClient) configurePongHandler() {
 	}
 }
 
+func writeMessage(socket *websocket.Conn, writeWait time.Duration, msg protocol.Message) error {
+
+	socket.SetWriteDeadline(time.Now().Add(writeWait))
+	w, err := socket.NextWriter(websocket.BinaryMessage)
+	if err != nil {
+		return err
+	}
+
+	err = protocol.WriteMessage(w, msg)
+	if err != nil {
+		return err
+	}
+
+	w.Close()
+
+	return nil
+}
+
 func (c *rcClient) write(ctx context.Context) {
 
 	pingTicker := c.configurePingTicker()
@@ -114,32 +114,25 @@ func (c *rcClient) write(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case err := <-c.errorChannel:
+			log.Println("Websocket writer - got an error - shutting down:", err)
+			return
+		case msg := <-c.controlChannel:
+			log.Println("Websocket writer needs to send msg:", msg)
+
+			err := writeMessage(c.socket, c.config.WriteWait, msg)
+			if err != nil {
+				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
+				return
+			}
 		case msg := <-c.send:
 			log.Println("Websocket writer needs to send msg:", msg)
 
-			payloadMessage, messageID, err := protocol.BuildPayloadMessage(
-				msg.MessageID,
-				c.config.ReceptorControllerNodeId,
-				msg.Recipient,
-				msg.RouteList,
-				"directive",
-				msg.Directive,
-				msg.Payload)
-			log.Printf("Sending PayloadMessage - %s\n", *messageID)
-
-			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
-			w, err := c.socket.NextWriter(websocket.BinaryMessage)
+			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Println("WebSocket writer - error!  Closing connection!")
+				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
 				return
 			}
-
-			err = protocol.WriteMessage(w, payloadMessage)
-			if err != nil {
-				log.Println("WebSocket writer - error writing the message!  Closing connection!")
-				return
-			}
-			w.Close()
 		case <-pingTicker.C:
 			log.Println("WebSocket writer - sending PingMessage")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
@@ -163,66 +156,4 @@ func (c *rcClient) configurePingTicker() *time.Ticker {
 		ticker.Stop()
 		return ticker
 	}
-}
-
-func (c *rcClient) performHandshake() (string, error) {
-
-	c.socket.SetReadDeadline(time.Now().Add(c.config.HandshakeReadWait))
-	defer c.socket.SetReadDeadline(time.Time{})
-
-	messageType, r, err := c.socket.NextReader()
-	log.Println("WebSocket reader got a message...")
-	if err != nil {
-		log.Println("WebSocket reader - error: ", err)
-		return "", err
-	}
-
-	if messageType != websocket.BinaryMessage {
-		log.Printf("WebSocket reader: invalid type, expected %d, got %d", websocket.BinaryMessage, messageType)
-		return "", errors.New("websocket reader: invalid message type")
-	}
-
-	message, err := protocol.ReadMessage(r)
-	if err != nil {
-		log.Println("Websocket reader - error reading/parsing message: ", err)
-		return "", err
-	}
-	log.Println("Websocket reader message:", message)
-	log.Println("Websocket reader message type:", message.Type())
-
-	if message.Type() != protocol.HiMessageType {
-		log.Printf("WebSocket reader: invalid type, expected %d, got %d", protocol.HiMessageType, message.Type())
-		return "", errors.New("websocket reader: invalid receptor message type")
-	}
-
-	hiMessage, ok := message.(*protocol.HiMessage)
-	if ok != true {
-		log.Println("Websocket reader - error casting message to HiMessage")
-		return "", errors.New("websocket reader: invalid receptor message type")
-	}
-
-	log.Printf("Received a hi message from receptor node %s\n", hiMessage.ID)
-
-	log.Println("WebSocket writer - sending HI")
-
-	c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
-	w, err := c.socket.NextWriter(websocket.BinaryMessage)
-	if err != nil {
-		log.Println("WebSocket writer - error getting next writer: ", err)
-		return "", err
-	}
-
-	defer w.Close()
-
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: c.config.ReceptorControllerNodeId}
-
-	err = protocol.WriteMessage(w, &responseHiMessage)
-	if err != nil {
-		log.Println("WebSocket writer - error writing message: ", err)
-		return "", err
-	}
-
-	log.Println("WebSocket writer - sent HI")
-
-	return hiMessage.ID, nil
 }

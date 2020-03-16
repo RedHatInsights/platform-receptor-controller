@@ -139,6 +139,8 @@ func buildCommandMessage(buff []byte) (Message, error) {
 	return m, nil
 }
 
+var _ Message = &HiMessage{}
+
 type HiMessage struct {
 	Command         string      `json:"cmd"`
 	ID              string      `json:"id"`
@@ -172,6 +174,8 @@ func (m *HiMessage) marshal() ([]byte, error) {
 
 	return b, nil
 }
+
+var _ Message = &RoutingMessage{}
 
 type RoutingMessage struct {
 	Sender    string   `json:"sender"`
@@ -210,6 +214,8 @@ type Edge struct {
 	Right string
 	Cost  int
 }
+
+var _ Message = &RouteTableMessage{}
 
 type RouteTableMessage struct {
 	Command      string          `json:"cmd"`
@@ -252,6 +258,8 @@ func (m *RouteTableMessage) marshal() ([]byte, error) {
 
 	return b, nil
 }
+
+var _ Message = &PayloadMessage{}
 
 type PayloadMessage struct {
 	RoutingInfo *RoutingMessage
@@ -325,7 +333,7 @@ func (jt *Time) UnmarshalJSON(b []byte) error {
 }
 
 func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, route []string,
-	messageType string, directive string, payload interface{}) (Message, *uuid.UUID, error) {
+	messageType string, directive string, payload interface{}) (Message, error) {
 	routingMessage := RoutingMessage{Sender: sender,
 		Recipient: recipient,
 		RouteList: route,
@@ -343,5 +351,5 @@ func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, r
 
 	payloadMessage := &PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
 
-	return payloadMessage, &messageId, nil
+	return payloadMessage, nil
 }

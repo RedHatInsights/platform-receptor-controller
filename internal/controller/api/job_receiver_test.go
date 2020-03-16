@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -22,13 +24,23 @@ const (
 type MockClient struct {
 }
 
-func (mc MockClient) SendMessage(w controller.Message) {
+func (mc MockClient) SendMessage(ctx context.Context, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+	myUUID, _ := uuid.NewRandom()
+	return &myUUID, nil
+}
+
+func (mc MockClient) Ping(context.Context, string, []string) (interface{}, error) {
+	return nil, nil
 }
 
 func (mc MockClient) Close() {
 }
 
 func (mc MockClient) DisconnectReceptorNetwork() {
+}
+
+func (mc MockClient) GetCapabilities() interface{} {
+	return struct{}{}
 }
 
 var _ = Describe("JobReciever", func() {

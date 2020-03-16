@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
@@ -17,20 +18,20 @@ const (
 )
 
 type ReceptorController struct {
-	connectionMgr             *controller.ConnectionManager
-	router                    *mux.Router
-	config                    *WebSocketConfig
-	responseDispatcherFactory *controller.ResponseDispatcherFactory
-	messageDispatcherFactory  *controller.MessageDispatcherFactory
+	connectionMgr            *controller.ConnectionManager
+	router                   *mux.Router
+	config                   *WebSocketConfig
+	responseReactorFactory   *controller.ResponseReactorFactory
+	messageDispatcherFactory *controller.MessageDispatcherFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseDispatcherFactory, md *controller.MessageDispatcherFactory) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory) *ReceptorController {
 	return &ReceptorController{
-		connectionMgr:             cm,
-		router:                    r,
-		config:                    wsc,
-		responseDispatcherFactory: rd,
-		messageDispatcherFactory:  md,
+		connectionMgr:            cm,
+		router:                   r,
+		config:                   wsc,
+		responseReactorFactory:   rd,
+		messageDispatcherFactory: md,
 	}
 }
 
@@ -58,39 +59,53 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		log.Println("All the headers: ", req.Header)
 
 		client := &rcClient{
-			config:  rc.config,
-			account: rhIdentity.Identity.AccountNumber,
-			socket:  socket,
-			send:    make(chan controller.Message, messageBufferSize),
+			config:         rc.config,
+			socket:         socket,
+			send:           make(chan protocol.Message, messageBufferSize),
+			controlChannel: make(chan protocol.Message, messageBufferSize),
+			errorChannel:   make(chan error),
+			recv:           make(chan protocol.Message, messageBufferSize),
 		}
-
-		client.responseDispatcher = rc.responseDispatcherFactory.NewDispatcher(client.account, client.node_id)
-		// messageDispatcher := rc.messageDispatcherFactory.NewDispatcher(client.account, client.node_id)
 
 		ctx := req.Context()
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		client.cancel = cancel
 
+		transport := &controller.Transport{
+			Send:           client.send,
+			Recv:           client.recv,
+			ControlChannel: client.controlChannel,
+			ErrorChannel:   client.errorChannel,
+			Cancel:         client.cancel,
+			Ctx:            ctx,
+		}
+
+		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
+
+		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
+
+		receptor := controller.ReceptorService{
+			AccountNumber: rhIdentity.Identity.AccountNumber,
+			NodeID:        rc.config.ReceptorControllerNodeId,
+			Transport:     transport,
+		}
+
+		handshakeHandler := controller.HandshakeHandler{
+			Transport:                transport,
+			Receptor:                 &receptor,
+			ResponseReactor:          responseReactor,
+			AccountNumber:            rhIdentity.Identity.AccountNumber,
+			ConnectionMgr:            rc.connectionMgr,
+			MessageDispatcherFactory: rc.messageDispatcherFactory,
+		}
+		responseReactor.RegisterHandler(protocol.HiMessageType, handshakeHandler)
+
+		go responseReactor.Run(ctx)
+
 		socket.SetReadLimit(rc.config.MaxMessageSize)
 
 		defer socket.Close()
-
-		peerID, err := client.performHandshake()
-		if err != nil {
-			log.Println("Error during handshake:", err)
-			return
-		}
-
-		client.node_id = peerID
-
-		rc.connectionMgr.Register(client.account, client.node_id, client)
-
-		// once this go routine exits...notify the connection manager of the clients departure
-		defer func() {
-			rc.connectionMgr.Unregister(client.account, client.node_id)
-			log.Println("Websocket server - account unregistered from connection manager")
-		}()
 
 		// Should the client have a 'handler' function that manages the connection?
 		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines

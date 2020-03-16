@@ -88,6 +88,40 @@
           }
         }
       }
+    },
+    "/connection/ping": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Send a ping request to a receptor node",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionPingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -141,13 +175,56 @@
         "type": "object",
         "properties": {
           "status": {
-            "type": "string",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
+            "$ref": "#/components/schemas/ConnectionStatus"
           }
         }
+      },
+      "ConnectionPingResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ConnectionStatus"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/Payload"
+          }
+        }
+      },
+      "Payload": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "message_type": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "in_response_to": {
+            "type": "string"
+          },
+          "serial": {
+            "type": "integer"
+          }
+        }
+      },
+      "ConnectionStatus": {
+        "type": "string",
+        "enum": [
+          "connected",
+          "disconnected"
+        ]
       }
     }
   }

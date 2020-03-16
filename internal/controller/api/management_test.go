@@ -147,7 +147,7 @@ var _ = Describe("Management", func() {
 
 				ms.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusNotFound))
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
 			})
 
 		})
