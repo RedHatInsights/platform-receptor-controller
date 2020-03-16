@@ -81,16 +81,22 @@ The response from the ping is similar to the response that is put onto the kafka
 
 ```
   {
-    "account": <account number>,
-    "sender": <node that send the response>
-    "message_type": <message type from the receptor network, usually "response">
-    "message_id": <uuid of the message from the receptor network>
-    "payload":  <response payload from the receptor network>
-    "code": 0,
-    "in_response_to": <uuid of the message that this message is in response to>
-    "serial": 1
+    "status":"connected" or "disconnected"
+    "payload":
+      {
+        "account": <account number>,
+        "sender": <node that send the response>
+        "message_type": <message type from the receptor network, usually "response">
+        "message_id": <uuid of the message from the receptor network>
+        "payload":  <response payload from the receptor network>
+        "code": 0,
+        "in_response_to": <uuid of the message that this message is in response to>
+        "serial": 1
+     }
   }
 ```
+
+If there is not a websocket connection to the node, then the status will be "disconnected" and the payload will be null.
 
 
 ### Kafka Topics
