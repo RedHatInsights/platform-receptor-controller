@@ -8,35 +8,45 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
-const authErrorHeader = "Authentication error: "
+const (
+	authErrorHeader = "Authentication error: "
+	identityHeader  = "x-rh-identity"
+	clientHeader    = "x-rh-receptor-controller-client-id"
+	accountHeader   = "x-rh-receptor-controller-account"
+	pskHeader       = "x-rh-receptor-controller-psk"
+)
 
-type serviceRequest struct {
+type serviceCredentials struct {
 	clientID string
 	account  string
 	psk      string
 }
 
-func newServiceRequest(clientID, account, psk string) (*serviceRequest, error) {
+func newServiceCredentials(clientID, account, psk string) (*serviceCredentials, error) {
 	switch {
 	case clientID == "":
-		return nil, errors.New(authErrorHeader + "Missing receptor-controller-client-id header")
+		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-client-id header")
 	case account == "":
-		return nil, errors.New(authErrorHeader + "Missing receptor-controller-account header")
+		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-account header")
 	case psk == "":
-		return nil, errors.New(authErrorHeader + "Missing receptor-controller-psk header")
+		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-psk header")
 	}
-	return &serviceRequest{
+	return &serviceCredentials{
 		clientID: clientID,
 		account:  account,
 		psk:      psk,
 	}, nil
 }
 
-func (sr *serviceRequest) validate(secrets map[string]interface{}) error {
+type serviceCredentialsValidator struct {
+	knownServiceCredentials map[string]interface{}
+}
+
+func (scv *serviceCredentialsValidator) validate(sc *serviceCredentials) error {
 	switch {
-	case secrets[sr.clientID] == nil:
+	case scv.knownServiceCredentials[sc.clientID] == nil:
 		return errors.New(authErrorHeader + "Provided ClientID not attached to any known keys")
-	case sr.psk != secrets[sr.clientID]:
+	case sc.psk != scv.knownServiceCredentials[sc.clientID]:
 		return errors.New(authErrorHeader + "Provided PSK does not match known key for this client")
 	}
 	return nil
@@ -51,20 +61,21 @@ type AuthMiddleware struct {
 // auth to the identity middleware
 func (amw *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("x-rh-identity") != "" { // identity header auth
+		if r.Header.Get(identityHeader) != "" { // identity header auth
 			identity.EnforceIdentity(next).ServeHTTP(w, r)
 		} else { // token auth
-			sr, err := newServiceRequest(
-				r.Header.Get("receptor-controller-client-id"),
-				r.Header.Get("receptor-controller-account"),
-				r.Header.Get("receptor-controller-psk"),
+			sr, err := newServiceCredentials(
+				r.Header.Get(clientHeader),
+				r.Header.Get(accountHeader),
+				r.Header.Get(pskHeader),
 			)
 			if err != nil {
 				http.Error(w, err.Error(), 401)
 				return
 			}
 			log.Printf("Received service to service request from %v using account:%v", sr.clientID, sr.account)
-			if err := sr.validate(amw.Secrets); err != nil {
+			validator := serviceCredentialsValidator{knownServiceCredentials: amw.Secrets}
+			if err := validator.validate(sr); err != nil {
 				http.Error(w, err.Error(), 401)
 				return
 			}

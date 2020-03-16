@@ -11,6 +11,7 @@ import (
 
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/gorilla/mux"
@@ -20,14 +21,16 @@ func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
 	flag.Parse()
 
+	wsConfig := ws.GetWebSocketConfig()
+
 	cm := c.NewConnectionManager()
 	mgmtMux := mux.NewRouter()
-	mgmtServer := api.NewManagementServer(cm, mgmtMux)
+	mgmtServer := api.NewManagementServer(cm, mgmtMux, wsConfig.ServiceToServiceCredentials)
 	mgmtServer.Routes()
 
 	kw := queue.StartProducer(queue.GetProducer())
 
-	jr := api.NewJobReceiver(cm, mgmtMux, kw)
+	jr := api.NewJobReceiver(cm, mgmtMux, kw, wsConfig.ServiceToServiceCredentials)
 	jr.Routes()
 
 	go func() {

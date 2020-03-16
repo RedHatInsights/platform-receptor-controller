@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	TOKEN_HEADER_CLIENT_NAME  = "receptor-controller-client-id"
-	TOKEN_HEADER_ACCOUNT_NAME = "receptor-controller-account"
-	TOKEN_HEADER_PSK_NAME     = "receptor-controller-psk"
+	TOKEN_HEADER_CLIENT_NAME  = "x-rh-receptor-controller-client-id"
+	TOKEN_HEADER_ACCOUNT_NAME = "x-rh-receptor-controller-account"
+	TOKEN_HEADER_PSK_NAME     = "x-rh-receptor-controller-psk"
 )
 
 func GetTestHandler() http.HandlerFunc {
@@ -80,21 +80,21 @@ var _ = Describe("Auth", func() {
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
 
-				boiler(req, 401, "Authentication error: Missing receptor-controller-client-id header\n", amw)
+				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-client-id header\n", amw)
 			})
 
 			It("Should return 401 when the account header is missing", func() {
 				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
 
-				boiler(req, 401, "Authentication error: Missing receptor-controller-account header\n", amw)
+				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-account header\n", amw)
 			})
 
 			It("Should return 401 when the psk header is missing", func() {
 				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 
-				boiler(req, 401, "Authentication error: Missing receptor-controller-psk header\n", amw)
+				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-psk header\n", amw)
 			})
 		})
 	})
