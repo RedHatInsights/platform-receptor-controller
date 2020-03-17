@@ -247,7 +247,6 @@ var _ = Describe("JobReceiver", func() {
 				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
 			})
 		})
-<<<<<<< HEAD
 
 		Context("With an unknown client during token auth", func() {
 			It("Should not be able to send a job to a connected customer", func() {
@@ -258,18 +257,6 @@ var _ = Describe("JobReceiver", func() {
 				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
 				Expect(err).NotTo(HaveOccurred())
 
-=======
-
-		Context("With an unknown client during token auth", func() {
-			It("Should not be able to send a job to a connected customer", func() {
-				jr.secrets["test_client_1"] = "12345"
-
-				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
-
-				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
-				Expect(err).NotTo(HaveOccurred())
-
->>>>>>> Initial commit for internal service to service auth using pre shared keys.
 				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_nil")
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")

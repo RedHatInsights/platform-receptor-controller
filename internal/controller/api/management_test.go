@@ -159,7 +159,7 @@ var _ = Describe("Management", func() {
 				// FIXME: need to verify that diconnect is called on the client connection
 			})
 
-			It("Should not be able to dsconnect a disconnected customer", func() {
+			It("Should not be able to disconnect a disconnected customer", func() {
 
 				postBody := createConnectionStatusPostBody("1234-not-here", CONNECTED_NODE_ID)
 
@@ -199,7 +199,7 @@ var _ = Describe("Management", func() {
 				// FIXME: need to verify that diconnect is called on the client connection
 			})
 
-			It("Should not be able to dsconnect a disconnected customer", func() {
+			It("Should not be able to disconnect a disconnected customer", func() {
 				ms.secrets["test_client_1"] = "12345"
 
 				postBody := createConnectionStatusPostBody("1234-not-here", CONNECTED_NODE_ID)
@@ -215,7 +215,7 @@ var _ = Describe("Management", func() {
 
 				ms.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusNotFound))
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
 			})
 
 		})
