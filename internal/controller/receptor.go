@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
 	"github.com/google/uuid"
@@ -20,6 +19,25 @@ var (
 	requestCancelledBySender        = errors.New("Unable to complete the request.  Request cancelled by message sender.")
 	requestTimedOut                 = errors.New("Unable to complete the request.  Request timed out.")
 )
+
+type ReceptorServiceFactory struct {
+	kafkaWriter *kafka.Writer
+}
+
+func NewReceptorServiceFactory(w *kafka.Writer) *ReceptorServiceFactory {
+	return &ReceptorServiceFactory{
+		kafkaWriter: w,
+	}
+}
+
+func (fact *ReceptorServiceFactory) NewReceptorService(account, nodeID string, transport *Transport) *ReceptorService {
+	return &ReceptorService{
+		AccountNumber: account,
+		NodeID:        nodeID,
+		Transport:     transport,
+		kafkaWriter:   fact.kafkaWriter,
+	}
+}
 
 type ReceptorService struct {
 	AccountNumber string
@@ -41,9 +59,6 @@ type ReceptorService struct {
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
 	log.Printf("Registering a connection to node %s", peerNodeID)
-
-	// FIXME: this is a bad hack!!!  fix this!!
-	r.kafkaWriter = queue.StartProducer(queue.GetProducer())
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata

@@ -23,15 +23,17 @@ type ReceptorController struct {
 	config                   *WebSocketConfig
 	responseReactorFactory   *controller.ResponseReactorFactory
 	messageDispatcherFactory *controller.MessageDispatcherFactory
+	receptorServiceFactory   *controller.ReceptorServiceFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory) *ReceptorController {
+func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:            cm,
 		router:                   r,
 		config:                   wsc,
 		responseReactorFactory:   rd,
 		messageDispatcherFactory: md,
+		receptorServiceFactory:   rs,
 	}
 }
 
@@ -84,16 +86,11 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
 
 		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
-
-		receptor := controller.ReceptorService{
-			AccountNumber: rhIdentity.Identity.AccountNumber,
-			NodeID:        rc.config.ReceptorControllerNodeId,
-			Transport:     transport,
-		}
+		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber, rc.config.ReceptorControllerNodeId, transport)
 
 		handshakeHandler := controller.HandshakeHandler{
 			Transport:                transport,
-			Receptor:                 &receptor,
+			Receptor:                 receptorService,
 			ResponseReactor:          responseReactor,
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
 			ConnectionMgr:            rc.connectionMgr,
