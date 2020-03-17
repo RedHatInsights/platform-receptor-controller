@@ -204,7 +204,12 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 		Serial:        payloadMessage.Data.Serial,
 	}
 
-	inResponseTo, _ := uuid.Parse(payloadMessage.Data.InResponseTo)
+	inResponseTo, err := uuid.Parse(payloadMessage.Data.InResponseTo)
+	if err != nil {
+		log.Printf("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
+			"  Error: %s, Message: %+v", err, payloadMessage.Data.InResponseTo)
+		return
+	}
 
 	responseChannel, _ := r.responseDispatcherRegistrar.GetDispatchChannel(inResponseTo)
 
