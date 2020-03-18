@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 )
 
@@ -125,24 +126,25 @@ func TestGetConnectionsByAccountWithNoRegisteredReceptors(t *testing.T) {
 }
 
 func TestGetAllConnections(t *testing.T) {
-	var testReceptors = []struct {
-		account  string
-		node_id  string
-		receptor *MockReceptor
-	}{
-		{"0000001", "node-a", &MockReceptor{}},
-		{"0000001", "node-b", &MockReceptor{}},
-		{"0000002", "node-a", &MockReceptor{}},
-		{"0000003", "node-a", &MockReceptor{}},
+
+	var testReceptors = map[string]map[string]Receptor{
+		"0000001": {"node-a": &MockReceptor{},
+			"node-b": &MockReceptor{}},
+		"0000002": {"node-a": &MockReceptor{}},
+		"0000003": {"node-a": &MockReceptor{}},
 	}
 	cm := NewConnectionManager()
-	for _, r := range testReceptors {
-		cm.Register(r.account, r.node_id, r.receptor)
+	for account, receptorMap := range testReceptors {
+		for nodeID, receptor := range receptorMap {
+			cm.Register(account, nodeID, receptor)
+		}
 	}
 
 	receptorMap := cm.GetAllConnections()
-	if len(receptorMap) != len(testReceptors)-1 { // FIXME:
-		t.Fatalf("Expected to find %d connections, but found %d connections", len(testReceptors), len(receptorMap))
+
+	if cmp.Equal(testReceptors, receptorMap) != true {
+		t.Fatalf("Excepted receptor map and actual receptor map do not match.  Excpected %+v, Actual %+v",
+			testReceptors, receptorMap)
 	}
 }
 
