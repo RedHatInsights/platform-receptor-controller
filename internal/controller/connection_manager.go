@@ -78,34 +78,32 @@ func (cm *ConnectionManager) GetConnectionsByAccount(account string) map[string]
 	cm.RLock()
 	defer cm.RUnlock()
 
-	retVal := make(map[string]Receptor)
+	connectionsPerAccount := make(map[string]Receptor)
 
 	_, exists := cm.connections[account]
 	if exists == false {
-		return retVal
+		return connectionsPerAccount
 	}
 
 	for k, v := range cm.connections[account] {
-		retVal[k] = v
+		connectionsPerAccount[k] = v
 	}
 
-	return retVal
+	return connectionsPerAccount
 }
 
 func (cm *ConnectionManager) GetAllConnections() map[string]map[string]Receptor {
 	cm.RLock()
 	defer cm.RUnlock()
 
-	retVal := make(map[string]map[string]Receptor)
+	connectionMap := make(map[string]map[string]Receptor)
 
 	for accountNumber, accountMap := range cm.connections {
-		retVal[accountNumber] = make(map[string]Receptor)
-		log.Println("\taccountNumber:", accountNumber)
+		connectionMap[accountNumber] = make(map[string]Receptor)
 		for nodeID, receptorObj := range accountMap {
-			log.Println("\t\tnodeID:", nodeID)
-			retVal[accountNumber][nodeID] = receptorObj
+			connectionMap[accountNumber][nodeID] = receptorObj
 		}
 	}
 
-	return retVal
+	return connectionMap
 }
