@@ -36,7 +36,7 @@ func main() {
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
 	kc := queue.GetConsumer()
-	rd := c.NewResponseReactorFactory(kw)
+	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw)
 	md := c.NewMessageDispatcherFactory(kc)
 	rc := ws.NewReceptorController(wsConfig, cm, wsMux, rd, md, rs)

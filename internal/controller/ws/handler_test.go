@@ -65,7 +65,7 @@ var _ = Describe("WsController", func() {
 		kc := queue.GetConsumer()
 		md := controller.NewMessageDispatcherFactory(kc)
 		kw = queue.StartProducer(queue.GetProducer())
-		rd := controller.NewResponseReactorFactory(kw)
+		rd := controller.NewResponseReactorFactory()
 		rs := controller.NewReceptorServiceFactory(kw)
 		rc = NewReceptorController(config, cm, wsMux, rd, md, rs)
 		rc.Routes()

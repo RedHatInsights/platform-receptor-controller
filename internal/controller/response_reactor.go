@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	kafka "github.com/segmentio/kafka-go"
 )
 
 type MessageHandler interface {
@@ -19,27 +18,22 @@ type ResponseReactor interface {
 }
 
 type ResponseReactorFactory struct {
-	writer *kafka.Writer
 }
 
-func NewResponseReactorFactory(writer *kafka.Writer) *ResponseReactorFactory {
-	return &ResponseReactorFactory{
-		writer: writer,
-	}
+func NewResponseReactorFactory() *ResponseReactorFactory {
+	return &ResponseReactorFactory{}
 }
 
 func (fact *ResponseReactorFactory) NewResponseReactor(recv <-chan protocol.Message) ResponseReactor {
 
 	log.Println("Creating a new response dispatcher")
 	return &ResponseReactorImpl{
-		writer:   fact.writer,
 		recv:     recv,
 		handlers: make(map[protocol.NetworkMessageType]MessageHandler),
 	}
 }
 
 type ResponseReactorImpl struct {
-	writer            *kafka.Writer
 	recv              <-chan protocol.Message
 	handlers          map[protocol.NetworkMessageType]MessageHandler
 	disconnectHandler MessageHandler
