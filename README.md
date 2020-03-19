@@ -120,9 +120,9 @@ The response will contain the following information:
 
 Internal services (not going through 3scale) can authenticate via a pre-shared key by adding the following headers to a request:
 
-  - receptor-controller-client-id
-  - receptor-controller-account
-  - receptor-controller-psk
+  - x-rh-receptor-controller-client-id
+  - x-rh-receptor-controller-account
+  - x-rh-receptor-controller-psk
 
 If your service is internal and will not be passing requests through 3scale a psk will be provided. This psk will be unique to your service.
 
@@ -133,7 +133,7 @@ Local testing example:
 
 Example work request using token auth:
 ```
-  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "receptor-controller-client-id:test-client" -H "receptor-controller-account:0001" -H "receptor-controller-psk:12345" http://localhost:9090/job
+  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "x-rh-receptor-controller-client-id:test_client_1" -H "x-rh-receptor-controller-account:0001" -H "x-rh-receptor-controller-psk:12345" http://localhost:9090/job
 ```
 
 ### Development
