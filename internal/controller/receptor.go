@@ -95,7 +95,10 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 		payload)
 	log.Printf("Sending PayloadMessage - %s\n", messageID)
 
-	err = r.sendMessage(msgSenderCtx, payloadMessage, time.Second*10) // FIXME:  add a configurable timeout
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
+	defer cancel()
+
+	err = r.sendMessage(msgSenderCtx, payloadMessage)
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +129,15 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
-	err = r.sendControlMessage(msgSenderCtx, payloadMessage, time.Second*10) // FIXME:  add a configurable timeout
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
+	defer cancel()
+
+	err = r.sendControlMessage(msgSenderCtx, payloadMessage)
 	if err != nil {
 		return nil, err
 	}
 
-	responseMsg, err := r.waitForResponse(msgSenderCtx, responseChannel, time.Second*10) // FIXME:  add a configurable timeout
+	responseMsg, err := r.waitForResponse(msgSenderCtx, responseChannel)
 	if err != nil {
 		return nil, err
 	}
@@ -140,35 +146,41 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 }
 
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
-func (r *ReceptorService) sendControlMessage(msgSenderCtx context.Context, msgToSend protocol.Message, timeToWait time.Duration) error {
+func (r *ReceptorService) sendControlMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend, timeToWait)
+	return sendMessage(r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
 }
 
-func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend protocol.Message, timeToWait time.Duration) error {
+func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend, timeToWait)
+	return sendMessage(r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
 }
 
-func sendMessage(transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message, timeToWait time.Duration) error {
+func sendMessage(transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
 	log.Println("Passing message to async layer")
 	select {
+
 	case sendChannel <- msgToSend:
 		return nil
+
 	case <-transportCtx.Done():
 		log.Printf("Connection to receptor network lost")
 		return connectionToReceptorNetworkLost
+
 	case <-msgSenderCtx.Done():
-		log.Printf("Message cancelled by sender")
-		return requestCancelledBySender
-	case <-time.After(timeToWait):
-		log.Printf("Timed out waiting to pass message to async layer")
-		return requestTimedOut
+		switch msgSenderCtx.Err().(error) {
+		case context.DeadlineExceeded:
+			log.Printf("Timed out waiting to pass message to async layer")
+			return requestTimedOut
+		default:
+			log.Printf("Message cancelled by sender")
+			return requestCancelledBySender
+		}
 	}
 }
 
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
-func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, responseChannel chan ResponseMessage, timeToWait time.Duration) (ResponseMessage, error) {
+func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, responseChannel chan ResponseMessage) (ResponseMessage, error) {
 	log.Println("Waiting for a sync response")
 	nilResponseMessage := ResponseMessage{}
 
@@ -182,12 +194,14 @@ func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, response
 		return nilResponseMessage, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
-		log.Printf("Message cancelled by sender")
-		return nilResponseMessage, requestCancelledBySender
-
-	case <-time.After(timeToWait): // FIXME:  add a configurable timeout
-		log.Printf("Timed out waiting for response for message")
-		return nilResponseMessage, requestTimedOut
+		switch msgSenderCtx.Err().(error) {
+		case context.DeadlineExceeded:
+			log.Printf("Timed out waiting for response for message")
+			return nilResponseMessage, requestTimedOut
+		default:
+			log.Printf("Message cancelled by sender")
+			return nilResponseMessage, requestCancelledBySender
+		}
 	}
 }
 
