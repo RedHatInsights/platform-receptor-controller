@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	kafka "github.com/segmentio/kafka-go"
 )
 
 type MessageHandler interface {
@@ -21,7 +20,7 @@ type ResponseReactor interface {
 type ResponseReactorFactory struct {
 }
 
-func NewResponseReactorFactory(writer *kafka.Writer) *ResponseReactorFactory {
+func NewResponseReactorFactory() *ResponseReactorFactory {
 	return &ResponseReactorFactory{}
 }
 
