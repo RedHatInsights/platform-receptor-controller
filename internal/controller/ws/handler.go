@@ -83,10 +83,11 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			Ctx:            ctx,
 		}
 
-		// FIXME: Use the ReceptorFactory to create an instance of the Receptor object
-
 		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
-		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber, rc.config.ReceptorControllerNodeId, transport)
+
+		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber,
+			rc.config.ReceptorControllerNodeId,
+			transport)
 
 		handshakeHandler := controller.HandshakeHandler{
 			Transport:                transport,
