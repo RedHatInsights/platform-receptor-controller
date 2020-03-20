@@ -31,6 +31,37 @@ A work request can be submitted by sending a work request message to the _/job_ 
   }
 ```
 
+### Get a list of open connections
+
+The list of open connections can be retrieved by sending a GET to the _/connection_ endpoint.
+
+
+```
+  $ curl -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection
+```
+
+#### Connection Status Response Message Format
+
+```
+  {
+    "connections": [
+      {
+        "account": "0000001",
+        "connections": [
+          "node-a",
+          "node-b"
+        ]
+      },
+      {
+        "account": "0000002",
+        "connections": [
+          "node-c"
+        ]
+      }
+    ]
+  }
+```
+
 ### Checking the status of a connection
 
 The status of a connection can be checked by sending a POST to the _/connection/status_ endpoint.
