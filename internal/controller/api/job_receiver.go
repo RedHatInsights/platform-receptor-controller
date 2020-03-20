@@ -55,7 +55,7 @@ func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.W
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
 	securedSubRouter.Use(identity.EnforceIdentity)
-	securedSubRouter.HandleFunc("/job", jr.handleJob())
+	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods("POST")
 }
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {

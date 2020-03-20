@@ -33,9 +33,9 @@ func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router) *Manag
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 	securedSubRouter.Use(identity.EnforceIdentity)
-	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect())
-	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus())
-	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing())
+	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods("POST")
+	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods("POST")
+	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods("POST")
 }
 
 type errorResponse struct {
