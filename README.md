@@ -40,7 +40,7 @@ The list of open connections can be retrieved by sending a GET to the _/connecti
   $ curl -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:9090/connection
 ```
 
-#### Connection Status Response Message Format
+#### Connection List Response Message Format
 
 ```
   {
