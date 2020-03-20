@@ -55,6 +55,31 @@
         }
       }
     },
+    "/connection": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get a list of open connections",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connection/status": {
       "post": {
         "tags": [
@@ -157,6 +182,30 @@
           },
           "directive": {
             "type": "string"
+          }
+        }
+      },
+      "ConnectionListResponse": {
+        "type": "object",
+        "properties": {
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account": {
+                  "type": "string",
+                  "example": "0000001"
+                },
+                "connections": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "node-a"
+                  }
+                }
+              }
+            }
           }
         }
       },
