@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	CONNECTION_LIST_ENDPOINT       = "/connection"
 	CONNECTION_STATUS_ENDPOINT     = "/connection/status"
 	CONNECTION_DISCONNECT_ENDPOINT = "/connection/disconnect"
 
@@ -158,6 +159,43 @@ var _ = Describe("Management", func() {
 				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
 
 				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+		})
+
+	})
+
+	Describe("Connecting to the connection list endpoint", func() {
+		Context("With a valid identity header", func() {
+			It("Should be able to get a list of open connections", func() {
+
+				req, err := http.NewRequest("GET", CONNECTION_LIST_ENDPOINT, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusOK))
+
+				// FIXME: need to verify that connection list
+			})
+
+		})
+
+		Context("Without an identity header", func() {
+			It("Should fail to get a list of connections", func() {
+
+				req, err := http.NewRequest("GET", CONNECTION_LIST_ENDPOINT, nil)
 				Expect(err).NotTo(HaveOccurred())
 
 				rr := httptest.NewRecorder()
