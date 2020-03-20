@@ -42,7 +42,7 @@ var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBuffer
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
 	router.Use(identity.EnforceIdentity)
-	router.HandleFunc("/gateway", rc.handleWebSocket())
+	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods("GET")
 }
 
 func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
