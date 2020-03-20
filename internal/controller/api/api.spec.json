@@ -176,6 +176,9 @@
         "properties": {
           "status": {
             "$ref": "#/components/schemas/ConnectionStatus"
+          },
+          "capabilities": {
+            "type": "object"
           }
         }
       },

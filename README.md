@@ -54,6 +54,12 @@ The status of a connection can be checked by sending a POST to the _/connection/
 ```
   {
     "status":"connected" or "disconnected"
+    "capabilities": {
+      "max_work_threads": 12,
+      "worker_versions": {
+        "receptor_http": "1.0.0"
+      }
+    }
   }
 ```
 
