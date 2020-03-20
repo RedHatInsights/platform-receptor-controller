@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -9,12 +10,54 @@ import (
 )
 
 const (
-	authErrorHeader = "Authentication error: "
-	identityHeader  = "x-rh-identity"
-	clientHeader    = "x-rh-receptor-controller-client-id"
-	accountHeader   = "x-rh-receptor-controller-account"
-	pskHeader       = "x-rh-receptor-controller-psk"
+	authErrorMessage   = "Authentication failed"
+	authErrorLogHeader = "Authentication error: "
+	identityHeader     = "x-rh-identity"
+	clientHeader       = "x-rh-receptor-controller-client-id"
+	accountHeader      = "x-rh-receptor-controller-account"
+	pskHeader          = "x-rh-receptor-controller-psk"
 )
+
+// Principal interface can be implemented and expanded by various principal objects (type depends on middleware being used)
+type Principal interface {
+	GetAccount() string
+}
+
+type key int
+
+var principalKey key
+
+type serviceToServicePrincipal struct {
+	account, clientID string
+}
+
+func (sp serviceToServicePrincipal) GetAccount() string {
+	return sp.account
+}
+
+func (sp serviceToServicePrincipal) GetClientID() string {
+	return sp.clientID
+}
+
+type identityPrincipal struct {
+	account string
+}
+
+func (ip identityPrincipal) GetAccount() string {
+	return ip.account
+}
+
+// GetPrincipal takes the request context and determines which middleware (identity header vs service to service) was used
+// before returning a principal object.
+func GetPrincipal(ctx context.Context) (Principal, bool) {
+	p, ok := ctx.Value(principalKey).(serviceToServicePrincipal)
+	if !ok {
+		id, ok := ctx.Value(identity.Key).(identity.XRHID)
+		p := identityPrincipal{account: id.Identity.AccountNumber}
+		return p, ok
+	}
+	return p, ok
+}
 
 type serviceCredentials struct {
 	clientID string
@@ -25,11 +68,14 @@ type serviceCredentials struct {
 func newServiceCredentials(clientID, account, psk string) (*serviceCredentials, error) {
 	switch {
 	case clientID == "":
-		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-client-id header")
+		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-client-id header")
+		return nil, errors.New(authErrorMessage)
 	case account == "":
-		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-account header")
+		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-account header")
+		return nil, errors.New(authErrorMessage)
 	case psk == "":
-		return nil, errors.New(authErrorHeader + "Missing x-rh-receptor-controller-psk header")
+		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-psk header")
+		return nil, errors.New(authErrorMessage)
 	}
 	return &serviceCredentials{
 		clientID: clientID,
@@ -45,9 +91,11 @@ type serviceCredentialsValidator struct {
 func (scv *serviceCredentialsValidator) validate(sc *serviceCredentials) error {
 	switch {
 	case scv.knownServiceCredentials[sc.clientID] == nil:
-		return errors.New(authErrorHeader + "Provided ClientID not attached to any known keys")
+		log.Println(authErrorLogHeader + "Provided ClientID not attached to any known keys")
+		return errors.New(authErrorMessage)
 	case sc.psk != scv.knownServiceCredentials[sc.clientID]:
-		return errors.New(authErrorHeader + "Provided PSK does not match known key for this client")
+		log.Println(authErrorLogHeader + "Provided PSK does not match known key for this client")
+		return errors.New(authErrorMessage)
 	}
 	return nil
 }
@@ -80,7 +128,10 @@ func (amw *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			principal := serviceToServicePrincipal{account: sr.account, clientID: sr.clientID}
+
+			ctx := context.WithValue(r.Context(), principalKey, principal)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 	})
 }
