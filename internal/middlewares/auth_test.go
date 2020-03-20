@@ -14,6 +14,7 @@ const (
 	TOKEN_HEADER_CLIENT_NAME  = "x-rh-receptor-controller-client-id"
 	TOKEN_HEADER_ACCOUNT_NAME = "x-rh-receptor-controller-account"
 	TOKEN_HEADER_PSK_NAME     = "x-rh-receptor-controller-psk"
+	authFailure               = "Authentication failed"
 )
 
 func GetTestHandler() http.HandlerFunc {
@@ -63,7 +64,7 @@ var _ = Describe("Auth", func() {
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "678910")
 
-				boiler(req, 401, "Authentication error: Provided PSK does not match known key for this client\n", amw)
+				boiler(req, 401, authFailure+"\n", amw)
 			})
 
 			It("Should return a 401 when the client id is unknown", func() {
@@ -71,7 +72,7 @@ var _ = Describe("Auth", func() {
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
 
-				boiler(req, 401, "Authentication error: Provided ClientID not attached to any known keys\n", amw)
+				boiler(req, 401, authFailure+"\n", amw)
 			})
 		})
 
@@ -80,21 +81,21 @@ var _ = Describe("Auth", func() {
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
 
-				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-client-id header\n", amw)
+				boiler(req, 401, authFailure+"\n", amw)
 			})
 
 			It("Should return 401 when the account header is missing", func() {
 				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
 				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
 
-				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-account header\n", amw)
+				boiler(req, 401, authFailure+"\n", amw)
 			})
 
 			It("Should return 401 when the psk header is missing", func() {
 				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
 				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
 
-				boiler(req, 401, "Authentication error: Missing x-rh-receptor-controller-psk header\n", amw)
+				boiler(req, 401, authFailure+"\n", amw)
 			})
 		})
 	})
