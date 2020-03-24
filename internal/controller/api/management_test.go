@@ -256,6 +256,9 @@ var _ = Describe("Management", func() {
 				Expect(rr.Code).To(Equal(http.StatusOK))
 
 				// FIXME: need to verify that connection list
+				var m map[string]interface{}
+				json.Unmarshal(rr.Body.Bytes(), &m)
+				Expect(m).Should(HaveKey("connections"))
 			})
 
 		})
@@ -270,7 +273,7 @@ var _ = Describe("Management", func() {
 
 				ms.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
 			})
 
 		})
