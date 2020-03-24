@@ -85,6 +85,12 @@ The status of a connection can be checked by sending a POST to the _/connection/
 ```
   {
     "status":"connected" or "disconnected"
+    "capabilities": {
+      "max_work_threads": 12,
+      "worker_versions": {
+        "receptor_http": "1.0.0"
+      }
+    }
   }
 ```
 
@@ -146,6 +152,26 @@ The response will contain the following information:
   The key for the message on the kafka topic will be the message id that was returned by the receptor-controller when the original message was submitted.  The _message\_id_ will be the message id as it is passed along from the receptor mesh network.  The _in\_response\_to_ will be the _in\_response\_to_ value as it is passed along from the receptor mesh network.  The key for the response message and the _in\_response\_to_ value can be used to match the response to the original message.
 
   The _code_ and _message\_type_ field as passed as is from the receptor mesh network.  The _code_ can be used to determine if the message was able to be handed over to a plugin and processed successfully (code=0) or if the plugin failed to process the message (code=1).  The _message\_type_ field can be either "response" or "eof".  If the value is "response", then the plugin has not completed processing and more responses are expected.  If the value is "eof", then the plugin has completed processing and no more responses are expected.
+
+### Connecting via Pre-Shared Key
+
+Internal services (not going through 3scale) can authenticate via a pre-shared key by adding the following headers to a request:
+
+  - x-rh-receptor-controller-client-id
+  - x-rh-receptor-controller-account
+  - x-rh-receptor-controller-psk
+
+If your service is internal and will not be passing requests through 3scale a psk will be provided. This psk will be unique to your service.
+
+Local testing example:
+```
+  $ export RECEPTOR_CONTROLLER_SERVICE_TO_SERVICE_CREDENTIALS='{"test_client_1": "12345", "test_client_2": "6789"}'
+```
+
+Example work request using token auth:
+```
+  $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "x-rh-receptor-controller-client-id:test_client_1" -H "x-rh-receptor-controller-account:0001" -H "x-rh-receptor-controller-psk:12345" http://localhost:9090/job
+```
 
 ### Development
 
