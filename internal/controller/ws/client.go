@@ -60,6 +60,8 @@ func (c *rcClient) read(ctx context.Context) {
 		log.Printf("Websocket reader message: %+v\n", message)
 		log.Println("Websocket reader message type:", message.Type())
 
+		metrics.TotalMessagesReceivedCounter.Inc()
+
 		c.recv <- message
 	}
 }
@@ -92,6 +94,8 @@ func writeMessage(socket *websocket.Conn, writeWait time.Duration, msg protocol.
 	if err != nil {
 		return err
 	}
+
+	metrics.TotalMessagesSentCounter.Inc()
 
 	w.Close()
 
