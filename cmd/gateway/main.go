@@ -47,10 +47,10 @@ func main() {
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
 
-	mgmtServer := api.NewManagementServer(cm, apiMux)
+	mgmtServer := api.NewManagementServer(cm, apiMux, wsConfig.ServiceToServiceCredentials)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, apiMux, kw)
+	jr := api.NewJobReceiver(cm, apiMux, kw, wsConfig.ServiceToServiceCredentials)
 	jr.Routes()
 
 	go func() {

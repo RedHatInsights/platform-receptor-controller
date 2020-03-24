@@ -11,23 +11,25 @@ import (
 const (
 	ENV_PREFIX = "RECEPTOR_CONTROLLER"
 
-	HANDSHAKE_READ_WAIT = "WebSocket_Handshake_Read_Wait"
-	WRITE_WAIT          = "WebSocket_Write_Wait"
-	PONG_WAIT           = "WebSocket_Pong_Wait"
-	PING_PERIOD         = "WebSocket_Ping_Period"
-	MAX_MESSAGE_SIZE    = "WebSocket_Max_Message_Size"
+	HANDSHAKE_READ_WAIT            = "WebSocket_Handshake_Read_Wait"
+	WRITE_WAIT                     = "WebSocket_Write_Wait"
+	PONG_WAIT                      = "WebSocket_Pong_Wait"
+	PING_PERIOD                    = "WebSocket_Ping_Period"
+	MAX_MESSAGE_SIZE               = "WebSocket_Max_Message_Size"
+	SERVICE_TO_SERVICE_CREDENTIALS = "Service_To_Service_Credentials"
 
 	// FIXME: I don't think this belongs here
 	NODE_ID = "ReceptorControllerNodeId"
 )
 
 type WebSocketConfig struct {
-	HandshakeReadWait        time.Duration
-	WriteWait                time.Duration
-	PongWait                 time.Duration
-	PingPeriod               time.Duration
-	MaxMessageSize           int64
-	ReceptorControllerNodeId string
+	HandshakeReadWait           time.Duration
+	WriteWait                   time.Duration
+	PongWait                    time.Duration
+	PingPeriod                  time.Duration
+	MaxMessageSize              int64
+	ServiceToServiceCredentials map[string]interface{}
+	ReceptorControllerNodeId    string
 }
 
 func (wsc WebSocketConfig) String() string {
@@ -48,6 +50,7 @@ func GetWebSocketConfig() *WebSocketConfig {
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
+	options.SetDefault(SERVICE_TO_SERVICE_CREDENTIALS, "")
 	options.SetDefault(NODE_ID, "node-cloud-receptor-controller")
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
@@ -57,12 +60,13 @@ func GetWebSocketConfig() *WebSocketConfig {
 	pingPeriod := calculatePingPeriod(pongWait)
 
 	return &WebSocketConfig{
-		HandshakeReadWait:        options.GetDuration(HANDSHAKE_READ_WAIT) * time.Second,
-		WriteWait:                writeWait,
-		PongWait:                 pongWait,
-		PingPeriod:               pingPeriod,
-		MaxMessageSize:           options.GetInt64(MAX_MESSAGE_SIZE),
-		ReceptorControllerNodeId: options.GetString(NODE_ID),
+		HandshakeReadWait:           options.GetDuration(HANDSHAKE_READ_WAIT) * time.Second,
+		WriteWait:                   writeWait,
+		PongWait:                    pongWait,
+		PingPeriod:                  pingPeriod,
+		MaxMessageSize:              options.GetInt64(MAX_MESSAGE_SIZE),
+		ServiceToServiceCredentials: options.GetStringMap(SERVICE_TO_SERVICE_CREDENTIALS),
+		ReceptorControllerNodeId:    options.GetString(NODE_ID),
 	}
 }
 

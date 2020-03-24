@@ -18,7 +18,10 @@ import (
 )
 
 const (
-	IDENTITY_HEADER_NAME = "x-rh-identity"
+	IDENTITY_HEADER_NAME      = "x-rh-identity"
+	TOKEN_HEADER_CLIENT_NAME  = "x-rh-receptor-controller-client-id"
+	TOKEN_HEADER_ACCOUNT_NAME = "x-rh-receptor-controller-account"
+	TOKEN_HEADER_PSK_NAME     = "x-rh-receptor-controller-psk"
 )
 
 type MockClient struct {
@@ -43,7 +46,7 @@ func (mc MockClient) GetCapabilities() interface{} {
 	return struct{}{}
 }
 
-var _ = Describe("JobReciever", func() {
+var _ = Describe("JobReceiver", func() {
 
 	var (
 		jr                  *JobReceiver
@@ -55,7 +58,7 @@ var _ = Describe("JobReciever", func() {
 		cm := controller.NewConnectionManager()
 		mc := MockClient{}
 		cm.Register("1234", "345", mc)
-		jr = NewJobReceiver(cm, apiMux, nil)
+		jr = NewJobReceiver(cm, apiMux, nil, make(map[string]interface{}))
 		jr.Routes()
 
 		identity := `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
@@ -64,7 +67,7 @@ var _ = Describe("JobReciever", func() {
 
 	Describe("Connecting to the job receiver", func() {
 		Context("With a valid identity header", func() {
-			It("Should be able send a job to a connected customer", func() {
+			It("Should be able to send a job to a connected customer", func() {
 
 				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
 
@@ -182,7 +185,7 @@ var _ = Describe("JobReciever", func() {
 
 		})
 
-		Context("Without an identity header", func() {
+		Context("Without an identity header or pre shared key", func() {
 			It("Should fail to send a job to a connected customer", func() {
 
 				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
@@ -194,9 +197,76 @@ var _ = Describe("JobReciever", func() {
 
 				jr.router.ServeHTTP(rr, req)
 
-				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
 			})
 
+		})
+
+		Context("With a valid token", func() {
+			It("Should be able to send a job to a connected customer", func() {
+				jr.secrets["test_client_1"] = "12345"
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusCreated))
+
+				var m map[string]string
+				json.Unmarshal(rr.Body.Bytes(), &m)
+				Expect(m).Should(HaveKey("id"))
+			})
+		})
+
+		Context("With an invalid token", func() {
+			It("Should not be able to send a job to a connected customer", func() {
+				jr.secrets["test_client_1"] = "12345"
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_1")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "6789")
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
+			})
+		})
+
+		Context("With an unknown client during token auth", func() {
+			It("Should not be able to send a job to a connected customer", func() {
+				jr.secrets["test_client_1"] = "12345"
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(TOKEN_HEADER_CLIENT_NAME, "test_client_nil")
+				req.Header.Add(TOKEN_HEADER_ACCOUNT_NAME, "0000001")
+				req.Header.Add(TOKEN_HEADER_PSK_NAME, "12345")
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusUnauthorized))
+			})
 		})
 
 	})
