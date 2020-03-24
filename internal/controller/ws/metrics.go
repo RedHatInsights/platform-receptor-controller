@@ -17,12 +17,12 @@ func NewMetrics() *Metrics {
 	metrics := new(Metrics)
 
 	metrics.TotalConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_total_websocket_connection_count",
+		Name: "receptor_controller_websocket_total_connection_count",
 		Help: "The total number of receptor websocket connections received",
 	})
 
 	metrics.ActiveConnectionCounter = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "receptor_controller_active_websocket_connection_count",
+		Name: "receptor_controller_websocket_active_connection_count",
 		Help: "The total number of active receptor websocket connections",
 	})
 
@@ -34,13 +34,13 @@ func NewMetrics() *Metrics {
 	*/
 
 	metrics.TotalMessagesSentCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_total_messages_sent_count",
-		Help: "The total number of messages sent",
+		Name: "receptor_controller_websocket_total_messages_sent_count",
+		Help: "The total number of messages sent over a websocket connection",
 	})
 
 	metrics.TotalMessagesReceivedCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_total_messages_received_count",
-		Help: "The total number of messages received",
+		Name: "receptor_controller_websocket_total_messages_received_count",
+		Help: "The total number of messages received over a websocket connection",
 	})
 
 	return metrics
