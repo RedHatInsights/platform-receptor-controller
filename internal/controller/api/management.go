@@ -36,6 +36,7 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: s.secrets}
 	securedSubRouter.Use(amw.Authenticate)
+	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods("GET")
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods("POST")
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods("POST")
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods("POST")
@@ -186,6 +187,45 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		}
 
 		WriteJSONResponse(w, http.StatusOK, pingResponse)
+	}
+}
+
+func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
+
+	type ConnectionsPerAccount struct {
+		AccountNumber string   `json:"account"`
+		Connections   []string `json:"connections"`
+	}
+
+	type Response struct {
+		Connections []ConnectionsPerAccount `json:"connections"`
+	}
+
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		allReceptorConnections := s.connectionMgr.GetAllConnections()
+		log.Println("allReceptorConnections:", allReceptorConnections)
+
+		connections := make([]ConnectionsPerAccount, len(allReceptorConnections))
+
+		accountCount := 0
+		for key, value := range allReceptorConnections {
+			connections[accountCount].AccountNumber = key
+			connections[accountCount].Connections = make([]string, len(value))
+			nodeCount := 0
+			for k, _ := range value {
+				connections[accountCount].Connections[nodeCount] = k
+				nodeCount++
+			}
+
+			accountCount++
+		}
+
+		response := Response{Connections: connections}
+
+		log.Println("response:", response)
+
+		WriteJSONResponse(w, http.StatusOK, response)
 	}
 }
 
