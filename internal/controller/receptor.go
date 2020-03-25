@@ -133,9 +133,9 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
 	defer cancel()
 
-	pingDurationRecorder := DurationRecorder{}
-	pingDurationRecorder.Start(metrics.pingElapsed,
-		prometheus.Labels{"account": r.AccountNumber, "recipient": r.PeerNodeID})
+	pingDurationRecorder := DurationRecorder{elapsed: metrics.pingElapsed,
+		labels: prometheus.Labels{"account": r.AccountNumber, "recipient": r.PeerNodeID}}
+	pingDurationRecorder.Start()
 
 	err = r.sendControlMessage(msgSenderCtx, payloadMessage)
 	if err != nil {

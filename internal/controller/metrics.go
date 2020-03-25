@@ -29,9 +29,7 @@ type DurationRecorder struct {
 	startTime time.Time
 }
 
-func (dr *DurationRecorder) Start(elapsed *prometheus.HistogramVec, labels prometheus.Labels) {
-	dr.elapsed = elapsed
-	dr.labels = labels
+func (dr *DurationRecorder) Start() {
 	dr.startTime = time.Now()
 }
 
