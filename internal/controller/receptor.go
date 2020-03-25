@@ -133,7 +133,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
 	defer cancel()
 
-	pingDurationRecorder := new(DurationRecorder)
+	pingDurationRecorder := DurationRecorder{}
 	pingDurationRecorder.Start(metrics.pingElapsed,
 		prometheus.Labels{"account": r.AccountNumber, "recipient": r.PeerNodeID})
 

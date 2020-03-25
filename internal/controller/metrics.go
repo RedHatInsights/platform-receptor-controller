@@ -20,18 +20,6 @@ func NewMetrics() *Metrics {
 		[]string{"account", "recipient"},
 	)
 
-	/*
-		metrics.TotalMessagesSentCounter = promauto.NewCounter(prometheus.CounterOpts{
-			Name: "receptor_controller_total_messages_sent_count",
-			Help: "The total number of messages sent",
-		})
-
-		metrics.TotalMessagesReceivedCounter = promauto.NewCounter(prometheus.CounterOpts{
-			Name: "receptor_controller_total_messages_received_count",
-			Help: "The total number of messages received",
-		})
-	*/
-
 	return metrics
 }
 

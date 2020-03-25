@@ -8,7 +8,6 @@ import (
 type Metrics struct {
 	TotalConnectionCounter       prometheus.Counter
 	ActiveConnectionCounter      prometheus.Gauge
-	ErrorConnectionCounter       prometheus.Counter
 	TotalMessagesSentCounter     prometheus.Counter
 	TotalMessagesReceivedCounter prometheus.Counter
 }
@@ -25,13 +24,6 @@ func NewMetrics() *Metrics {
 		Name: "receptor_controller_websocket_active_connection_count",
 		Help: "The total number of active receptor websocket connections",
 	})
-
-	/*
-		metrics.ErrorConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
-			Name: "receptor_controller_error_connection_count",
-			Help: "The total number of receptor websocket connection errors",
-		})
-	*/
 
 	metrics.TotalMessagesSentCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_websocket_total_messages_sent_count",
