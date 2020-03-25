@@ -12,6 +12,7 @@ import (
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
+	//"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 
 	"github.com/gorilla/handlers"
@@ -26,6 +27,8 @@ func main() {
 	var wsAddr = flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
 	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
 	flag.Parse()
+
+	//logger.InitLogger()
 
 	wsConfig := ws.GetWebSocketConfig()
 	log.Println("WebSocket configuration:")

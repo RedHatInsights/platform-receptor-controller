@@ -2,14 +2,15 @@ package ws
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -51,14 +52,13 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Println("Upgrade error:", err)
+			logger.Log.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
 			return
 		}
 
 		rhIdentity := identity.Get(req.Context())
 
-		log.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
-		log.Println("All the headers: ", req.Header)
+		logger.Log.WithFields(logrus.Fields{"account": rhIdentity.Identity.AccountNumber}).Info("WebSocket server - got a websocket connection")
 
 		client := &rcClient{
 			config:         rc.config,
