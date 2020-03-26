@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,6 +18,7 @@ import (
 // Log is an instance of the global logrus.Logger
 var Log *logrus.Logger
 var logLevel logrus.Level
+var initializeLogger sync.Once
 
 // NewCloudwatchFormatter creates a new log formatter
 func NewCloudwatchFormatter() *CustomCloudwatch {
@@ -75,52 +77,54 @@ func (f *CustomCloudwatch) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 // InitLogger initializes the logger instance
-func init() {
+func InitLogger() {
 
-	hostname, _ := os.Hostname()
+	initializeLogger.Do(func() {
+		hostname, _ := os.Hostname()
 
-	logconfig := viper.New()
-	logconfig.SetDefault("LOG_LEVEL", "INFO")
-	logconfig.SetDefault("LOG_GROUP", "platform-dev")
-	logconfig.SetDefault("AWS_REGION", "us-east-1")
-	logconfig.SetDefault("LOG_STREAM", hostname)
-	logconfig.SetEnvPrefix("RECEPTOR_CONTROLLER")
-	logconfig.AutomaticEnv()
-	key := logconfig.GetString("CW_AWS_ACCESS_KEY_ID")
-	secret := logconfig.GetString("CW_AWS_SECRET_ACCESS_KEY")
-	region := logconfig.GetString("AWS_REGION")
-	group := logconfig.GetString("LOG_GROUP")
-	stream := logconfig.GetString("LOG_STREAM")
+		logconfig := viper.New()
+		logconfig.SetDefault("LOG_LEVEL", "INFO")
+		logconfig.SetDefault("LOG_GROUP", "platform-dev")
+		logconfig.SetDefault("AWS_REGION", "us-east-1")
+		logconfig.SetDefault("LOG_STREAM", hostname)
+		logconfig.SetEnvPrefix("RECEPTOR_CONTROLLER")
+		logconfig.AutomaticEnv()
+		key := logconfig.GetString("CW_AWS_ACCESS_KEY_ID")
+		secret := logconfig.GetString("CW_AWS_SECRET_ACCESS_KEY")
+		region := logconfig.GetString("AWS_REGION")
+		group := logconfig.GetString("LOG_GROUP")
+		stream := logconfig.GetString("LOG_STREAM")
 
-	switch logconfig.GetString("LOG_LEVEL") {
-	case "DEBUG":
-		logLevel = logrus.DebugLevel
-	case "ERROR":
-		logLevel = logrus.ErrorLevel
-	default:
-		logLevel = logrus.InfoLevel
-	}
-	if flag.Lookup("test.v") != nil {
-		logLevel = logrus.FatalLevel
-	}
-
-	formatter := NewCloudwatchFormatter()
-
-	Log = &logrus.Logger{
-		Out:          os.Stdout,
-		Level:        logLevel,
-		Formatter:    formatter,
-		Hooks:        make(logrus.LevelHooks),
-		ReportCaller: true,
-	}
-
-	if key != "" {
-		cred := credentials.NewStaticCredentials(key, secret, "")
-		awsconf := aws.NewConfig().WithRegion(region).WithCredentials(cred)
-		hook, err := lc.NewBatchingHook(group, stream, awsconf, 10*time.Second)
-		if err != nil {
-			Log.Info(err)
+		switch logconfig.GetString("LOG_LEVEL") {
+		case "DEBUG":
+			logLevel = logrus.DebugLevel
+		case "ERROR":
+			logLevel = logrus.ErrorLevel
+		default:
+			logLevel = logrus.InfoLevel
 		}
-		Log.Hooks.Add(hook)
-	}
+		if flag.Lookup("test.v") != nil {
+			logLevel = logrus.FatalLevel
+		}
+
+		formatter := NewCloudwatchFormatter()
+
+		Log = &logrus.Logger{
+			Out:          os.Stdout,
+			Level:        logLevel,
+			Formatter:    formatter,
+			Hooks:        make(logrus.LevelHooks),
+			ReportCaller: true,
+		}
+
+		if key != "" {
+			cred := credentials.NewStaticCredentials(key, secret, "")
+			awsconf := aws.NewConfig().WithRegion(region).WithCredentials(cred)
+			hook, err := lc.NewBatchingHook(group, stream, awsconf, 10*time.Second)
+			if err != nil {
+				Log.Info(err)
+			}
+			Log.Hooks.Add(hook)
+		}
+	})
 }

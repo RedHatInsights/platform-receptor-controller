@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
-	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
+	"github.com/sirupsen/logrus"
 )
 
 type MessageHandler interface {
@@ -24,12 +25,13 @@ func NewResponseReactorFactory() *ResponseReactorFactory {
 	return &ResponseReactorFactory{}
 }
 
-func (fact *ResponseReactorFactory) NewResponseReactor(recv <-chan protocol.Message) ResponseReactor {
+func (fact *ResponseReactorFactory) NewResponseReactor(logger *logrus.Entry, recv <-chan protocol.Message) ResponseReactor {
 
-	log.Println("Creating a new response dispatcher")
+	logger.Debug("Creating a new response dispatcher")
 	return &ResponseReactorImpl{
 		recv:     recv,
 		handlers: make(map[protocol.NetworkMessageType]MessageHandler),
+		logger:   logger,
 	}
 }
 
@@ -37,6 +39,7 @@ type ResponseReactorImpl struct {
 	recv              <-chan protocol.Message
 	handlers          map[protocol.NetworkMessageType]MessageHandler
 	disconnectHandler MessageHandler
+	logger            *logrus.Entry
 }
 
 func (rd *ResponseReactorImpl) RegisterHandler(msgType protocol.NetworkMessageType, handler MessageHandler) {
@@ -48,26 +51,19 @@ func (rd *ResponseReactorImpl) RegisterDisconnectHandler(handler MessageHandler)
 }
 
 func (rd *ResponseReactorImpl) Run(ctx context.Context) {
-	defer func() {
-		log.Println("ResponseReactor leaving!")
-	}()
-
 	for {
-		log.Println("ResponseReactorImpl - Waiting for something to send")
-
 		select {
 		case <-ctx.Done():
-			log.Println("**** dispatching disconnect")
 			if rd.disconnectHandler != nil {
 				rd.disconnectHandler.HandleMessage(ctx, nil)
 			}
 			return
 		case msg := <-rd.recv:
-			log.Printf("**** dispatching message (type: %d): %v", msg.Type(), msg)
+			rd.logger.Debug("Dispatching message (type: %d)", msg.Type())
 
 			handler, exists := rd.handlers[msg.Type()]
 			if exists == false {
-				log.Printf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
+				rd.logger.Debug("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
 				continue
 			}
 

@@ -51,10 +51,6 @@ type ReceptorService struct {
 	responseDispatcherRegistrar *DispatcherTable
 
 	kafkaWriter *kafka.Writer
-	/*
-	   edges
-	   seen
-	*/
 }
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {

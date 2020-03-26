@@ -50,15 +50,17 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		socket, err := upgrader.Upgrade(w, req, nil)
-		if err != nil {
-			logger.Log.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
-			return
-		}
-
 		rhIdentity := identity.Get(req.Context())
 
-		logger.Log.WithFields(logrus.Fields{"account": rhIdentity.Identity.AccountNumber}).Info("WebSocket server - got a websocket connection")
+		log := logger.Log.WithFields(logrus.Fields{"account": rhIdentity.Identity.AccountNumber})
+
+		log.Info("WebSocket server - got a websocket connection")
+
+		socket, err := upgrader.Upgrade(w, req, nil)
+		if err != nil {
+			log.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
+			return
+		}
 
 		client := &rcClient{
 			config:         rc.config,
@@ -67,6 +69,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			controlChannel: make(chan protocol.Message, messageBufferSize),
 			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
+			log:            log,
 		}
 
 		ctx := req.Context()
@@ -83,7 +86,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			Ctx:            ctx,
 		}
 
-		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
+		responseReactor := rc.responseReactorFactory.NewResponseReactor(log, transport.Recv)
 
 		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber,
 			rc.config.ReceptorControllerNodeId,
