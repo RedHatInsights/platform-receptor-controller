@@ -4,9 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 )
+
+func init() {
+	logger.InitLogger()
+}
 
 // FIXME: Move this to a "central" place
 type MockReceptor struct {

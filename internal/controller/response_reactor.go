@@ -59,11 +59,11 @@ func (rd *ResponseReactorImpl) Run(ctx context.Context) {
 			}
 			return
 		case msg := <-rd.recv:
-			rd.logger.Debug("Dispatching message (type: %d)", msg.Type())
+			rd.logger.Debugf("Dispatching message (type: %d)", msg.Type())
 
 			handler, exists := rd.handlers[msg.Type()]
 			if exists == false {
-				rd.logger.Debug("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
+				rd.logger.Debugf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
 				continue
 			}
 
