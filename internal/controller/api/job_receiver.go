@@ -92,7 +92,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			errMsg := "Unable to process json input"
 			requestLogger.WithFields(logrus.Fields{"error": err}).Debug(errMsg)
 			errorResponse := errorResponse{Title: errMsg,
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusBadRequest,
 				Detail: err.Error()}
 			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
@@ -109,7 +109,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			errMsg := "No connection to the receptor node"
 			requestLogger.Info(errMsg)
 			errorResponse := errorResponse{Title: errMsg,
-				Status: http.StatusBadRequest,
+				Status: http.StatusNotFound,
 				Detail: errMsg}
 			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return

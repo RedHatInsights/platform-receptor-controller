@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -110,7 +109,11 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var connID connectionID
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		requestLogger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -122,6 +125,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			panic(err)
 		}
 
+		var connID connectionID
 		if err := json.Unmarshal(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
@@ -130,7 +134,8 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			return
 		}
 
-		log.Println(connID)
+		requestLogger.Debugf("Checking connection status for account:%s - node id:%s",
+			connID.Account, connID.NodeID)
 
 		var connectionStatus connectionStatusResponse
 
@@ -150,7 +155,11 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var connID connectionID
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		requestLogger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -162,6 +171,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			panic(err)
 		}
 
+		var connID connectionID
 		if err := json.Unmarshal(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
@@ -170,7 +180,8 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			return
 		}
 
-		log.Println(connID)
+		requestLogger.Debugf("Submitting ping for account:%s - node id:%s",
+			connID.Account, connID.NodeID)
 
 		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
@@ -205,6 +216,14 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
+
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		requestLogger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
+
+		requestLogger.Debugf("Getting connection list")
 
 		allReceptorConnections := s.connectionMgr.GetAllConnections()
 
