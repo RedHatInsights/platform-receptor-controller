@@ -98,10 +98,6 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			return
 		}
 
-		requestLogger.Debug("jobRequest:", jobRequest)
-
-		// dispatch job via client's sendwork
-		// not using client's sendwork, but leaving this code in to verify connection?
 		var client controller.Receptor
 		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
@@ -115,7 +111,8 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			return
 		}
 
-		log.Println("job request:", jobRequest)
+		requestLogger.WithFields(logrus.Fields{"node_id": jobRequest.Recipient,
+			"directive": jobRequest.Directive}).Debug("Sending a message:", jobRequest)
 
 		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,
 			[]string{jobRequest.Recipient},
