@@ -58,7 +58,7 @@ func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: jr.secrets}
 	securedSubRouter.Use(amw.Authenticate)
-	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods("POST")
+	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
