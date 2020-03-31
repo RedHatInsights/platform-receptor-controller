@@ -9,8 +9,11 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -42,12 +45,6 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods("POST")
 }
 
-type errorResponse struct {
-	Title  string `json:"title"`
-	Status int    `json:"status"`
-	Detail string `json:"detail"`
-}
-
 type connectionID struct {
 	Account string `json:"account"`
 	NodeID  string `json:"node_id"`
@@ -67,7 +64,11 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		var connID connectionID
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		requestLogger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
 
 		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
 
@@ -79,6 +80,8 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			panic(err)
 		}
 
+		var connID connectionID
+
 		if err := json.Unmarshal(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
@@ -89,7 +92,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			log.Printf("No connection to the customer (%+v)...\n", connID)
+			requestLogger.Printf("No connection to the customer (%+v)...\n", connID)
 			errorResponse := errorResponse{Title: "No connection found to node",
 				Status: http.StatusBadRequest,
 				Detail: "No connection found to node"}
@@ -204,7 +207,6 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
 		allReceptorConnections := s.connectionMgr.GetAllConnections()
-		log.Println("allReceptorConnections:", allReceptorConnections)
 
 		connections := make([]ConnectionsPerAccount, len(allReceptorConnections))
 
@@ -223,18 +225,6 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 
 		response := Response{Connections: connections}
 
-		log.Println("response:", response)
-
 		WriteJSONResponse(w, http.StatusOK, response)
-	}
-}
-
-func WriteJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		http.Error(w, "Unable to encode payload!", http.StatusUnprocessableEntity)
-		log.Println("Unable to encode payload!")
-		return
 	}
 }

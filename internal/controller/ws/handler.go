@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,15 +51,19 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
+		requestId := request_id.GetReqID(req.Context())
 		rhIdentity := identity.Get(req.Context())
 
-		log := logger.Log.WithFields(logrus.Fields{"account": rhIdentity.Identity.AccountNumber})
+		logger := logger.Log.WithFields(logrus.Fields{
+			"account":    rhIdentity.Identity.AccountNumber,
+			"request_id": requestId,
+		})
 
-		log.Info("WebSocket server - got a websocket connection")
+		logger.Info("WebSocket server - got a websocket connection")
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
+			logger.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
 			return
 		}
 
@@ -69,7 +74,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			controlChannel: make(chan protocol.Message, messageBufferSize),
 			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
-			log:            log,
+			logger:         logger,
 		}
 
 		ctx := req.Context()
@@ -86,9 +91,11 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			Ctx:            ctx,
 		}
 
-		responseReactor := rc.responseReactorFactory.NewResponseReactor(log, transport.Recv)
+		responseReactor := rc.responseReactorFactory.NewResponseReactor(logger, transport.Recv)
 
-		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber,
+		receptorService := rc.receptorServiceFactory.NewReceptorService(
+			logger,
+			rhIdentity.Identity.AccountNumber,
 			rc.config.ReceptorControllerNodeId,
 			transport)
 
@@ -99,6 +106,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
 			ConnectionMgr:            rc.connectionMgr,
 			MessageDispatcherFactory: rc.messageDispatcherFactory,
+			Logger:                   logger,
 		}
 		responseReactor.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 

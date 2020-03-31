@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"sync"
 	"time"
 
@@ -12,6 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -30,12 +31,16 @@ func NewReceptorServiceFactory(w *kafka.Writer) *ReceptorServiceFactory {
 	}
 }
 
-func (fact *ReceptorServiceFactory) NewReceptorService(account, nodeID string, transport *Transport) *ReceptorService {
+func (fact *ReceptorServiceFactory) NewReceptorService(logger *logrus.Entry, account, nodeID string, transport *Transport) *ReceptorService {
 	return &ReceptorService{
 		AccountNumber: account,
 		NodeID:        nodeID,
 		Transport:     transport,
-		kafkaWriter:   fact.kafkaWriter,
+		responseDispatcherRegistrar: &DispatcherTable{
+			dispatchTable: make(map[uuid.UUID]chan ResponseMessage),
+		},
+		kafkaWriter: fact.kafkaWriter,
+		logger:      logger,
 	}
 }
 
@@ -51,25 +56,21 @@ type ReceptorService struct {
 	responseDispatcherRegistrar *DispatcherTable
 
 	kafkaWriter *kafka.Writer
+	logger      *logrus.Entry
 }
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
-	log.Printf("Registering a connection to node %s", peerNodeID)
+	r.logger.Printf("Registering a connection to node %s", peerNodeID)
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata
-
-	r.responseDispatcherRegistrar = &DispatcherTable{
-		dispatchTable: make(map[uuid.UUID]chan ResponseMessage),
-	}
 
 	return nil
 }
 
 func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
-	log.Println("edges:", edges)
-	log.Println("seen:", seen)
-
+	r.logger.Println("edges:", edges)
+	r.logger.Println("seen:", seen)
 	return nil
 }
 
@@ -77,7 +78,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
-		log.Println("Unable to generate UUID for routing the job...cannot proceed")
+		r.logger.Println("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
@@ -89,7 +90,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 		"directive",
 		directive,
 		payload)
-	log.Printf("Sending PayloadMessage - %s\n", messageID)
+	r.logger.Printf("Sending PayloadMessage - %s\n", messageID)
 
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
 	defer cancel()
@@ -106,7 +107,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
-		log.Println("Unable to generate UUID for routing the job...cannot proceed")
+		r.logger.Println("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
@@ -121,7 +122,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 
 	responseChannel := make(chan ResponseMessage)
 
-	log.Println("Registering a sync response handler")
+	r.logger.Println("Registering a sync response handler")
 	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
@@ -144,32 +145,32 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
 func (r *ReceptorService) sendControlMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
+	return r._sendMessage(r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
 }
 
 func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
+	return r._sendMessage(r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
 }
 
-func sendMessage(transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
-	log.Println("Passing message to async layer")
+func (r *ReceptorService) _sendMessage(transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
+	r.logger.Println("Passing message to async layer")
 	select {
 
 	case sendChannel <- msgToSend:
 		return nil
 
 	case <-transportCtx.Done():
-		log.Printf("Connection to receptor network lost")
+		r.logger.Printf("Connection to receptor network lost")
 		return connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		switch msgSenderCtx.Err().(error) {
 		case context.DeadlineExceeded:
-			log.Printf("Timed out waiting to pass message to async layer")
+			r.logger.Printf("Timed out waiting to pass message to async layer")
 			return requestTimedOut
 		default:
-			log.Printf("Message cancelled by sender")
+			r.logger.Printf("Message cancelled by sender")
 			return requestCancelledBySender
 		}
 	}
@@ -177,7 +178,7 @@ func sendMessage(transportCtx context.Context, sendChannel chan protocol.Message
 
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
 func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, responseChannel chan ResponseMessage) (ResponseMessage, error) {
-	log.Println("Waiting for a sync response")
+	r.logger.Println("Waiting for a sync response")
 	nilResponseMessage := ResponseMessage{}
 
 	select {
@@ -186,16 +187,16 @@ func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, response
 		return responseMsg, nil
 
 	case <-r.Transport.Ctx.Done():
-		log.Printf("Connection to receptor network lost")
+		r.logger.Printf("Connection to receptor network lost")
 		return nilResponseMessage, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		switch msgSenderCtx.Err().(error) {
 		case context.DeadlineExceeded:
-			log.Printf("Timed out waiting for response for message")
+			r.logger.Printf("Timed out waiting for response for message")
 			return nilResponseMessage, requestTimedOut
 		default:
-			log.Printf("Message cancelled by sender")
+			r.logger.Printf("Message cancelled by sender")
 			return nilResponseMessage, requestCancelledBySender
 		}
 	}
@@ -216,7 +217,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	inResponseTo, err := uuid.Parse(payloadMessage.Data.InResponseTo)
 	if err != nil {
-		log.Printf("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
+		r.logger.Printf("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
 			"  Error: %s, Message: %+v", err, payloadMessage.Data.InResponseTo)
 		return
 	}
@@ -228,11 +229,11 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 		return
 	}
 
-	log.Printf("Dispatching response:%+v", responseMessage)
+	r.logger.Printf("Dispatching response:%+v", responseMessage)
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
-		log.Println("JSON marshal of ResponseMessage failed, err:", err)
+		r.logger.Println("JSON marshal of ResponseMessage failed, err:", err)
 		return
 	}
 

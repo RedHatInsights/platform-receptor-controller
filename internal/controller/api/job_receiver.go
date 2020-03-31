@@ -6,16 +6,18 @@ import (
 
 	"github.com/gorilla/mux"
 
-	//	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
-	"github.com/go-playground/validator/v10"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
+	"github.com/go-playground/validator/v10"
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/sirupsen/logrus"
 )
 
 func decodeJSON(body io.ReadCloser, job interface{}) error {
@@ -76,32 +78,40 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
-		log.Println("Simulating JobReceiver producing a message")
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		requestLogger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
 
 		var jobRequest JobRequest
 
 		body := http.MaxBytesReader(w, req.Body, 1048576)
 
 		if err := decodeJSON(body, &jobRequest); err != nil {
-			log.Println(err)
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
+			errMsg := "Unable to process json input"
+			requestLogger.WithFields(logrus.Fields{"error": err}).Debug(errMsg)
+			errorResponse := errorResponse{Title: errMsg,
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		log.Println("jobRequest:", jobRequest)
+		requestLogger.Debug("jobRequest:", jobRequest)
+
 		// dispatch job via client's sendwork
 		// not using client's sendwork, but leaving this code in to verify connection?
 		var client controller.Receptor
 		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
-			// FIXME: the connection to the client was not available
-			log.Println("No connection to the customer...")
-			w.WriteHeader(http.StatusNotFound)
+			// The connection to the customer's receptor node was not available
+			errMsg := "No connection to the receptor node"
+			requestLogger.Info(errMsg)
+			errorResponse := errorResponse{Title: errMsg,
+				Status: http.StatusBadRequest,
+				Detail: errMsg}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
@@ -114,23 +124,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		if err != nil {
 			// FIXME:  Handle this better!?!?
-			log.Println("Error passing message to receptor: ", err)
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-
-			}
+			requestLogger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
+			errorResponse := errorResponse{Title: "Error passing message to receptor",
+				Status: http.StatusUnprocessableEntity,
+				Detail: err.Error()}
+			WriteJSONResponse(w, errorResponse.Status, errorResponse)
 		}
 
 		jobResponse := JobResponse{jobID.String()}
 
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(jobResponse); err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
+		WriteJSONResponse(w, http.StatusCreated, jobResponse)
 	}
 }

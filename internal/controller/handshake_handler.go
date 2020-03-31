@@ -3,10 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
+	"github.com/sirupsen/logrus"
 )
 
 type HandshakeHandler struct {
@@ -18,6 +19,7 @@ type HandshakeHandler struct {
 	ResponseReactor          ResponseReactor
 	ConnectionMgr            *ConnectionManager
 	MessageDispatcherFactory *MessageDispatcherFactory
+	Logger                   *logrus.Entry
 }
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) {
@@ -32,8 +34,6 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		return
 	}
 
-	log.Printf("**** got hi message!!  %+v", hiMessage)
-
 	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.Receptor.NodeID}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10) // FIXME:  add a configurable timeout
@@ -41,7 +41,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	select {
 	case <-ctx.Done():
-		log.Println("Request cancelled during handshake. Error: ", ctx.Err())
+		hh.Logger.Info("Request cancelled during handshake. Error: ", ctx.Err())
 		return
 	case hh.Transport.ControlChannel <- &responseHiMessage: // FIXME:  Why a pointer here??
 		break
@@ -58,29 +58,29 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		AccountNumber: hh.AccountNumber,
 		NodeID:        hiMessage.ID,
 		ConnectionMgr: hh.ConnectionMgr,
+		Logger:        hh.Logger,
 	}
 	hh.ResponseReactor.RegisterDisconnectHandler(disconnectHandler)
 
 	routeTableHandler := RouteTableHandler{
 		Receptor:  hh.Receptor,
 		Transport: hh.Transport,
+		Logger:    hh.Logger,
 	}
 	hh.ResponseReactor.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
 
 	payloadHandler := PayloadHandler{AccountNumber: hh.AccountNumber,
 		Receptor:  hh.Receptor,
 		Transport: hh.Transport,
+		Logger:    hh.Logger,
 	}
 	hh.ResponseReactor.RegisterHandler(protocol.PayloadMessageType, payloadHandler)
 
-	/**** FIXME:
-	         1) I think we need to build a Receptor service object that gets created here.
-	            The MessageDispatcher likely needs to be created by the Receptor service object
-	         2) The MessageDispatcher needs to be disabled until we split the service apart.
+	/**** FIXME: The MessageDispatcher needs to be disabled until we split the service apart.
 
-		// Start the message dispatcher
-		messageDispatcher := hh.MessageDispatcherFactory.NewDispatcher(hh.AccountNumber, hiMessage.ID)
-		messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
+	// Start the message dispatcher
+	messageDispatcher := hh.MessageDispatcherFactory.NewDispatcher(hh.AccountNumber, hiMessage.ID)
+	messageDispatcher.StartDispatchingMessages(ctx, hh.Send)
 	*/
 
 	return

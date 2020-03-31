@@ -16,7 +16,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/gorilla/mux"
-	//	kafka "github.com/segmentio/kafka-go"
 )
 
 const (

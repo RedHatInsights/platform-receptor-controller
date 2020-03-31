@@ -28,7 +28,7 @@ type rcClient struct {
 
 	config *WebSocketConfig
 
-	log *logrus.Entry
+	logger *logrus.Entry
 }
 
 func (c *rcClient) read(ctx context.Context) {
@@ -42,13 +42,13 @@ func (c *rcClient) read(ctx context.Context) {
 		_, r, err := c.socket.NextReader()
 
 		if err != nil {
-			c.log.WithFields(logrus.Fields{"error": err}).Debug("WebSocket reader while getting a reader")
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("WebSocket reader while getting a reader")
 			return
 		}
 
 		message, err := protocol.ReadMessage(r)
 		if err != nil {
-			c.log.WithFields(logrus.Fields{"error": err}).Debug("WebSocket reader while reading receptor message")
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("WebSocket reader while reading receptor message")
 			return
 		}
 
@@ -62,16 +62,16 @@ func (c *rcClient) read(ctx context.Context) {
 func (c *rcClient) configurePongHandler() {
 
 	if c.config.PongWait > 0 {
-		c.log.Debug("Configuring a pong handler with a deadline of ", c.config.PongWait)
+		c.logger.Debug("Configuring a pong handler with a deadline of ", c.config.PongWait)
 		c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 
 		c.socket.SetPongHandler(func(data string) error {
-			//logger.log.Debug("WebSocket reader - got a pong")
+			//logger.logger.Debug("WebSocket reader - got a pong")
 			c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 			return nil
 		})
 	} else {
-		c.log.Debug("Pong handler has been disabled")
+		c.logger.Debug("Pong handler has been disabled")
 	}
 }
 
@@ -109,27 +109,27 @@ func (c *rcClient) write(ctx context.Context) {
 			return
 
 		case err := <-c.errorChannel:
-			c.log.WithFields(logrus.Fields{"error": err}).Debug("Got an error from the sync layer...shutting down")
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Got an error from the sync layer...shutting down")
 			return
 
 		case msg := <-c.controlChannel:
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				c.log.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a control message")
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a control message")
 				return
 			}
 
 		case msg := <-c.send:
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				c.log.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a message")
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a message")
 				return
 			}
 
 		case <-pingTicker.C:
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
-				c.log.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a ping")
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("An error occurred while sending a ping")
 				return
 			}
 		}
@@ -139,10 +139,10 @@ func (c *rcClient) write(ctx context.Context) {
 func (c *rcClient) configurePingTicker() *time.Ticker {
 
 	if c.config.PingPeriod > 0 {
-		c.log.Debug("Configuring a ping to fire every ", c.config.PingPeriod)
+		c.logger.Debug("Configuring a ping to fire every ", c.config.PingPeriod)
 		return time.NewTicker(c.config.PingPeriod)
 	} else {
-		c.log.Debug("Pings are disabled")
+		c.logger.Debug("Pings are disabled")
 		// To disable sending ping messages, we create a ticker that doesn't ever fire
 		ticker := time.NewTicker(40 * 60 * time.Minute)
 		ticker.Stop()
