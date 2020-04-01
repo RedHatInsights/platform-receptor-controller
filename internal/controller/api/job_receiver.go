@@ -111,7 +111,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			return
 		}
 
-		requestLogger.WithFields(logrus.Fields{"node_id": jobRequest.Recipient,
+		requestLogger.WithFields(logrus.Fields{"recipient": jobRequest.Recipient,
 			"directive": jobRequest.Directive}).Debug("Sending a message:", jobRequest)
 
 		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,

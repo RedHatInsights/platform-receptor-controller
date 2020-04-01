@@ -117,5 +117,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// go messageDispatcher.StartDispatchingMessages(ctx, client.send)
 		go client.write(ctx)
 		client.read(ctx)
+
+		logger.Info("Closing websocket connection")
 	}
 }

@@ -99,7 +99,10 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			return
 		}
 
-		client.DisconnectReceptorNetwork()
+		requestLogger.Infof("Attempting to disconnect account:%s - node id:%s",
+			connID.Account, connID.NodeID)
+
+		client.Close()
 
 		WriteJSONResponse(w, http.StatusOK, struct{}{})
 	}
