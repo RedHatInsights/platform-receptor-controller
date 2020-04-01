@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -91,10 +92,11 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			logger.Printf("No connection to the customer (%+v)...\n", connID)
-			errorResponse := errorResponse{Title: "No connection found to node",
+			errMsg := fmt.Sprintf("No connection found for node (%s:%s)", connID.Account, connID.NodeID)
+			logger.Info(errMsg)
+			errorResponse := errorResponse{Title: errMsg,
 				Status: http.StatusBadRequest,
-				Detail: "No connection found to node"}
+				Detail: errMsg}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
