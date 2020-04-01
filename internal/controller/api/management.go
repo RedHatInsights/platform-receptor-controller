@@ -97,7 +97,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			return
 		}
 
-		client.DisconnectReceptorNetwork()
+		client.Close()
 
 		WriteJSONResponse(w, http.StatusOK, struct{}{})
 	}

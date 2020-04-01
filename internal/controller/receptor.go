@@ -261,10 +261,6 @@ func (r *ReceptorService) Close() {
 	r.Transport.Cancel()
 }
 
-func (r *ReceptorService) DisconnectReceptorNetwork() {
-	r.Transport.Cancel()
-}
-
 func (r *ReceptorService) GetCapabilities() interface{} {
 	emptyCapabilities := struct{}{}
 

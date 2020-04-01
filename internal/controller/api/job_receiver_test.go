@@ -39,9 +39,6 @@ func (mc MockClient) Ping(context.Context, string, []string) (interface{}, error
 func (mc MockClient) Close() {
 }
 
-func (mc MockClient) DisconnectReceptorNetwork() {
-}
-
 func (mc MockClient) GetCapabilities() interface{} {
 	return struct{}{}
 }
