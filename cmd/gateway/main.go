@@ -13,6 +13,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -36,6 +37,7 @@ func main() {
 	logger.Log.Info("WebSocket configuration:\n", wsConfig)
 
 	wsMux := mux.NewRouter()
+	wsMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
@@ -47,6 +49,7 @@ func main() {
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
+	apiMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()

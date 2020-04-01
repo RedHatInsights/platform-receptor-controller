@@ -1,14 +1,13 @@
 package queue
 
 import (
-	"log"
-
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	kafka "github.com/segmentio/kafka-go"
 )
 
 func StartConsumer(cfg *ConsumerConfig) *kafka.Reader {
-	log.Println("Starting a new kafka consumer...")
-	log.Println("Kafka consumer configuration: ", cfg)
+	logger.Log.Info("Starting a new kafka consumer...")
+	logger.Log.Info("Kafka consumer configuration: ", cfg)
 
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     cfg.Brokers,
@@ -17,7 +16,7 @@ func StartConsumer(cfg *ConsumerConfig) *kafka.Reader {
 		StartOffset: cfg.ConsumerOffset,
 	})
 
-	log.Println("Kafka consumer config: ", r.Config())
+	logger.Log.Info("Kafka consumer config: ", r.Config())
 
 	return r
 }

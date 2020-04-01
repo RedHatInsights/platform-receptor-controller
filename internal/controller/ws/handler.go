@@ -59,13 +59,13 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			"request_id": requestId,
 		})
 
-		logger.Info("WebSocket server - got a websocket connection")
-
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			logger.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
 			return
 		}
+
+		logger.Info("Accepted websocket connection")
 
 		client := &rcClient{
 			config:         rc.config,

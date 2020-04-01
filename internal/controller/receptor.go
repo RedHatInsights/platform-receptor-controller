@@ -145,32 +145,32 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
 func (r *ReceptorService) sendControlMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return r._sendMessage(r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
+	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
 }
 
 func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return r._sendMessage(r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
+	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
 }
 
-func (r *ReceptorService) _sendMessage(transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
-	r.logger.Println("Passing message to async layer")
+func sendMessage(logger *logrus.Entry, transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
+	logger.Println("Passing message to async layer")
 	select {
 
 	case sendChannel <- msgToSend:
 		return nil
 
 	case <-transportCtx.Done():
-		r.logger.Printf("Connection to receptor network lost")
+		logger.Printf("Connection to receptor network lost")
 		return connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		switch msgSenderCtx.Err().(error) {
 		case context.DeadlineExceeded:
-			r.logger.Printf("Timed out waiting to pass message to async layer")
+			logger.Printf("Timed out waiting to pass message to async layer")
 			return requestTimedOut
 		default:
-			r.logger.Printf("Message cancelled by sender")
+			logger.Printf("Message cancelled by sender")
 			return requestCancelledBySender
 		}
 	}
