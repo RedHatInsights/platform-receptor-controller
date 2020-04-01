@@ -60,7 +60,7 @@ type ReceptorService struct {
 }
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
-	r.logger.Printf("Registering a connection to node %s", peerNodeID)
+	r.logger.Debugf("Registering a connection to node %s", peerNodeID)
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata
@@ -69,8 +69,8 @@ func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interfa
 }
 
 func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
-	r.logger.Println("edges:", edges)
-	r.logger.Println("seen:", seen)
+	r.logger.Debug("edges:", edges)
+	r.logger.Debug("seen:", seen)
 	return nil
 }
 
@@ -229,7 +229,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 		return
 	}
 
-	r.logger.Printf("Dispatching response:%+v", responseMessage)
+	r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo}).Info("Dispatching response message")
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {

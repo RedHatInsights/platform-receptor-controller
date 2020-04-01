@@ -11,11 +11,10 @@ import (
 )
 
 type HandshakeHandler struct {
-	AccountNumber string
-
-	Transport *Transport
-
-	Receptor                 *ReceptorService
+	AccountNumber            string
+	NodeID                   string
+	Transport                *Transport
+	ReceptorServiceFactory   *ReceptorServiceFactory
 	ResponseReactor          ResponseReactor
 	ConnectionMgr            *ConnectionManager
 	MessageDispatcherFactory *MessageDispatcherFactory
@@ -34,7 +33,10 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		return
 	}
 
-	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.Receptor.NodeID}
+	hh.Logger = hh.Logger.WithFields(logrus.Fields{"peer_node_id": hiMessage.ID})
+	hh.Logger.Info("Received handshake message")
+
+	responseHiMessage := protocol.HiMessage{Command: "HI", ID: hh.NodeID}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10) // FIXME:  add a configurable timeout
 	defer cancel()
@@ -47,12 +49,20 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		break
 	}
 
+	hh.Logger.Info("Handshake complete")
+
+	receptor := hh.ReceptorServiceFactory.NewReceptorService(
+		hh.Logger,
+		hh.AccountNumber,
+		hh.NodeID,
+		hh.Transport)
+
 	// FIXME:  What if this account number and node id are already registered?
 	//  abort the connection??
 
-	hh.Receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
+	receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
 
-	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, hh.Receptor)
+	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
 
 	disconnectHandler := DisconnectHandler{
 		AccountNumber: hh.AccountNumber,
@@ -63,14 +73,14 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	hh.ResponseReactor.RegisterDisconnectHandler(disconnectHandler)
 
 	routeTableHandler := RouteTableHandler{
-		Receptor:  hh.Receptor,
+		Receptor:  receptor,
 		Transport: hh.Transport,
 		Logger:    hh.Logger,
 	}
 	hh.ResponseReactor.RegisterHandler(protocol.RouteTableMessageType, routeTableHandler)
 
 	payloadHandler := PayloadHandler{AccountNumber: hh.AccountNumber,
-		Receptor:  hh.Receptor,
+		Receptor:  receptor,
 		Transport: hh.Transport,
 		Logger:    hh.Logger,
 	}

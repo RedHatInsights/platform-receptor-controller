@@ -7,10 +7,11 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -93,17 +94,12 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		responseReactor := rc.responseReactorFactory.NewResponseReactor(logger, transport.Recv)
 
-		receptorService := rc.receptorServiceFactory.NewReceptorService(
-			logger,
-			rhIdentity.Identity.AccountNumber,
-			rc.config.ReceptorControllerNodeId,
-			transport)
-
 		handshakeHandler := controller.HandshakeHandler{
 			Transport:                transport,
-			Receptor:                 receptorService,
+			ReceptorServiceFactory:   rc.receptorServiceFactory,
 			ResponseReactor:          responseReactor,
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
+			NodeID:                   rc.config.ReceptorControllerNodeId,
 			ConnectionMgr:            rc.connectionMgr,
 			MessageDispatcherFactory: rc.messageDispatcherFactory,
 			Logger:                   logger,
