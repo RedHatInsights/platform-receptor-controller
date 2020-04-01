@@ -38,10 +38,10 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: s.secrets}
 	securedSubRouter.Use(amw.Authenticate)
-	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods("GET")
-	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods("POST")
-	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods("POST")
-	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods("POST")
+	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
+	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)
+	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods(http.MethodPost)
+	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods(http.MethodPost)
 }
 
 type connectionID struct {

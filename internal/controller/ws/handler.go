@@ -45,7 +45,7 @@ var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBuffer
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
 	router.Use(identity.EnforceIdentity)
-	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods("GET")
+	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods(http.MethodGet)
 }
 
 func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
@@ -59,6 +59,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			"account":    rhIdentity.Identity.AccountNumber,
 			"request_id": requestId,
 		})
+
+		metrics.TotalConnectionCounter.Inc()
+		metrics.ActiveConnectionCounter.Inc()
+		defer metrics.ActiveConnectionCounter.Dec()
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {

@@ -55,6 +55,8 @@ func (c *rcClient) read(ctx context.Context) {
 		// The read has completed...disable the read deadline
 		c.socket.SetReadDeadline(time.Time{})
 
+		metrics.TotalMessagesReceivedCounter.Inc()
+
 		c.recv <- message
 	}
 }
@@ -87,6 +89,8 @@ func writeMessage(socket *websocket.Conn, writeWait time.Duration, msg protocol.
 	if err != nil {
 		return err
 	}
+
+	metrics.TotalMessagesSentCounter.Inc()
 
 	w.Close()
 

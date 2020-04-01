@@ -17,6 +17,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,6 +60,8 @@ func main() {
 
 	jr := api.NewJobReceiver(cm, apiMux, kw, wsConfig.ServiceToServiceCredentials)
 	jr.Routes()
+
+	apiMux.Handle("/metrics", promhttp.Handler())
 
 	go func() {
 		logger.Log.Info("Starting management web server:  ", *mgmtAddr)

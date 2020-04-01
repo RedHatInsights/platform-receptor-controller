@@ -29,9 +29,6 @@ func (mr *MockReceptor) Ping(context.Context, string, []string) (interface{}, er
 func (mr *MockReceptor) Close() {
 }
 
-func (mr *MockReceptor) DisconnectReceptorNetwork() {
-}
-
 func (mr *MockReceptor) GetCapabilities() interface{} {
 	return nil
 }

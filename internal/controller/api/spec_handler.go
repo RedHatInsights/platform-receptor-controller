@@ -21,7 +21,7 @@ func NewApiSpecServer(r *mux.Router, f string) *ApiSpecServer {
 }
 
 func (s *ApiSpecServer) Routes() {
-	s.router.HandleFunc("/openapi.json", s.handleApiSpec()).Methods("GET")
+	s.router.HandleFunc("/openapi.json", s.handleApiSpec()).Methods(http.MethodGet)
 }
 
 func (s *ApiSpecServer) handleApiSpec() http.HandlerFunc {
