@@ -49,6 +49,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
+		metrics.TotalConnectionCounter.Inc()
+		metrics.ActiveConnectionCounter.Inc()
+		defer metrics.ActiveConnectionCounter.Dec()
+
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			log.Println("Upgrade error:", err)
