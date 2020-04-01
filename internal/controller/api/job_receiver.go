@@ -80,7 +80,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		principal, _ := middlewares.GetPrincipal(req.Context())
 		requestId := request_id.GetReqID(req.Context())
-		requestLogger := logger.Log.WithFields(logrus.Fields{
+		logger := logger.Log.WithFields(logrus.Fields{
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
@@ -90,11 +90,11 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		if err := decodeJSON(body, &jobRequest); err != nil {
 			errMsg := "Unable to process json input"
-			requestLogger.WithFields(logrus.Fields{"error": err}).Debug(errMsg)
+			logger.WithFields(logrus.Fields{"error": err}).Debug(errMsg)
 			errorResponse := errorResponse{Title: errMsg,
 				Status: http.StatusBadRequest,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
@@ -103,15 +103,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		if client == nil {
 			// The connection to the customer's receptor node was not available
 			errMsg := "No connection to the receptor node"
-			requestLogger.Info(errMsg)
+			logger.Info(errMsg)
 			errorResponse := errorResponse{Title: errMsg,
 				Status: http.StatusNotFound,
 				Detail: errMsg}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		requestLogger.WithFields(logrus.Fields{"recipient": jobRequest.Recipient,
+		logger.WithFields(logrus.Fields{"recipient": jobRequest.Recipient,
 			"directive": jobRequest.Directive}).Debug("Sending a message:", jobRequest)
 
 		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,
@@ -121,15 +121,15 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		if err != nil {
 			// FIXME:  Handle this better!?!?
-			requestLogger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
+			logger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
 			errorResponse := errorResponse{Title: "Error passing message to receptor",
 				Status: http.StatusUnprocessableEntity,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 		}
 
 		jobResponse := JobResponse{jobID.String()}
 
-		WriteJSONResponse(w, http.StatusCreated, jobResponse)
+		writeJSONResponse(w, http.StatusCreated, jobResponse)
 	}
 }

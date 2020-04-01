@@ -65,7 +65,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 
 		principal, _ := middlewares.GetPrincipal(req.Context())
 		requestId := request_id.GetReqID(req.Context())
-		requestLogger := logger.Log.WithFields(logrus.Fields{
+		logger := logger.Log.WithFields(logrus.Fields{
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
@@ -85,26 +85,26 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			requestLogger.Printf("No connection to the customer (%+v)...\n", connID)
+			logger.Printf("No connection to the customer (%+v)...\n", connID)
 			errorResponse := errorResponse{Title: "No connection found to node",
 				Status: http.StatusBadRequest,
 				Detail: "No connection found to node"}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		requestLogger.Infof("Attempting to disconnect account:%s - node id:%s",
+		logger.Infof("Attempting to disconnect account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
 		client.Close()
 
-		WriteJSONResponse(w, http.StatusOK, struct{}{})
+		writeJSONResponse(w, http.StatusOK, struct{}{})
 	}
 }
 
@@ -114,7 +114,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 		principal, _ := middlewares.GetPrincipal(req.Context())
 		requestId := request_id.GetReqID(req.Context())
-		requestLogger := logger.Log.WithFields(logrus.Fields{
+		logger := logger.Log.WithFields(logrus.Fields{
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
@@ -133,11 +133,11 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		requestLogger.Debugf("Checking connection status for account:%s - node id:%s",
+		logger.Debugf("Checking connection status for account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
 		var connectionStatus connectionStatusResponse
@@ -150,7 +150,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
-		WriteJSONResponse(w, http.StatusOK, connectionStatus)
+		writeJSONResponse(w, http.StatusOK, connectionStatus)
 	}
 }
 
@@ -160,7 +160,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 
 		principal, _ := middlewares.GetPrincipal(req.Context())
 		requestId := request_id.GetReqID(req.Context())
-		requestLogger := logger.Log.WithFields(logrus.Fields{
+		logger := logger.Log.WithFields(logrus.Fields{
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
@@ -179,17 +179,17 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			errorResponse := errorResponse{Title: "Unable to process json input",
 				Status: http.StatusUnprocessableEntity,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		requestLogger.Debugf("Submitting ping for account:%s - node id:%s",
+		logger.Debugf("Submitting ping for account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
 		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client == nil {
-			WriteJSONResponse(w, http.StatusOK, pingResponse)
+			writeJSONResponse(w, http.StatusOK, pingResponse)
 			return
 		}
 
@@ -199,11 +199,11 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			errorResponse := errorResponse{Title: "Ping failed",
 				Status: http.StatusBadRequest,
 				Detail: err.Error()}
-			WriteJSONResponse(w, errorResponse.Status, errorResponse)
+			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
 		}
 
-		WriteJSONResponse(w, http.StatusOK, pingResponse)
+		writeJSONResponse(w, http.StatusOK, pingResponse)
 	}
 }
 
@@ -222,11 +222,11 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 
 		principal, _ := middlewares.GetPrincipal(req.Context())
 		requestId := request_id.GetReqID(req.Context())
-		requestLogger := logger.Log.WithFields(logrus.Fields{
+		logger := logger.Log.WithFields(logrus.Fields{
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
-		requestLogger.Debugf("Getting connection list")
+		logger.Debugf("Getting connection list")
 
 		allReceptorConnections := s.connectionMgr.GetAllConnections()
 
@@ -247,6 +247,6 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 
 		response := Response{Connections: connections}
 
-		WriteJSONResponse(w, http.StatusOK, response)
+		writeJSONResponse(w, http.StatusOK, response)
 	}
 }

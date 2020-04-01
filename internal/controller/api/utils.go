@@ -12,12 +12,11 @@ type errorResponse struct {
 	Detail string `json:"detail"`
 }
 
-func WriteJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
+func writeJSONResponse(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		http.Error(w, "Unable to encode payload!", http.StatusUnprocessableEntity)
 		log.Println("Unable to encode payload!")
-		return
 	}
 }
