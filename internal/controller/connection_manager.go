@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -16,6 +17,10 @@ type Receptor interface {
 	GetCapabilities() interface{}
 }
 
+var (
+	errDuplicateNodeID = errors.New("duplicate node id")
+)
+
 type ConnectionManager struct {
 	connections map[string]map[string]Receptor
 	sync.RWMutex
@@ -27,17 +32,23 @@ func NewConnectionManager() *ConnectionManager {
 	}
 }
 
-func (cm *ConnectionManager) Register(account string, node_id string, client Receptor) {
+func (cm *ConnectionManager) Register(account string, node_id string, client Receptor) error {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
 	if exists == true {
+		_, exists = cm.connections[account][node_id]
+		if exists == true {
+			return errDuplicateNodeID
+		}
 		cm.connections[account][node_id] = client
 	} else {
 		cm.connections[account] = make(map[string]Receptor)
 		cm.connections[account][node_id] = client
 	}
+
 	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
+	return nil
 }
 
 func (cm *ConnectionManager) Unregister(account string, node_id string) {

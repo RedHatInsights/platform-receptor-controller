@@ -116,6 +116,9 @@ func (c *rcClient) write(ctx context.Context) {
 
 		case err := <-c.errorChannel:
 			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Received an error from the sync layer")
+			c.socket.WriteMessage(websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, err.Error()))
+			// FIXME: is a sleep needed here??
 			return
 
 		case msg := <-c.controlChannel:

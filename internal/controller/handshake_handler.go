@@ -56,12 +56,16 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		hh.AccountNumber,
 		hh.NodeID)
 
-	// FIXME:  What if this account number and node id are already registered?
-	//  abort the connection??
-
 	receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata, hh.Transport)
 
-	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
+	err := hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
+	if err != nil {
+		// Abort the connection if this account number and node id are already registered
+		hh.Logger.Printf("Unable to register connection (%s:%s) with connection manager.  Dropping connection!",
+			hh.AccountNumber, hiMessage.ID)
+		hh.Transport.ErrorChannel <- err
+		return
+	}
 
 	disconnectHandler := DisconnectHandler{
 		AccountNumber: hh.AccountNumber,

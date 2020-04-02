@@ -167,6 +167,32 @@ var _ = Describe("WsController", func() {
 		})
 	})
 
+	Describe("Connecting to the receptor controller with duplicate account and node id", func() {
+		Context("With an open connection and open a new connection and send Hi with the same account and node id", func() {
+			It("Should in return receive an error on the second connection", func() {
+
+				var RC_URL string = "ws://localhost:8080/wss/receptor-controller/gateway"
+
+				c, _, err := d.Dial(RC_URL, header)
+				Expect(err).NotTo(HaveOccurred())
+				defer c.Close()
+
+				hiMessage := protocol.HiMessage{Command: "HI", ID: "TestClient"}
+				writeSocket(c, &hiMessage)
+
+				m, _ := readSocket(c, 1)
+				Expect(m.Type()).To(Equal(protocol.HiMessageType))
+
+				// If we got to this point...we have a valid handshake
+
+				// Open a new connection without closing the previously opened connection
+				duplicateConnection, _, err := d.Dial(RC_URL, header)
+				Expect(duplicateConnection).Should(BeNil())
+				Expect(err).Should(HaveOccurred()) // FIXME: Check for an error
+			})
+		})
+	})
+
 	Describe("Connecting to the receptor controller with a handshake that takes too long", func() {
 		Context("With an open connection and trying to read from the connection", func() {
 			It("Should in return receive connection closed error", func() {

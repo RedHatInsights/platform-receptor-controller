@@ -16,6 +16,7 @@ func init() {
 
 // FIXME: Move this to a "central" place
 type MockReceptor struct {
+	NodeID string
 }
 
 func (mr *MockReceptor) SendMessage(context.Context, string, []string, interface{}, string) (*uuid.UUID, error) {
@@ -156,5 +157,35 @@ func TestGetAllConnectionsWithNoRegisteredReceptors(t *testing.T) {
 	receptorMap := cm.GetAllConnections()
 	if len(receptorMap) != 0 {
 		t.Fatalf("Expected to find 0 connections, but found %d connections", len(receptorMap))
+	}
+}
+
+func TestRegisterConnectionsWithDuplicateNodeIDs(t *testing.T) {
+	accountNumber := "123"
+	nodeID := "456"
+	expectedReceptorObj := new(MockReceptor)
+	secondReceptorObj := new(MockReceptor)
+
+	// This seems silly but it tripped me up since pointers to empty structs have the same value
+	if expectedReceptorObj == secondReceptorObj {
+		t.Fatalf("Expected the test receptor objects to be different")
+	}
+
+	cm := NewConnectionManager()
+
+	err := cm.Register(accountNumber, nodeID, expectedReceptorObj)
+	if err != nil {
+		t.Fatalf("Expected the error to be nil")
+	}
+
+	err = cm.Register(accountNumber, nodeID, secondReceptorObj)
+	if err == nil {
+		t.Fatalf("Expected an error instance to be returned in the case of duplicate registration")
+	}
+
+	actualReceptorObj := cm.GetConnection(accountNumber, nodeID)
+
+	if actualReceptorObj != expectedReceptorObj {
+		t.Fatalf("Expected to find the connection that was registered first")
 	}
 }
