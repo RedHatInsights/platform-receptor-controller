@@ -61,9 +61,16 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	err := hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
 	if err != nil {
 		// Abort the connection if this account number and node id are already registered
-		hh.Logger.Printf("Unable to register connection (%s:%s) with connection manager.  Dropping connection!",
-			hh.AccountNumber, hiMessage.ID)
+		_, ok := err.(DuplicateNodeIDError)
+		if ok == true {
+			metrics.DuplicateConnectionCounter.Inc()
+		}
+
+		hh.Logger.WithFields(logrus.Fields{"error": err}).Infof("Unable to register connection "+
+			"(%s:%s) with connection manager.  Dropping connection!", hh.AccountNumber, hiMessage.ID)
+
 		hh.Transport.ErrorChannel <- err
+
 		return
 	}
 

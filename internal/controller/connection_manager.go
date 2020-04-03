@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -17,9 +16,12 @@ type Receptor interface {
 	GetCapabilities() interface{}
 }
 
-var (
-	errDuplicateNodeID = errors.New("duplicate node id")
-)
+type DuplicateNodeIDError struct {
+}
+
+func (d DuplicateNodeIDError) Error() string {
+	return "duplicate node id"
+}
 
 type ConnectionManager struct {
 	connections map[string]map[string]Receptor
@@ -39,7 +41,7 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 	if exists == true {
 		_, exists = cm.connections[account][node_id]
 		if exists == true {
-			return errDuplicateNodeID
+			return DuplicateNodeIDError{}
 		}
 		cm.connections[account][node_id] = client
 	} else {
