@@ -2,8 +2,9 @@ package controller
 
 import (
 	"context"
-	"log"
 	"sync"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +37,7 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 		cm.connections[account] = make(map[string]Receptor)
 		cm.connections[account][node_id] = client
 	}
-	log.Printf("Registered a connection (%s, %s)", account, node_id)
+	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
 }
 
 func (cm *ConnectionManager) Unregister(account string, node_id string) {
@@ -52,7 +53,7 @@ func (cm *ConnectionManager) Unregister(account string, node_id string) {
 			delete(cm.connections, account)
 		}
 	}
-	log.Printf("Unregistered a connection (%s, %s)", account, node_id)
+	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }
 
 func (cm *ConnectionManager) GetConnection(account string, node_id string) Receptor {

@@ -3,9 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
+	"github.com/sirupsen/logrus"
 )
 
 type PayloadHandler struct {
@@ -14,6 +15,7 @@ type PayloadHandler struct {
 
 	Transport *Transport
 	Receptor  *ReceptorService
+	Logger    *logrus.Entry
 }
 
 func (ph *PayloadHandler) GetKey() string {
@@ -23,19 +25,19 @@ func (ph *PayloadHandler) GetKey() string {
 func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 
 	if m.Type() != protocol.PayloadMessageType {
-		log.Printf("Unable to dispatch message (type: %d): %s", m.Type(), m)
+		ph.Logger.Infof("Unable to dispatch message (type: %d): %s", m.Type(), m)
 		return
 	}
 
 	payloadMessage, ok := m.(*protocol.PayloadMessage)
 	if !ok {
-		log.Println("Unable to convert message into PayloadMessage")
+		ph.Logger.Info("Unable to convert message into PayloadMessage")
 		return
 	}
 
 	// verify this message was meant for this receptor/peer (probably want a uuid here)
 	if payloadMessage.RoutingInfo.Recipient != ph.Receptor.NodeID {
-		log.Println("Recieved message that was not intended for this node")
+		ph.Logger.Info("Recieved message that was not intended for this node")
 		return
 	}
 

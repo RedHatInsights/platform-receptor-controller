@@ -13,9 +13,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/gorilla/mux"
-	//	kafka "github.com/segmentio/kafka-go"
 )
 
 const (
@@ -26,6 +26,10 @@ const (
 	CONNECTED_ACCOUNT_NUMBER = "1234"
 	CONNECTED_NODE_ID        = "345"
 )
+
+func init() {
+	logger.InitLogger()
+}
 
 func createConnectionStatusPostBody(account_number string, node_id string) io.Reader {
 	jsonString := fmt.Sprintf("{\"account\": \"%s\", \"node_id\": \"%s\"}", account_number, node_id)

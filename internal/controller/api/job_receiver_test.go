@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -41,6 +42,10 @@ func (mc MockClient) Close() {
 
 func (mc MockClient) GetCapabilities() interface{} {
 	return struct{}{}
+}
+
+func init() {
+	logger.InitLogger()
 }
 
 var _ = Describe("JobReceiver", func() {

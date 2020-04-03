@@ -3,32 +3,30 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+
+	"github.com/sirupsen/logrus"
 )
 
 type RouteTableHandler struct {
 	Receptor  *ReceptorService
 	Transport *Transport
+	Logger    *logrus.Entry
 }
 
 func (rth RouteTableHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 
-	log.Printf("inside RouteTableHandler...receptor:%+v", rth.Receptor)
-
 	if m.Type() != protocol.RouteTableMessageType {
-		log.Printf("Invalid message type (type: %d): %v", m.Type(), m)
+		rth.Logger.Infof("Invalid message type (type: %d): %v", m.Type(), m)
 		return
 	}
 
 	routingTableMessage, ok := m.(*protocol.RouteTableMessage)
 	if !ok {
-		log.Println("Unable to convert message into RouteTableMessage")
+		rth.Logger.Info("Unable to convert message into RouteTableMessage")
 		return
 	}
-
-	log.Printf("**** got routing table message!!  %+v", routingTableMessage)
 
 	rth.Receptor.UpdateRoutingTable(
 		fmt.Sprintf("%s", routingTableMessage.Edges),

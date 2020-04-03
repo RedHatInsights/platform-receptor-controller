@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -12,12 +11,14 @@ import (
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -29,11 +30,15 @@ func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
 	flag.Parse()
 
+	logger.InitLogger()
+
+	logger.Log.Info("Starting Receptor-Controller service")
+
 	wsConfig := ws.GetWebSocketConfig()
-	log.Println("WebSocket configuration:")
-	log.Println(wsConfig)
+	logger.Log.Info("WebSocket configuration:\n", wsConfig)
 
 	wsMux := mux.NewRouter()
+	wsMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
 	cm := c.NewConnectionManager()
 	kw := queue.StartProducer(queue.GetProducer())
@@ -45,6 +50,7 @@ func main() {
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
+	apiMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
@@ -58,16 +64,16 @@ func main() {
 	apiMux.Handle("/metrics", promhttp.Handler())
 
 	go func() {
-		log.Println("Starting management web server on", *mgmtAddr)
+		logger.Log.Info("Starting management web server:  ", *mgmtAddr)
 		if err := http.ListenAndServe(*mgmtAddr, handlers.LoggingHandler(os.Stdout, apiMux)); err != nil {
-			log.Fatal("ListenAndServe:", err)
+			logger.Log.WithFields(logrus.Fields{"error": err}).Fatal("managment web server error")
 		}
 	}()
 
 	go func() {
-		log.Println("Starting websocket server on", *wsAddr)
+		logger.Log.Info("Starting websocket server on:  ", *wsAddr)
 		if err := http.ListenAndServe(*wsAddr, handlers.LoggingHandler(os.Stdout, wsMux)); err != nil {
-			log.Fatal("ListenAndServe:", err)
+			logger.Log.WithFields(logrus.Fields{"error": err}).Fatal("websocket server error")
 		}
 	}()
 
@@ -75,6 +81,6 @@ func main() {
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("Blocking waiting for signal")
 	<-signalChan
+	logger.Log.Debug("Receptor-Controller shutting down")
 }

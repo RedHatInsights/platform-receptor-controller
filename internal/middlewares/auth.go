@@ -3,10 +3,12 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/redhatinsights/platform-go-middlewares/identity"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -68,14 +70,11 @@ type serviceCredentials struct {
 func newServiceCredentials(clientID, account, psk string) (*serviceCredentials, error) {
 	switch {
 	case clientID == "":
-		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-client-id header")
-		return nil, errors.New(authErrorMessage)
+		return nil, errors.New(authErrorLogHeader + "Missing x-rh-receptor-controller-client-id header")
 	case account == "":
-		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-account header")
-		return nil, errors.New(authErrorMessage)
+		return nil, errors.New(authErrorLogHeader + "Missing x-rh-receptor-controller-account header")
 	case psk == "":
-		log.Println(authErrorLogHeader + "Missing x-rh-receptor-controller-psk header")
-		return nil, errors.New(authErrorMessage)
+		return nil, errors.New(authErrorLogHeader + "Missing x-rh-receptor-controller-psk header")
 	}
 	return &serviceCredentials{
 		clientID: clientID,
@@ -91,11 +90,9 @@ type serviceCredentialsValidator struct {
 func (scv *serviceCredentialsValidator) validate(sc *serviceCredentials) error {
 	switch {
 	case scv.knownServiceCredentials[sc.clientID] == nil:
-		log.Println(authErrorLogHeader + "Provided ClientID not attached to any known keys")
-		return errors.New(authErrorMessage)
+		return errors.New(authErrorLogHeader + "Provided ClientID not attached to any known keys")
 	case sc.psk != scv.knownServiceCredentials[sc.clientID]:
-		log.Println(authErrorLogHeader + "Provided PSK does not match known key for this client")
-		return errors.New(authErrorMessage)
+		return errors.New(authErrorLogHeader + "Provided PSK does not match known key for this client")
 	}
 	return nil
 }
@@ -118,13 +115,15 @@ func (amw *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 				r.Header.Get(pskHeader),
 			)
 			if err != nil {
-				http.Error(w, err.Error(), 401)
+				logger.Log.WithFields(logrus.Fields{"error": err}).Debug("Authentication failure")
+				http.Error(w, authErrorMessage, 401)
 				return
 			}
-			log.Printf("Received service to service request from %v using account:%v", sr.clientID, sr.account)
+			logger.Log.Debugf("Received service to service request from %v using account:%v", sr.clientID, sr.account)
 			validator := serviceCredentialsValidator{knownServiceCredentials: amw.Secrets}
 			if err := validator.validate(sr); err != nil {
-				http.Error(w, err.Error(), 401)
+				logger.Log.WithFields(logrus.Fields{"error": err}).Debug("Authentication failure")
+				http.Error(w, authErrorMessage, 401)
 				return
 			}
 

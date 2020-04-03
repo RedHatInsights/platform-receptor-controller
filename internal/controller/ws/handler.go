@@ -2,14 +2,17 @@ package ws
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
+	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -49,20 +52,25 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
+		requestId := request_id.GetReqID(req.Context())
+		rhIdentity := identity.Get(req.Context())
+
+		logger := logger.Log.WithFields(logrus.Fields{
+			"account":    rhIdentity.Identity.AccountNumber,
+			"request_id": requestId,
+		})
+
 		metrics.TotalConnectionCounter.Inc()
 		metrics.ActiveConnectionCounter.Inc()
 		defer metrics.ActiveConnectionCounter.Dec()
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Println("Upgrade error:", err)
+			logger.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
 			return
 		}
 
-		rhIdentity := identity.Get(req.Context())
-
-		log.Println("WebSocket server - got a connection, account #", rhIdentity.Identity.AccountNumber)
-		log.Println("All the headers: ", req.Header)
+		logger.Info("Accepted websocket connection")
 
 		client := &rcClient{
 			config:         rc.config,
@@ -71,6 +79,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			controlChannel: make(chan protocol.Message, messageBufferSize),
 			errorChannel:   make(chan error),
 			recv:           make(chan protocol.Message, messageBufferSize),
+			logger:         logger,
 		}
 
 		ctx := req.Context()
@@ -87,19 +96,17 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			Ctx:            ctx,
 		}
 
-		responseReactor := rc.responseReactorFactory.NewResponseReactor(transport.Recv)
-
-		receptorService := rc.receptorServiceFactory.NewReceptorService(rhIdentity.Identity.AccountNumber,
-			rc.config.ReceptorControllerNodeId,
-			transport)
+		responseReactor := rc.responseReactorFactory.NewResponseReactor(logger, transport.Recv)
 
 		handshakeHandler := controller.HandshakeHandler{
 			Transport:                transport,
-			Receptor:                 receptorService,
+			ReceptorServiceFactory:   rc.receptorServiceFactory,
 			ResponseReactor:          responseReactor,
 			AccountNumber:            rhIdentity.Identity.AccountNumber,
+			NodeID:                   rc.config.ReceptorControllerNodeId,
 			ConnectionMgr:            rc.connectionMgr,
 			MessageDispatcherFactory: rc.messageDispatcherFactory,
+			Logger:                   logger,
 		}
 		responseReactor.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
@@ -114,5 +121,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		// go messageDispatcher.StartDispatchingMessages(ctx, client.send)
 		go client.write(ctx)
 		client.read(ctx)
+
+		logger.Info("Closing websocket connection")
 	}
 }

@@ -2,11 +2,11 @@ package ws
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 type rcClient struct {
@@ -27,38 +27,33 @@ type rcClient struct {
 	cancel context.CancelFunc
 
 	config *WebSocketConfig
+
+	logger *logrus.Entry
 }
 
 func (c *rcClient) read(ctx context.Context) {
 	defer func() {
 		c.socket.Close()
-		log.Println("WebSocket reader leaving!")
 	}()
 
 	c.configurePongHandler()
 
 	for {
-		log.Println("WebSocket reader waiting for message...")
-		messageType, r, err := c.socket.NextReader()
-		log.Println("Websocket reader: got message")
-		log.Println("messageType:", messageType)
+		_, r, err := c.socket.NextReader()
 
 		if err != nil {
-			log.Println("WebSocket reader got a error: ", err)
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while getting a reader from the websocket")
 			return
 		}
 
 		message, err := protocol.ReadMessage(r)
 		if err != nil {
-			log.Println("WebSocket reader got a error: ", err)
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while reading receptor message")
 			return
 		}
 
 		// The read has completed...disable the read deadline
 		c.socket.SetReadDeadline(time.Time{})
-
-		log.Printf("Websocket reader message: %+v\n", message)
-		log.Println("Websocket reader message type:", message.Type())
 
 		metrics.TotalMessagesReceivedCounter.Inc()
 
@@ -69,16 +64,16 @@ func (c *rcClient) read(ctx context.Context) {
 func (c *rcClient) configurePongHandler() {
 
 	if c.config.PongWait > 0 {
-		log.Println("Configuring a pong handler with a deadline of ", c.config.PongWait)
+		c.logger.Debug("Configuring a pong handler with a deadline of ", c.config.PongWait)
 		c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 
 		c.socket.SetPongHandler(func(data string) error {
-			log.Println("WebSocket reader - got a pong")
+			// c.logger.Debug("Got a pong message")
 			c.socket.SetReadDeadline(time.Now().Add(c.config.PongWait))
 			return nil
 		})
 	} else {
-		log.Println("Pong handler has been disabled")
+		c.logger.Debug("Pong handler has been disabled")
 	}
 }
 
@@ -109,39 +104,37 @@ func (c *rcClient) write(ctx context.Context) {
 	defer func() {
 		c.socket.Close()
 		pingTicker.Stop()
-		log.Println("WebSocket writer leaving!")
 	}()
 
 	for {
-		log.Println("WebSocket writer - Waiting for something to send")
 
 		select {
 		case <-ctx.Done():
 			return
+
 		case err := <-c.errorChannel:
-			log.Println("Websocket writer - got an error - shutting down:", err)
+			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Received an error from the sync layer")
 			return
+
 		case msg := <-c.controlChannel:
-			log.Println("Websocket writer needs to send msg:", msg)
-
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a control message")
 				return
 			}
+
 		case msg := <-c.send:
-			log.Println("Websocket writer needs to send msg:", msg)
-
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				log.Println("WebSocket writer - error!  Closing connection! err: ", err)
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a message")
 				return
 			}
+
 		case <-pingTicker.C:
-			log.Println("WebSocket writer - sending PingMessage")
+			// c.logger.Debug("Sending a ping message")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Println("WebSocket writer - error sending ping message!  Closing connection!")
+				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a ping message")
 				return
 			}
 		}
@@ -151,10 +144,10 @@ func (c *rcClient) write(ctx context.Context) {
 func (c *rcClient) configurePingTicker() *time.Ticker {
 
 	if c.config.PingPeriod > 0 {
-		log.Println("Configuring a ping to fire every ", c.config.PingPeriod)
+		c.logger.Debug("Configuring a ping to fire every ", c.config.PingPeriod)
 		return time.NewTicker(c.config.PingPeriod)
 	} else {
-		log.Println("Pings are disabled")
+		c.logger.Debug("Pings are disabled")
 		// To disable sending ping messages, we create a ticker that doesn't ever fire
 		ticker := time.NewTicker(40 * 60 * time.Minute)
 		ticker.Stop()
