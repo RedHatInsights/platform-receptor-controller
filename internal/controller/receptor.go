@@ -79,7 +79,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
-		r.logger.Println("Unable to generate UUID for routing the job...cannot proceed")
+		r.logger.Info("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 		"directive",
 		directive,
 		payload)
-	r.logger.Printf("Sending PayloadMessage - %s\n", messageID)
+	r.logger.Infof("Sending PayloadMessage - %s\n", messageID)
 
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
 	defer cancel()
@@ -108,7 +108,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
-		r.logger.Println("Unable to generate UUID for routing the job...cannot proceed")
+		r.logger.Info("Unable to generate UUID for routing the job...cannot proceed")
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 
 	responseChannel := make(chan ResponseMessage)
 
-	r.logger.Println("Registering a sync response handler")
+	r.logger.Info("Registering a sync response handler")
 	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
@@ -160,23 +160,24 @@ func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend pr
 }
 
 func sendMessage(logger *logrus.Entry, transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
-	logger.Println("Passing message to async layer")
+	logger.Debug("Passing message to async layer")
+
 	select {
 
 	case sendChannel <- msgToSend:
 		return nil
 
 	case <-transportCtx.Done():
-		logger.Printf("Connection to receptor network lost")
+		logger.Info("Connection to receptor network lost")
 		return connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		switch msgSenderCtx.Err().(error) {
 		case context.DeadlineExceeded:
-			logger.Printf("Timed out waiting to pass message to async layer")
+			logger.Info("Timed out waiting to pass message to async layer")
 			return requestTimedOut
 		default:
-			logger.Printf("Message cancelled by sender")
+			logger.Info("Message cancelled by sender")
 			return requestCancelledBySender
 		}
 	}
@@ -184,7 +185,7 @@ func sendMessage(logger *logrus.Entry, transportCtx context.Context, sendChannel
 
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
 func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, responseChannel chan ResponseMessage) (ResponseMessage, error) {
-	r.logger.Println("Waiting for a sync response")
+	r.logger.Info("Waiting for a sync response")
 	nilResponseMessage := ResponseMessage{}
 
 	select {
@@ -193,16 +194,16 @@ func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, response
 		return responseMsg, nil
 
 	case <-r.Transport.Ctx.Done():
-		r.logger.Printf("Connection to receptor network lost")
+		r.logger.Info("Connection to receptor network lost")
 		return nilResponseMessage, connectionToReceptorNetworkLost
 
 	case <-msgSenderCtx.Done():
 		switch msgSenderCtx.Err().(error) {
 		case context.DeadlineExceeded:
-			r.logger.Printf("Timed out waiting for response for message")
+			r.logger.Info("Timed out waiting for response for message")
 			return nilResponseMessage, requestTimedOut
 		default:
-			r.logger.Printf("Message cancelled by sender")
+			r.logger.Info("Message cancelled by sender")
 			return nilResponseMessage, requestCancelledBySender
 		}
 	}
@@ -223,7 +224,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	inResponseTo, err := uuid.Parse(payloadMessage.Data.InResponseTo)
 	if err != nil {
-		r.logger.Printf("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
+		r.logger.Infof("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
 			"  Error: %s, Message: %+v", err, payloadMessage.Data.InResponseTo)
 		return
 	}
@@ -239,7 +240,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
-		r.logger.Println("JSON marshal of ResponseMessage failed, err:", err)
+		r.logger.Info("JSON marshal of ResponseMessage failed, err:", err)
 		return
 	}
 

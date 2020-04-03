@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -95,7 +96,9 @@ func InitLogger() {
 		group := logconfig.GetString("LOG_GROUP")
 		stream := logconfig.GetString("LOG_STREAM")
 
-		switch logconfig.GetString("LOG_LEVEL") {
+		switch strings.ToUpper(logconfig.GetString("LOG_LEVEL")) {
+		case "TRACE":
+			logLevel = logrus.TraceLevel
 		case "DEBUG":
 			logLevel = logrus.DebugLevel
 		case "ERROR":

@@ -60,6 +60,7 @@ func (rd *ResponseReactorImpl) Run(ctx context.Context) {
 			return
 		case msg := <-rd.recv:
 			rd.logger.Debugf("Dispatching message (type: %d)", msg.Type())
+			rd.logger.Tracef("Dispatching message: %+v", msg)
 
 			handler, exists := rd.handlers[msg.Type()]
 			if exists == false {
