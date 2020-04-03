@@ -57,6 +57,8 @@ func (c *rcClient) read(ctx context.Context) {
 
 		metrics.TotalMessagesReceivedCounter.Inc()
 
+		c.logger.Tracef("Received message: %+v", message)
+
 		c.recv <- message
 	}
 }
@@ -117,6 +119,7 @@ func (c *rcClient) write(ctx context.Context) {
 			return
 
 		case msg := <-c.controlChannel:
+			c.logger.Tracef("Sending message received from control channel: %+v", msg)
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
 				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a control message")
@@ -124,6 +127,7 @@ func (c *rcClient) write(ctx context.Context) {
 			}
 
 		case msg := <-c.send:
+			c.logger.Tracef("Sending message received from send channel: %+v", msg)
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
 				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a message")
