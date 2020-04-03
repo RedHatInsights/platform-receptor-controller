@@ -7,6 +7,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type Receptor interface {
@@ -16,10 +17,10 @@ type Receptor interface {
 	GetCapabilities() interface{}
 }
 
-type DuplicateNodeIDError struct {
+type DuplicateConnectionError struct {
 }
 
-func (d DuplicateNodeIDError) Error() string {
+func (d DuplicateConnectionError) Error() string {
 	return "duplicate node id"
 }
 
@@ -41,7 +42,10 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 	if exists == true {
 		_, exists = cm.connections[account][node_id]
 		if exists == true {
-			return DuplicateNodeIDError{}
+			logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
+			logger.Infof("Attempting to register duplicate connection")
+			metrics.DuplicateConnectionCounter.Inc()
+			return DuplicateConnectionError{}
 		}
 		cm.connections[account][node_id] = client
 	} else {
