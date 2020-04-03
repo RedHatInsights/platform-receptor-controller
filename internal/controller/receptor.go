@@ -32,11 +32,10 @@ func NewReceptorServiceFactory(w *kafka.Writer) *ReceptorServiceFactory {
 	}
 }
 
-func (fact *ReceptorServiceFactory) NewReceptorService(logger *logrus.Entry, account, nodeID string, transport *Transport) *ReceptorService {
+func (fact *ReceptorServiceFactory) NewReceptorService(logger *logrus.Entry, account, nodeID string) *ReceptorService {
 	return &ReceptorService{
 		AccountNumber: account,
 		NodeID:        nodeID,
-		Transport:     transport,
 		responseDispatcherRegistrar: &DispatcherTable{
 			dispatchTable: make(map[uuid.UUID]chan ResponseMessage),
 		},
@@ -60,11 +59,12 @@ type ReceptorService struct {
 	logger      *logrus.Entry
 }
 
-func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}) error {
+func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}, transport *Transport) error {
 	r.logger.Debugf("Registering a connection to node %s", peerNodeID)
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata
+	r.Transport = transport
 
 	return nil
 }

@@ -54,13 +54,12 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	receptor := hh.ReceptorServiceFactory.NewReceptorService(
 		hh.Logger,
 		hh.AccountNumber,
-		hh.NodeID,
-		hh.Transport)
+		hh.NodeID)
 
 	// FIXME:  What if this account number and node id are already registered?
 	//  abort the connection??
 
-	receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata)
+	receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata, hh.Transport)
 
 	hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
 
