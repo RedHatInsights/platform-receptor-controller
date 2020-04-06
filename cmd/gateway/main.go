@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
@@ -34,19 +35,28 @@ func main() {
 
 	logger.Log.Info("Starting Receptor-Controller service")
 
-	wsConfig := ws.GetWebSocketConfig()
-	logger.Log.Info("WebSocket configuration:\n", wsConfig)
+	cfg := config.GetConfig()
+	logger.Log.Info("Receptor Controller configuration:\n", cfg)
 
 	wsMux := mux.NewRouter()
 	wsMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
+	kw := queue.StartProducer(&queue.ProducerConfig{
+		Brokers: cfg.KafkaBrokers,
+		Topic:   cfg.KafkaResponsesTopic,
+	})
+	kc := &queue.ConsumerConfig{
+		Brokers:        cfg.KafkaBrokers,
+		Topic:          cfg.KafkaJobsTopic,
+		GroupID:        cfg.KafkaGroupID,
+		ConsumerOffset: cfg.KafkaConsumerOffset,
+	}
+
 	cm := c.NewConnectionManager()
-	kw := queue.StartProducer(queue.GetProducer())
-	kc := queue.GetConsumer()
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw)
 	md := c.NewMessageDispatcherFactory(kc)
-	rc := ws.NewReceptorController(wsConfig, cm, wsMux, rd, md, rs)
+	rc := ws.NewReceptorController(cfg, cm, wsMux, rd, md, rs)
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
@@ -55,10 +65,10 @@ func main() {
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
 
-	mgmtServer := api.NewManagementServer(cm, apiMux, wsConfig.ServiceToServiceCredentials)
+	mgmtServer := api.NewManagementServer(cm, apiMux, cfg.ServiceToServiceCredentials)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, apiMux, kw, wsConfig.ServiceToServiceCredentials)
+	jr := api.NewJobReceiver(cm, apiMux, kw, cfg.ServiceToServiceCredentials)
 	jr.Routes()
 
 	apiMux.Handle("/metrics", promhttp.Handler())
