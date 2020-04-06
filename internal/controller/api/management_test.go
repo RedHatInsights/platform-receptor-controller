@@ -98,6 +98,38 @@ var _ = Describe("Management", func() {
 				Expect(rr.Code).To(Equal(http.StatusOK))
 			})
 
+			It("Should not be able get the status of a connected customer without providing account number", func() {
+
+				postBody := createConnectionStatusPostBody("", CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_STATUS_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not be able get the status of a connected customer without providing the node id", func() {
+
+				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, "")
+
+				req, err := http.NewRequest("POST", CONNECTION_STATUS_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
 		})
 
 		Context("With valid service to service credentials", func() {
@@ -167,6 +199,38 @@ var _ = Describe("Management", func() {
 			It("Should not be able to disconnect a disconnected customer", func() {
 
 				postBody := createConnectionStatusPostBody("1234-not-here", CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not be able to disconnect a connected customer without providing account number", func() {
+
+				postBody := createConnectionStatusPostBody("", CONNECTED_NODE_ID)
+
+				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				ms.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusBadRequest))
+			})
+
+			It("Should not be able get the status of a connected customer without providing the node id", func() {
+
+				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, "")
 
 				req, err := http.NewRequest("POST", CONNECTION_DISCONNECT_ENDPOINT, postBody)
 				Expect(err).NotTo(HaveOccurred())
