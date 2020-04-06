@@ -14,26 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// func decodeJSON(body io.ReadCloser, job interface{}) error {
-// 	dec := json.NewDecoder(body)
-// 	if err := dec.Decode(&job); err != nil {
-// 		// FIXME: More specific error handling needed.. case statement for different scenarios?
-// 		return errors.New("Request body includes malformed json")
-// 	}
-
-// 	v := validator.New()
-// 	if err := v.Struct(job); err != nil {
-// 		for _, e := range err.(validator.ValidationErrors) {
-// 			log.Println(e)
-// 		}
-// 		return errors.New("Request body is missing required fields")
-// 	} else if dec.More() {
-// 		return errors.New("Request body must only contain one json object")
-// 	}
-
-// 	return nil
-// }
-
 type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
