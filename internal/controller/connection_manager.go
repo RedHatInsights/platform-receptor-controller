@@ -43,7 +43,7 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 		_, exists = cm.connections[account][node_id]
 		if exists == true {
 			logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
-			logger.Infof("Attempting to register duplicate connection")
+			logger.Warn("Attempting to register duplicate connection")
 			metrics.DuplicateConnectionCounter.Inc()
 			return DuplicateConnectionError{}
 		}
