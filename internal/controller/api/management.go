@@ -1,10 +1,7 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -46,8 +43,8 @@ func (s *ManagementServer) Routes() {
 }
 
 type connectionID struct {
-	Account string `json:"account"`
-	NodeID  string `json:"node_id"`
+	Account string `json:"account" validate:"required"`
+	NodeID  string `json:"node_id" validate:"required"`
 }
 
 type connectionStatusResponse struct {
@@ -70,21 +67,13 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
-		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
-
-		if err != nil {
-			panic(err)
-		}
-
-		if err := req.Body.Close(); err != nil {
-			panic(err)
-		}
+		body := http.MaxBytesReader(w, req.Body, 1048576)
 
 		var connID connectionID
 
-		if err := json.Unmarshal(body, &connID); err != nil {
+		if err := decodeJSON(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusBadRequest,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
@@ -120,20 +109,13 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
-		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
-
-		if err != nil {
-			panic(err)
-		}
-
-		if err := req.Body.Close(); err != nil {
-			panic(err)
-		}
+		body := http.MaxBytesReader(w, req.Body, 1048576)
 
 		var connID connectionID
-		if err := json.Unmarshal(body, &connID); err != nil {
+
+		if err := decodeJSON(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusBadRequest,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
@@ -166,20 +148,13 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
-		body, err := ioutil.ReadAll(io.LimitReader(req.Body, 1048576))
-
-		if err != nil {
-			panic(err)
-		}
-
-		if err := req.Body.Close(); err != nil {
-			panic(err)
-		}
+		body := http.MaxBytesReader(w, req.Body, 1048576)
 
 		var connID connectionID
-		if err := json.Unmarshal(body, &connID); err != nil {
+
+		if err := decodeJSON(body, &connID); err != nil {
 			errorResponse := errorResponse{Title: "Unable to process json input",
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusBadRequest,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
@@ -196,6 +171,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		}
 
 		pingResponse.Status = CONNECTED_STATUS
+		var err error
 		pingResponse.Payload, err = client.Ping(req.Context(), connID.NodeID, []string{connID.NodeID})
 		if err != nil {
 			errorResponse := errorResponse{Title: "Ping failed",

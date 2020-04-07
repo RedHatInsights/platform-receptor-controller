@@ -1,13 +1,8 @@
 package api
 
 import (
-	"errors"
-	"io"
-
 	"github.com/gorilla/mux"
 
-	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -15,30 +10,9 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
-	"github.com/go-playground/validator/v10"
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
-
-func decodeJSON(body io.ReadCloser, job interface{}) error {
-	dec := json.NewDecoder(body)
-	if err := dec.Decode(&job); err != nil {
-		// FIXME: More specific error handling needed.. case statement for different scenarios?
-		return errors.New("Request body includes malformed json")
-	}
-
-	v := validator.New()
-	if err := v.Struct(job); err != nil {
-		for _, e := range err.(validator.ValidationErrors) {
-			log.Println(e)
-		}
-		return errors.New("Request body is missing required fields")
-	} else if dec.More() {
-		return errors.New("Request body must only contain one json object")
-	}
-
-	return nil
-}
 
 type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
