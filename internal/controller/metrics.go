@@ -7,7 +7,8 @@ import (
 )
 
 type Metrics struct {
-	pingElapsed *prometheus.HistogramVec
+	pingElapsed                *prometheus.HistogramVec
+	DuplicateConnectionCounter prometheus.Counter
 }
 
 func NewMetrics() *Metrics {
@@ -19,6 +20,11 @@ func NewMetrics() *Metrics {
 	},
 		[]string{"account", "recipient"},
 	)
+
+	metrics.DuplicateConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_duplicate_connection_count",
+		Help: "The number of receptor websocket connections with the same account number and node id",
+	})
 
 	return metrics
 }

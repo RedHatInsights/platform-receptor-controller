@@ -7,6 +7,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type Receptor interface {
@@ -14,6 +15,13 @@ type Receptor interface {
 	Ping(context.Context, string, []string) (interface{}, error)
 	Close()
 	GetCapabilities() interface{}
+}
+
+type DuplicateConnectionError struct {
+}
+
+func (d DuplicateConnectionError) Error() string {
+	return "duplicate node id"
 }
 
 type ConnectionManager struct {
@@ -27,17 +35,26 @@ func NewConnectionManager() *ConnectionManager {
 	}
 }
 
-func (cm *ConnectionManager) Register(account string, node_id string, client Receptor) {
+func (cm *ConnectionManager) Register(account string, node_id string, client Receptor) error {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
 	if exists == true {
+		_, exists = cm.connections[account][node_id]
+		if exists == true {
+			logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
+			logger.Warn("Attempting to register duplicate connection")
+			metrics.DuplicateConnectionCounter.Inc()
+			return DuplicateConnectionError{}
+		}
 		cm.connections[account][node_id] = client
 	} else {
 		cm.connections[account] = make(map[string]Receptor)
 		cm.connections[account][node_id] = client
 	}
+
 	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
+	return nil
 }
 
 func (cm *ConnectionManager) Unregister(account string, node_id string) {
