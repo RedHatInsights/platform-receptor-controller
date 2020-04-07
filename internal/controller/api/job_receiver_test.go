@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
@@ -60,7 +61,8 @@ var _ = Describe("JobReceiver", func() {
 		cm := controller.NewConnectionManager()
 		mc := MockClient{}
 		cm.Register("1234", "345", mc)
-		jr = NewJobReceiver(cm, apiMux, nil, make(map[string]interface{}))
+		cfg := config.GetConfig()
+		jr = NewJobReceiver(cm, apiMux, nil, cfg)
 		jr.Routes()
 
 		identity := `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
@@ -206,7 +208,7 @@ var _ = Describe("JobReceiver", func() {
 
 		Context("With a valid token", func() {
 			It("Should be able to send a job to a connected customer", func() {
-				jr.secrets["test_client_1"] = "12345"
+				jr.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
 
@@ -231,7 +233,7 @@ var _ = Describe("JobReceiver", func() {
 
 		Context("With an invalid token", func() {
 			It("Should not be able to send a job to a connected customer", func() {
-				jr.secrets["test_client_1"] = "12345"
+				jr.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
 
@@ -252,7 +254,7 @@ var _ = Describe("JobReceiver", func() {
 
 		Context("With an unknown client during token auth", func() {
 			It("Should not be able to send a job to a connected customer", func() {
-				jr.secrets["test_client_1"] = "12345"
+				jr.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := "{\"account\": \"1234\", \"recipient\": \"345\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
 

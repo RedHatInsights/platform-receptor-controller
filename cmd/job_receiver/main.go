@@ -25,7 +25,7 @@ func main() {
 
 	cm := c.NewConnectionManager()
 	mgmtMux := mux.NewRouter()
-	mgmtServer := api.NewManagementServer(cm, mgmtMux, cfg.ServiceToServiceCredentials)
+	mgmtServer := api.NewManagementServer(cm, mgmtMux, cfg)
 	mgmtServer.Routes()
 
 	kw := queue.StartProducer(&queue.ProducerConfig{
@@ -33,7 +33,7 @@ func main() {
 		Topic:   cfg.KafkaResponsesTopic,
 	})
 
-	jr := api.NewJobReceiver(cm, mgmtMux, kw, cfg.ServiceToServiceCredentials)
+	jr := api.NewJobReceiver(cm, mgmtMux, kw, cfg)
 	jr.Routes()
 
 	go func() {

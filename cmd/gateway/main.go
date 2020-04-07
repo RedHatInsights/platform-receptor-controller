@@ -65,10 +65,10 @@ func main() {
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
 
-	mgmtServer := api.NewManagementServer(cm, apiMux, cfg.ServiceToServiceCredentials)
+	mgmtServer := api.NewManagementServer(cm, apiMux, cfg)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, apiMux, kw, cfg.ServiceToServiceCredentials)
+	jr := api.NewJobReceiver(cm, apiMux, kw, cfg)
 	jr.Routes()
 
 	apiMux.Handle("/metrics", promhttp.Handler())
