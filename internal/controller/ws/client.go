@@ -42,13 +42,13 @@ func (c *rcClient) read(ctx context.Context) {
 		_, r, err := c.socket.NextReader()
 
 		if err != nil {
-			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while getting a reader from the websocket")
+			c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while getting a reader from the websocket")
 			return
 		}
 
 		message, err := protocol.ReadMessage(r)
 		if err != nil {
-			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while reading receptor message")
+			c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while reading receptor message")
 			return
 		}
 
@@ -115,14 +115,14 @@ func (c *rcClient) write(ctx context.Context) {
 			return
 
 		case err := <-c.errorChannel:
-			c.logger.WithFields(logrus.Fields{"error": err}).Debug("Received an error from the sync layer")
+			c.logger.WithFields(logrus.Fields{"error": err}).Error("Received an error from the sync layer")
 			return
 
 		case msg := <-c.controlChannel:
 			c.logger.Tracef("Sending message received from control channel: %+v", msg)
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a control message")
+				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a control message")
 				return
 			}
 
@@ -130,7 +130,7 @@ func (c *rcClient) write(ctx context.Context) {
 			c.logger.Tracef("Sending message received from send channel: %+v", msg)
 			err := writeMessage(c.socket, c.config.WriteWait, msg)
 			if err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a message")
+				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a message")
 				return
 			}
 
@@ -138,7 +138,7 @@ func (c *rcClient) write(ctx context.Context) {
 			// c.logger.Debug("Sending a ping message")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Debug("Error while sending a ping message")
+				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a ping message")
 				return
 			}
 		}
