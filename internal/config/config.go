@@ -16,6 +16,8 @@ const (
 	PONG_WAIT                      = "WebSocket_Pong_Wait"
 	PING_PERIOD                    = "WebSocket_Ping_Period"
 	MAX_MESSAGE_SIZE               = "WebSocket_Max_Message_Size"
+	SOCKET_BUFFER_SIZE             = "WebSocket_Buffer_Size"
+	CHANNEL_BUFFER_SIZE            = "Goroutine_Channel_Buffer_Size"
 	SERVICE_TO_SERVICE_CREDENTIALS = "Service_To_Service_Credentials"
 	BROKERS                        = "Kafka_Brokers"
 	JOBS_TOPIC                     = "Kafka_Jobs_Topic"
@@ -35,6 +37,8 @@ type ReceptorControllerConfig struct {
 	PongWait                    time.Duration
 	PingPeriod                  time.Duration
 	MaxMessageSize              int64
+	SocketBufferSize            int
+	ChannelBufferSize           int
 	ServiceToServiceCredentials map[string]interface{}
 	ReceptorControllerNodeId    string
 	KafkaBrokers                []string
@@ -53,6 +57,8 @@ func (rcc ReceptorControllerConfig) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, rcc.PongWait)
 	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, rcc.PingPeriod)
 	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, rcc.MaxMessageSize)
+	fmt.Fprintf(&b, "%s: %s\n", SOCKET_BUFFER_SIZE, rcc.SocketBufferSize)
+	fmt.Fprintf(&b, "%s: %s\n", CHANNEL_BUFFER_SIZE, rcc.ChannelBufferSize)
 	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, rcc.ReceptorControllerNodeId)
 	fmt.Fprintf(&b, "%s: %s\n", BROKERS, rcc.KafkaBrokers)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, rcc.KafkaJobsTopic)
@@ -71,6 +77,8 @@ func GetConfig() *ReceptorControllerConfig {
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
+	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
+	options.SetDefault(CHANNEL_BUFFER_SIZE, 10)
 	options.SetDefault(SERVICE_TO_SERVICE_CREDENTIALS, "")
 	options.SetDefault(NODE_ID, "node-cloud-receptor-controller")
 	options.SetDefault(BROKERS, []string{DEFAULT_BROKER_ADDRESS})
@@ -93,6 +101,8 @@ func GetConfig() *ReceptorControllerConfig {
 		PongWait:                    pongWait,
 		PingPeriod:                  pingPeriod,
 		MaxMessageSize:              options.GetInt64(MAX_MESSAGE_SIZE),
+		SocketBufferSize:            options.GetInt(SOCKET_BUFFER_SIZE),
+		ChannelBufferSize:           options.GetInt(CHANNEL_BUFFER_SIZE),
 		ServiceToServiceCredentials: options.GetStringMap(SERVICE_TO_SERVICE_CREDENTIALS),
 		ReceptorControllerNodeId:    options.GetString(NODE_ID),
 		KafkaBrokers:                options.GetStringSlice(BROKERS),

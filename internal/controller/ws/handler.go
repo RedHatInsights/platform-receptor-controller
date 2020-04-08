@@ -16,11 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	socketBufferSize  = 1024
-	messageBufferSize = 256
-)
-
 type ReceptorController struct {
 	connectionMgr            *controller.ConnectionManager
 	router                   *mux.Router
@@ -41,8 +36,6 @@ func NewReceptorController(cfg *config.ReceptorControllerConfig, cm *controller.
 	}
 }
 
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
-
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
 	router.Use(identity.EnforceIdentity)
@@ -52,6 +45,8 @@ func (rc *ReceptorController) Routes() {
 func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
+
+		upgrader := &websocket.Upgrader{ReadBufferSize: rc.config.SocketBufferSize, WriteBufferSize: rc.config.SocketBufferSize}
 
 		requestId := request_id.GetReqID(req.Context())
 		rhIdentity := identity.Get(req.Context())
@@ -76,10 +71,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		client := &rcClient{
 			config:         rc.config,
 			socket:         socket,
-			send:           make(chan protocol.Message, messageBufferSize),
-			controlChannel: make(chan protocol.Message, messageBufferSize),
+			send:           make(chan protocol.Message, rc.config.ChannelBufferSize),
+			controlChannel: make(chan protocol.Message, rc.config.ChannelBufferSize),
 			errorChannel:   make(chan error),
-			recv:           make(chan protocol.Message, messageBufferSize),
+			recv:           make(chan protocol.Message, rc.config.ChannelBufferSize),
 			logger:         logger,
 		}
 
