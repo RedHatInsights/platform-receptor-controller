@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -21,20 +22,20 @@ const (
 type ManagementServer struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
-	secrets       map[string]interface{}
+	config        *config.ReceptorControllerConfig
 }
 
-func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, secrets map[string]interface{}) *ManagementServer {
+func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, cfg *config.ReceptorControllerConfig) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
-		secrets:       secrets,
+		config:        cfg,
 	}
 }
 
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
-	amw := &middlewares.AuthMiddleware{Secrets: s.secrets}
+	amw := &middlewares.AuthMiddleware{Secrets: s.config.ServiceToServiceCredentials}
 	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)

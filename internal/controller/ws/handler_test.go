@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
@@ -51,7 +52,7 @@ var _ = Describe("WsController", func() {
 		identity string
 		wsMux    *mux.Router
 		cm       *controller.ConnectionManager
-		config   *WebSocketConfig
+		cfg      *config.ReceptorControllerConfig
 		rc       *ReceptorController
 		kw       *kafka.Writer
 		d        *websocket.Dialer
@@ -60,14 +61,22 @@ var _ = Describe("WsController", func() {
 
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
-		config = GetWebSocketConfig()
+		cfg = config.GetConfig()
 		cm = controller.NewConnectionManager()
-		kc := queue.GetConsumer()
+		kc := &queue.ConsumerConfig{
+			Brokers:        cfg.KafkaBrokers,
+			Topic:          cfg.KafkaJobsTopic,
+			GroupID:        cfg.KafkaGroupID,
+			ConsumerOffset: cfg.KafkaConsumerOffset,
+		}
 		md := controller.NewMessageDispatcherFactory(kc)
-		kw = queue.StartProducer(queue.GetProducer())
+		kw = queue.StartProducer(&queue.ProducerConfig{
+			Brokers: cfg.KafkaBrokers,
+			Topic:   cfg.KafkaResponsesTopic,
+		})
 		rd := controller.NewResponseReactorFactory()
 		rs := controller.NewReceptorServiceFactory(kw)
-		rc = NewReceptorController(config, cm, wsMux, rd, md, rs)
+		rc = NewReceptorController(cfg, cm, wsMux, rd, md, rs)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)

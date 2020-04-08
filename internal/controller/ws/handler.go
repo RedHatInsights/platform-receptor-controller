@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
@@ -23,17 +24,17 @@ const (
 type ReceptorController struct {
 	connectionMgr            *controller.ConnectionManager
 	router                   *mux.Router
-	config                   *WebSocketConfig
+	config                   *config.ReceptorControllerConfig
 	responseReactorFactory   *controller.ResponseReactorFactory
 	messageDispatcherFactory *controller.MessageDispatcherFactory
 	receptorServiceFactory   *controller.ReceptorServiceFactory
 }
 
-func NewReceptorController(wsc *WebSocketConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
+func NewReceptorController(cfg *config.ReceptorControllerConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:            cm,
 		router:                   r,
-		config:                   wsc,
+		config:                   cfg,
 		responseReactorFactory:   rd,
 		messageDispatcherFactory: md,
 		receptorServiceFactory:   rs,

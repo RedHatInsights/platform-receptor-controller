@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
@@ -49,7 +50,8 @@ var _ = Describe("Management", func() {
 		cm = controller.NewConnectionManager()
 		mc := MockClient{}
 		cm.Register(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
-		ms = NewManagementServer(cm, apiMux, make(map[string]interface{}))
+		cfg := config.GetConfig()
+		ms = NewManagementServer(cm, apiMux, cfg)
 		ms.Routes()
 
 		identity := `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`
@@ -134,7 +136,7 @@ var _ = Describe("Management", func() {
 
 		Context("With valid service to service credentials", func() {
 			It("Should be able to get the status of a connected customer", func() {
-				ms.secrets["test_client_1"] = "12345"
+				ms.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
 
@@ -248,7 +250,7 @@ var _ = Describe("Management", func() {
 
 		Context("With valid service to service credentials", func() {
 			It("Should be able to disconnect a connected customer", func() {
-				ms.secrets["test_client_1"] = "12345"
+				ms.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := createConnectionStatusPostBody(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID)
 
@@ -269,7 +271,7 @@ var _ = Describe("Management", func() {
 			})
 
 			It("Should not be able to disconnect a disconnected customer", func() {
-				ms.secrets["test_client_1"] = "12345"
+				ms.config.ServiceToServiceCredentials["test_client_1"] = "12345"
 
 				postBody := createConnectionStatusPostBody("1234-not-here", CONNECTED_NODE_ID)
 

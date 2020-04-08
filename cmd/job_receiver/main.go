@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/gorilla/mux"
@@ -21,16 +21,19 @@ func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
 	flag.Parse()
 
-	wsConfig := ws.GetWebSocketConfig()
+	cfg := config.GetConfig()
 
 	cm := c.NewConnectionManager()
 	mgmtMux := mux.NewRouter()
-	mgmtServer := api.NewManagementServer(cm, mgmtMux, wsConfig.ServiceToServiceCredentials)
+	mgmtServer := api.NewManagementServer(cm, mgmtMux, cfg)
 	mgmtServer.Routes()
 
-	kw := queue.StartProducer(queue.GetProducer())
+	kw := queue.StartProducer(&queue.ProducerConfig{
+		Brokers: cfg.KafkaBrokers,
+		Topic:   cfg.KafkaResponsesTopic,
+	})
 
-	jr := api.NewJobReceiver(cm, mgmtMux, kw, wsConfig.ServiceToServiceCredentials)
+	jr := api.NewJobReceiver(cm, mgmtMux, kw, cfg)
 	jr.Routes()
 
 	go func() {

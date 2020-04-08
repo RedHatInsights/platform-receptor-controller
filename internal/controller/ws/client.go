@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -26,9 +27,9 @@ type rcClient struct {
 
 	cancel context.CancelFunc
 
-	config *WebSocketConfig
-
 	logger *logrus.Entry
+
+	config *config.ReceptorControllerConfig
 }
 
 func (c *rcClient) read(ctx context.Context) {

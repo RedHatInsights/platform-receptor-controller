@@ -5,6 +5,7 @@ import (
 
 	"net/http"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/middlewares"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -18,21 +19,21 @@ type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 	producer      *kafka.Writer
-	secrets       map[string]interface{}
+	config        *config.ReceptorControllerConfig
 }
 
-func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, secrets map[string]interface{}) *JobReceiver {
+func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, cfg *config.ReceptorControllerConfig) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
 		producer:      kw,
-		secrets:       secrets,
+		config:        cfg,
 	}
 }
 
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
-	amw := &middlewares.AuthMiddleware{Secrets: jr.secrets}
+	amw := &middlewares.AuthMiddleware{Secrets: jr.config.ServiceToServiceCredentials}
 	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
