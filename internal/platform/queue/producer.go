@@ -10,8 +10,10 @@ func StartProducer(cfg *ProducerConfig) *kafka.Writer {
 	logger.Log.Info("Kafka producer configuration: ", cfg)
 
 	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: cfg.Brokers,
-		Topic:   cfg.Topic,
+		Brokers:    cfg.Brokers,
+		Topic:      cfg.Topic,
+		BatchSize:  cfg.BatchSize,
+		BatchBytes: cfg.BatchBytes,
 	})
 
 	logger.Log.Info("Producing messages to topic: ", cfg.Topic)
