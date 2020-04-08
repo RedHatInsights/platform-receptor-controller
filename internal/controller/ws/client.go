@@ -29,7 +29,7 @@ type rcClient struct {
 
 	logger *logrus.Entry
 
-	config *config.ReceptorControllerConfig
+	config *config.Config
 }
 
 func (c *rcClient) read(ctx context.Context) {

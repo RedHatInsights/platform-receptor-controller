@@ -52,7 +52,7 @@ var _ = Describe("WsController", func() {
 		identity string
 		wsMux    *mux.Router
 		cm       *controller.ConnectionManager
-		cfg      *config.ReceptorControllerConfig
+		cfg      *config.Config
 		rc       *ReceptorController
 		kw       *kafka.Writer
 		d        *websocket.Dialer
@@ -75,7 +75,7 @@ var _ = Describe("WsController", func() {
 			Topic:   cfg.KafkaResponsesTopic,
 		})
 		rd := controller.NewResponseReactorFactory()
-		rs := controller.NewReceptorServiceFactory(kw)
+		rs := controller.NewReceptorServiceFactory(kw, cfg)
 		rc = NewReceptorController(cfg, cm, wsMux, rd, md, rs)
 		rc.Routes()
 

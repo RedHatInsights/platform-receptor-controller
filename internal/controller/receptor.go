@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
 	"github.com/google/uuid"
@@ -24,11 +25,13 @@ var (
 
 type ReceptorServiceFactory struct {
 	kafkaWriter *kafka.Writer
+	config      *config.Config
 }
 
-func NewReceptorServiceFactory(w *kafka.Writer) *ReceptorServiceFactory {
+func NewReceptorServiceFactory(w *kafka.Writer, cfg *config.Config) *ReceptorServiceFactory {
 	return &ReceptorServiceFactory{
 		kafkaWriter: w,
+		config:      cfg,
 	}
 }
 
@@ -40,6 +43,7 @@ func (fact *ReceptorServiceFactory) NewReceptorService(logger *logrus.Entry, acc
 			dispatchTable: make(map[uuid.UUID]chan ResponseMessage),
 		},
 		kafkaWriter: fact.kafkaWriter,
+		config:      fact.config,
 		logger:      logger,
 	}
 }
@@ -56,6 +60,7 @@ type ReceptorService struct {
 	responseDispatcherRegistrar *DispatcherTable
 
 	kafkaWriter *kafka.Writer
+	config      *config.Config
 	logger      *logrus.Entry
 }
 
@@ -93,7 +98,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 		payload)
 	r.logger.Infof("Sending PayloadMessage - %s\n", messageID)
 
-	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.SendMessageTimeout)
 	defer cancel()
 
 	err = r.sendMessage(msgSenderCtx, payloadMessage)
@@ -127,7 +132,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
-	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, time.Second*10) // FIXME:  add a configurable timeout
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.SendMessageTimeout)
 	defer cancel()
 
 	pingDurationRecorder := DurationRecorder{elapsed: metrics.pingElapsed,

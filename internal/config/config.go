@@ -15,6 +15,7 @@ const (
 	WRITE_WAIT                     = "WebSocket_Write_Wait"
 	PONG_WAIT                      = "WebSocket_Pong_Wait"
 	PING_PERIOD                    = "WebSocket_Ping_Period"
+	SEND_MESSAGE_TIMEOUT           = "WebSocket_Send_Message_Context_Timeout"
 	MAX_MESSAGE_SIZE               = "WebSocket_Max_Message_Size"
 	SOCKET_BUFFER_SIZE             = "WebSocket_Buffer_Size"
 	CHANNEL_BUFFER_SIZE            = "Goroutine_Channel_Buffer_Size"
@@ -31,11 +32,12 @@ const (
 	NODE_ID = "ReceptorControllerNodeId"
 )
 
-type ReceptorControllerConfig struct {
+type Config struct {
 	HandshakeReadWait           time.Duration
 	WriteWait                   time.Duration
 	PongWait                    time.Duration
 	PingPeriod                  time.Duration
+	SendMessageTimeout          time.Duration
 	MaxMessageSize              int64
 	SocketBufferSize            int
 	ChannelBufferSize           int
@@ -50,32 +52,34 @@ type ReceptorControllerConfig struct {
 	KafkaConsumerOffset         int64
 }
 
-func (rcc ReceptorControllerConfig) String() string {
+func (c Config) String() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s: %s\n", HANDSHAKE_READ_WAIT, rcc.HandshakeReadWait)
-	fmt.Fprintf(&b, "%s: %s\n", WRITE_WAIT, rcc.WriteWait)
-	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, rcc.PongWait)
-	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, rcc.PingPeriod)
-	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, rcc.MaxMessageSize)
-	fmt.Fprintf(&b, "%s: %s\n", SOCKET_BUFFER_SIZE, rcc.SocketBufferSize)
-	fmt.Fprintf(&b, "%s: %s\n", CHANNEL_BUFFER_SIZE, rcc.ChannelBufferSize)
-	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, rcc.ReceptorControllerNodeId)
-	fmt.Fprintf(&b, "%s: %s\n", BROKERS, rcc.KafkaBrokers)
-	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, rcc.KafkaJobsTopic)
-	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, rcc.KafkaResponsesTopic)
-	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, rcc.KafkaResponsesBatchSize)
-	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, rcc.KafkaResponsesBatchBytes)
-	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, rcc.KafkaGroupID)
-	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, rcc.KafkaConsumerOffset)
+	fmt.Fprintf(&b, "%s: %s\n", HANDSHAKE_READ_WAIT, c.HandshakeReadWait)
+	fmt.Fprintf(&b, "%s: %s\n", WRITE_WAIT, c.WriteWait)
+	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, c.PongWait)
+	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, c.PingPeriod)
+	fmt.Fprintf(&b, "%s: %s\n", SEND_MESSAGE_TIMEOUT, c.SendMessageTimeout)
+	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, c.MaxMessageSize)
+	fmt.Fprintf(&b, "%s: %s\n", SOCKET_BUFFER_SIZE, c.SocketBufferSize)
+	fmt.Fprintf(&b, "%s: %s\n", CHANNEL_BUFFER_SIZE, c.ChannelBufferSize)
+	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, c.ReceptorControllerNodeId)
+	fmt.Fprintf(&b, "%s: %s\n", BROKERS, c.KafkaBrokers)
+	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, c.KafkaJobsTopic)
+	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, c.KafkaResponsesTopic)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, c.KafkaResponsesBatchSize)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, c.KafkaResponsesBatchBytes)
+	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, c.KafkaGroupID)
+	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
 	return b.String()
 }
 
-func GetConfig() *ReceptorControllerConfig {
+func GetConfig() *Config {
 	options := viper.New()
 
 	options.SetDefault(HANDSHAKE_READ_WAIT, 5)
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
+	options.SetDefault(SEND_MESSAGE_TIMEOUT, 10)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
 	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
 	options.SetDefault(CHANNEL_BUFFER_SIZE, 10)
@@ -95,11 +99,12 @@ func GetConfig() *ReceptorControllerConfig {
 	pongWait := options.GetDuration(PONG_WAIT) * time.Second
 	pingPeriod := calculatePingPeriod(pongWait)
 
-	return &ReceptorControllerConfig{
+	return &Config{
 		HandshakeReadWait:           options.GetDuration(HANDSHAKE_READ_WAIT) * time.Second,
 		WriteWait:                   writeWait,
 		PongWait:                    pongWait,
 		PingPeriod:                  pingPeriod,
+		SendMessageTimeout:          options.GetDuration(SEND_MESSAGE_TIMEOUT) * time.Second,
 		MaxMessageSize:              options.GetInt64(MAX_MESSAGE_SIZE),
 		SocketBufferSize:            options.GetInt(SOCKET_BUFFER_SIZE),
 		ChannelBufferSize:           options.GetInt(CHANNEL_BUFFER_SIZE),

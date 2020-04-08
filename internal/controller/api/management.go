@@ -22,10 +22,10 @@ const (
 type ManagementServer struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
-	config        *config.ReceptorControllerConfig
+	config        *config.Config
 }
 
-func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, cfg *config.ReceptorControllerConfig) *ManagementServer {
+func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, cfg *config.Config) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,

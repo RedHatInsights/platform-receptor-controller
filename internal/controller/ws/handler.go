@@ -19,13 +19,13 @@ import (
 type ReceptorController struct {
 	connectionMgr            *controller.ConnectionManager
 	router                   *mux.Router
-	config                   *config.ReceptorControllerConfig
+	config                   *config.Config
 	responseReactorFactory   *controller.ResponseReactorFactory
 	messageDispatcherFactory *controller.MessageDispatcherFactory
 	receptorServiceFactory   *controller.ReceptorServiceFactory
 }
 
-func NewReceptorController(cfg *config.ReceptorControllerConfig, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
+func NewReceptorController(cfg *config.Config, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:            cm,
 		router:                   r,
