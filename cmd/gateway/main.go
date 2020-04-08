@@ -42,9 +42,12 @@ func main() {
 	wsMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
 	kw := queue.StartProducer(&queue.ProducerConfig{
-		Brokers: cfg.KafkaBrokers,
-		Topic:   cfg.KafkaResponsesTopic,
+		Brokers:    cfg.KafkaBrokers,
+		Topic:      cfg.KafkaResponsesTopic,
+		BatchSize:  cfg.KafkaResponsesBatchSize,
+		BatchBytes: cfg.KafkaResponsesBatchBytes,
 	})
+
 	kc := &queue.ConsumerConfig{
 		Brokers:        cfg.KafkaBrokers,
 		Topic:          cfg.KafkaJobsTopic,

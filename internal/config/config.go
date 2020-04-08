@@ -22,9 +22,10 @@ const (
 	JOBS_GROUP_ID                  = "Kafka_Jobs_Group_Id"
 	JOBS_CONSUMER_OFFSET           = "Kafka_Jobs_Consumer_Offset"
 	RESPONSES_TOPIC                = "Kafka_Responses_Topic"
+	RESPONSES_BATCH_SIZE           = "Kafka_Responses_Batch_Size"
+	RESPONSES_BATCH_BYTES          = "Kafka_Responses_Batch_Bytes"
 	DEFAULT_BROKER_ADDRESS         = "kafka:29092"
 
-	// FIXME: I don't think this belongs here
 	NODE_ID = "ReceptorControllerNodeId"
 )
 
@@ -39,6 +40,8 @@ type ReceptorControllerConfig struct {
 	KafkaBrokers                []string
 	KafkaJobsTopic              string
 	KafkaResponsesTopic         string
+	KafkaResponsesBatchSize     int
+	KafkaResponsesBatchBytes    int
 	KafkaGroupID                string
 	KafkaConsumerOffset         int64
 }
@@ -54,6 +57,8 @@ func (rcc ReceptorControllerConfig) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", BROKERS, rcc.KafkaBrokers)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, rcc.KafkaJobsTopic)
 	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, rcc.KafkaResponsesTopic)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, rcc.KafkaResponsesBatchSize)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, rcc.KafkaResponsesBatchBytes)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, rcc.KafkaGroupID)
 	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, rcc.KafkaConsumerOffset)
 	return b.String()
@@ -71,6 +76,8 @@ func GetConfig() *ReceptorControllerConfig {
 	options.SetDefault(BROKERS, []string{DEFAULT_BROKER_ADDRESS})
 	options.SetDefault(JOBS_TOPIC, "platform.receptor-controller.jobs")
 	options.SetDefault(RESPONSES_TOPIC, "platform.receptor-controller.responses")
+	options.SetDefault(RESPONSES_BATCH_SIZE, 100)
+	options.SetDefault(RESPONSES_BATCH_BYTES, 1048576)
 	options.SetDefault(JOBS_GROUP_ID, "receptor-controller")
 	options.SetDefault(JOBS_CONSUMER_OFFSET, -1)
 	options.SetEnvPrefix(ENV_PREFIX)
@@ -91,6 +98,8 @@ func GetConfig() *ReceptorControllerConfig {
 		KafkaBrokers:                options.GetStringSlice(BROKERS),
 		KafkaJobsTopic:              options.GetString(JOBS_TOPIC),
 		KafkaResponsesTopic:         options.GetString(RESPONSES_TOPIC),
+		KafkaResponsesBatchSize:     options.GetInt(RESPONSES_BATCH_SIZE),
+		KafkaResponsesBatchBytes:    options.GetInt(RESPONSES_BATCH_BYTES),
 		KafkaGroupID:                options.GetString(JOBS_GROUP_ID),
 		KafkaConsumerOffset:         options.GetInt64(JOBS_CONSUMER_OFFSET),
 	}
