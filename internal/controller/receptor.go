@@ -254,7 +254,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 		if err != nil {
 			r.logger.WithFields(logrus.Fields{"error": err}).Warn("Error writing response message to kafka")
-			metrics.ResponseKafkaWriteFailureCounter.Inc()
+			metrics.responseKafkaWriteFailureCounter.Inc()
 		}
 	}()
 
