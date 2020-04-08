@@ -98,7 +98,7 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 		payload)
 	r.logger.Infof("Sending PayloadMessage - %s\n", messageID)
 
-	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.SendMessageTimeout)
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.ReceptorSyncPingTimeout)
 	defer cancel()
 
 	err = r.sendMessage(msgSenderCtx, payloadMessage)
@@ -132,7 +132,7 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, r
 	r.responseDispatcherRegistrar.Register(messageID, responseChannel)
 	defer r.responseDispatcherRegistrar.Unregister(messageID)
 
-	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.SendMessageTimeout)
+	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.ReceptorSyncPingTimeout)
 	defer cancel()
 
 	pingDurationRecorder := DurationRecorder{elapsed: metrics.pingElapsed,
