@@ -246,11 +246,16 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
 	go func() {
-		r.kafkaWriter.WriteMessages(r.Transport.Ctx,
+		err = r.kafkaWriter.WriteMessages(r.Transport.Ctx,
 			kafka.Message{
 				Key:   []byte(payloadMessage.Data.InResponseTo),
 				Value: jsonResponseMessage,
 			})
+
+		if err != nil {
+			r.logger.WithFields(logrus.Fields{"error": err}).Warn("Error writing response message to kafka")
+			metrics.ResponseKafkaWriteFailureCounter.Inc()
+		}
 	}()
 
 }
