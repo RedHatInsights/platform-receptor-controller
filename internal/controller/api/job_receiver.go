@@ -19,10 +19,10 @@ type JobReceiver struct {
 	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 	producer      *kafka.Writer
-	config        *config.ReceptorControllerConfig
+	config        *config.Config
 }
 
-func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, cfg *config.ReceptorControllerConfig) *JobReceiver {
+func NewJobReceiver(cm *controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,

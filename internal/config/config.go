@@ -15,7 +15,10 @@ const (
 	WRITE_WAIT                     = "WebSocket_Write_Wait"
 	PONG_WAIT                      = "WebSocket_Pong_Wait"
 	PING_PERIOD                    = "WebSocket_Ping_Period"
+	RECEPTOR_SYNC_PING_TIMEOUT     = "Receptor_Sync_Ping_Timeout"
 	MAX_MESSAGE_SIZE               = "WebSocket_Max_Message_Size"
+	SOCKET_BUFFER_SIZE             = "WebSocket_IO_Buffer_Size"
+	BUFFERED_CHANNEL_SIZE          = "WebSocket_Buffered_Channel_Size"
 	SERVICE_TO_SERVICE_CREDENTIALS = "Service_To_Service_Credentials"
 	BROKERS                        = "Kafka_Brokers"
 	JOBS_TOPIC                     = "Kafka_Jobs_Topic"
@@ -29,12 +32,15 @@ const (
 	NODE_ID = "ReceptorControllerNodeId"
 )
 
-type ReceptorControllerConfig struct {
+type Config struct {
 	HandshakeReadWait           time.Duration
 	WriteWait                   time.Duration
 	PongWait                    time.Duration
 	PingPeriod                  time.Duration
+	ReceptorSyncPingTimeout     time.Duration
 	MaxMessageSize              int64
+	SocketBufferSize            int
+	BufferedChannelSize         int
 	ServiceToServiceCredentials map[string]interface{}
 	ReceptorControllerNodeId    string
 	KafkaBrokers                []string
@@ -46,31 +52,37 @@ type ReceptorControllerConfig struct {
 	KafkaConsumerOffset         int64
 }
 
-func (rcc ReceptorControllerConfig) String() string {
+func (c Config) String() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s: %s\n", HANDSHAKE_READ_WAIT, rcc.HandshakeReadWait)
-	fmt.Fprintf(&b, "%s: %s\n", WRITE_WAIT, rcc.WriteWait)
-	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, rcc.PongWait)
-	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, rcc.PingPeriod)
-	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, rcc.MaxMessageSize)
-	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, rcc.ReceptorControllerNodeId)
-	fmt.Fprintf(&b, "%s: %s\n", BROKERS, rcc.KafkaBrokers)
-	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, rcc.KafkaJobsTopic)
-	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, rcc.KafkaResponsesTopic)
-	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, rcc.KafkaResponsesBatchSize)
-	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, rcc.KafkaResponsesBatchBytes)
-	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, rcc.KafkaGroupID)
-	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, rcc.KafkaConsumerOffset)
+	fmt.Fprintf(&b, "%s: %s\n", HANDSHAKE_READ_WAIT, c.HandshakeReadWait)
+	fmt.Fprintf(&b, "%s: %s\n", WRITE_WAIT, c.WriteWait)
+	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, c.PongWait)
+	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, c.PingPeriod)
+	fmt.Fprintf(&b, "%s: %s\n", RECEPTOR_SYNC_PING_TIMEOUT, c.ReceptorSyncPingTimeout)
+	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, c.MaxMessageSize)
+	fmt.Fprintf(&b, "%s: %d\n", SOCKET_BUFFER_SIZE, c.SocketBufferSize)
+	fmt.Fprintf(&b, "%s: %d\n", BUFFERED_CHANNEL_SIZE, c.BufferedChannelSize)
+	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, c.ReceptorControllerNodeId)
+	fmt.Fprintf(&b, "%s: %s\n", BROKERS, c.KafkaBrokers)
+	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, c.KafkaJobsTopic)
+	fmt.Fprintf(&b, "%s: %s\n", RESPONSES_TOPIC, c.KafkaResponsesTopic)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, c.KafkaResponsesBatchSize)
+	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, c.KafkaResponsesBatchBytes)
+	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, c.KafkaGroupID)
+	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
 	return b.String()
 }
 
-func GetConfig() *ReceptorControllerConfig {
+func GetConfig() *Config {
 	options := viper.New()
 
 	options.SetDefault(HANDSHAKE_READ_WAIT, 5)
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
+	options.SetDefault(RECEPTOR_SYNC_PING_TIMEOUT, 10)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
+	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
+	options.SetDefault(BUFFERED_CHANNEL_SIZE, 10)
 	options.SetDefault(SERVICE_TO_SERVICE_CREDENTIALS, "")
 	options.SetDefault(NODE_ID, "node-cloud-receptor-controller")
 	options.SetDefault(BROKERS, []string{DEFAULT_BROKER_ADDRESS})
@@ -87,12 +99,15 @@ func GetConfig() *ReceptorControllerConfig {
 	pongWait := options.GetDuration(PONG_WAIT) * time.Second
 	pingPeriod := calculatePingPeriod(pongWait)
 
-	return &ReceptorControllerConfig{
+	return &Config{
 		HandshakeReadWait:           options.GetDuration(HANDSHAKE_READ_WAIT) * time.Second,
 		WriteWait:                   writeWait,
 		PongWait:                    pongWait,
 		PingPeriod:                  pingPeriod,
+		ReceptorSyncPingTimeout:     options.GetDuration(RECEPTOR_SYNC_PING_TIMEOUT) * time.Second,
 		MaxMessageSize:              options.GetInt64(MAX_MESSAGE_SIZE),
+		SocketBufferSize:            options.GetInt(SOCKET_BUFFER_SIZE),
+		BufferedChannelSize:         options.GetInt(BUFFERED_CHANNEL_SIZE),
 		ServiceToServiceCredentials: options.GetStringMap(SERVICE_TO_SERVICE_CREDENTIALS),
 		ReceptorControllerNodeId:    options.GetString(NODE_ID),
 		KafkaBrokers:                options.GetStringSlice(BROKERS),
