@@ -57,7 +57,7 @@ func main() {
 
 	cm := c.NewConnectionManager()
 	rd := c.NewResponseReactorFactory()
-	rs := c.NewReceptorServiceFactory(kw)
+	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
 	rc := ws.NewReceptorController(cfg, cm, wsMux, rd, md, rs)
 	rc.Routes()
