@@ -62,6 +62,8 @@ func ReadMessage(r io.Reader) (Message, error) {
 			return nil, errInvalidMessage
 		}
 
+		metrics.payloadMessageSize.Observe(float64(payloadFrame.Length))
+
 		pm, err := parseFrameData(r, payloadFrame.Type, payloadFrame.Length)
 		if err != nil {
 			return nil, err
