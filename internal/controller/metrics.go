@@ -7,9 +7,11 @@ import (
 )
 
 type Metrics struct {
-	pingElapsed                      *prometheus.HistogramVec
-	DuplicateConnectionCounter       prometheus.Counter
-	responseKafkaWriteFailureCounter prometheus.Counter
+	pingElapsed                          *prometheus.HistogramVec
+	duplicateConnectionCounter           prometheus.Counter
+	responseKafkaWriteFailureCounter     prometheus.Counter
+	responseMessageWithoutHandlerCounter prometheus.Counter
+	responseMessageHandledCounter        prometheus.Counter
 }
 
 func NewMetrics() *Metrics {
@@ -22,14 +24,24 @@ func NewMetrics() *Metrics {
 		[]string{"account", "recipient"},
 	)
 
-	metrics.DuplicateConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
+	metrics.duplicateConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_duplicate_connection_count",
 		Help: "The number of receptor websocket connections with the same account number and node id",
 	})
 
 	metrics.responseKafkaWriteFailureCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_kafka_response_write_failures",
+		Name: "receptor_controller_kafka_response_write_failure_count",
 		Help: "The number of responses that failed to get produced to kafka topic",
+	})
+
+	metrics.responseMessageWithoutHandlerCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_response_message_without_handler_count",
+		Help: "The number of response messages received that do not have a handler",
+	})
+
+	metrics.responseMessageHandledCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_response_message_handled_count",
+		Help: "The number of response messages handled",
 	})
 
 	return metrics
