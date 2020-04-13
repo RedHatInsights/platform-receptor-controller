@@ -65,10 +65,13 @@ func (rd *ResponseReactorImpl) Run(ctx context.Context) {
 			handler, exists := rd.handlers[msg.Type()]
 			if exists == false {
 				rd.logger.Debugf("Unable to dispatch message type (%d) - no suitable handler found", msg.Type())
+				metrics.responseMessageWithoutHandlerCounter.Inc()
 				continue
 			}
 
 			handler.HandleMessage(ctx, msg)
+
+			metrics.responseMessageHandledCounter.Inc()
 		}
 	}
 
