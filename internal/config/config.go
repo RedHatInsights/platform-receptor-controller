@@ -20,6 +20,7 @@ const (
 	SOCKET_BUFFER_SIZE             = "WebSocket_IO_Buffer_Size"
 	BUFFERED_CHANNEL_SIZE          = "WebSocket_Buffered_Channel_Size"
 	SERVICE_TO_SERVICE_CREDENTIALS = "Service_To_Service_Credentials"
+	PROFILE                        = "Enable_Profile"
 	BROKERS                        = "Kafka_Brokers"
 	JOBS_TOPIC                     = "Kafka_Jobs_Topic"
 	JOBS_GROUP_ID                  = "Kafka_Jobs_Group_Id"
@@ -42,6 +43,7 @@ type Config struct {
 	SocketBufferSize            int
 	BufferedChannelSize         int
 	ServiceToServiceCredentials map[string]interface{}
+	Profile                     bool
 	ReceptorControllerNodeId    string
 	KafkaBrokers                []string
 	KafkaJobsTopic              string
@@ -62,6 +64,7 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, c.MaxMessageSize)
 	fmt.Fprintf(&b, "%s: %d\n", SOCKET_BUFFER_SIZE, c.SocketBufferSize)
 	fmt.Fprintf(&b, "%s: %d\n", BUFFERED_CHANNEL_SIZE, c.BufferedChannelSize)
+	fmt.Fprintf(&b, "%s: %t\n", PROFILE, c.Profile)
 	fmt.Fprintf(&b, "%s: %s\n", NODE_ID, c.ReceptorControllerNodeId)
 	fmt.Fprintf(&b, "%s: %s\n", BROKERS, c.KafkaBrokers)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_TOPIC, c.KafkaJobsTopic)
@@ -84,6 +87,7 @@ func GetConfig() *Config {
 	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
 	options.SetDefault(BUFFERED_CHANNEL_SIZE, 10)
 	options.SetDefault(SERVICE_TO_SERVICE_CREDENTIALS, "")
+	options.SetDefault(PROFILE, false)
 	options.SetDefault(NODE_ID, "node-cloud-receptor-controller")
 	options.SetDefault(BROKERS, []string{DEFAULT_BROKER_ADDRESS})
 	options.SetDefault(JOBS_TOPIC, "platform.receptor-controller.jobs")
@@ -109,6 +113,7 @@ func GetConfig() *Config {
 		SocketBufferSize:            options.GetInt(SOCKET_BUFFER_SIZE),
 		BufferedChannelSize:         options.GetInt(BUFFERED_CHANNEL_SIZE),
 		ServiceToServiceCredentials: options.GetStringMap(SERVICE_TO_SERVICE_CREDENTIALS),
+		Profile:                     options.GetBool(PROFILE),
 		ReceptorControllerNodeId:    options.GetString(NODE_ID),
 		KafkaBrokers:                options.GetStringSlice(BROKERS),
 		KafkaJobsTopic:              options.GetString(JOBS_TOPIC),

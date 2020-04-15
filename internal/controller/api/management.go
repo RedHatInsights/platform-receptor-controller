@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -41,6 +42,9 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods(http.MethodPost)
+	if s.config.Profile {
+		s.router.PathPrefix("/debug").Handler(http.DefaultServeMux)
+	}
 }
 
 type connectionID struct {
