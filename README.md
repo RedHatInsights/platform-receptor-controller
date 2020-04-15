@@ -181,7 +181,7 @@ To view data gathered by pprof the `/debug` endpoint needs to be enabled. You ca
 The profiles can be viewed by going to `localhost:9090/debug/pprof` in a browser. Profiles can also be viewed interactively through the command line:
   - $ go tool pprof localhost:9090/debug/pprof/allocs (or a different profile)
 
-The above command will above an interactive terminal that can be used to go through the stack traces.
+The above command will open an interactive terminal that can be used to go through the stack traces.
 
 ### Development
 
