@@ -9,7 +9,8 @@ import (
 type Metrics struct {
 	pingElapsed                          *prometheus.HistogramVec
 	duplicateConnectionCounter           prometheus.Counter
-	responseKafkaWriteFailureCounter     prometheus.Counter
+	responseKafkaWriterGoRoutineGauge    prometheus.Gauge
+	responseKafkaWriterFailureCounter    prometheus.Counter
 	responseMessageWithoutHandlerCounter prometheus.Counter
 	responseMessageHandledCounter        prometheus.Counter
 }
@@ -29,8 +30,13 @@ func NewMetrics() *Metrics {
 		Help: "The number of receptor websocket connections with the same account number and node id",
 	})
 
-	metrics.responseKafkaWriteFailureCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_kafka_response_write_failure_count",
+	metrics.responseKafkaWriterGoRoutineGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "receptor_controller_kafka_response_writer_go_routine_count",
+		Help: "The total number of active kakfa response writer go routines",
+	})
+
+	metrics.responseKafkaWriterFailureCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_kafka_response_writer_failure_count",
 		Help: "The number of responses that failed to get produced to kafka topic",
 	})
 
