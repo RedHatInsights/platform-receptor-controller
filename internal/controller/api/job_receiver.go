@@ -90,7 +90,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			"directive": jobRequest.Directive})
 		logger.Info("Sending a message")
 
-		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,
+		jobID, err := client.SendMessage(req.Context(), jobRequest.Account, jobRequest.Recipient,
 			[]string{jobRequest.Recipient},
 			jobRequest.Payload,
 			jobRequest.Directive)

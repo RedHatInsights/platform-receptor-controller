@@ -29,12 +29,12 @@ const (
 type MockClient struct {
 }
 
-func (mc MockClient) SendMessage(ctx context.Context, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+func (mc MockClient) SendMessage(ctx context.Context, account string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 	myUUID, _ := uuid.NewRandom()
 	return &myUUID, nil
 }
 
-func (mc MockClient) Ping(context.Context, string, []string) (interface{}, error) {
+func (mc MockClient) Ping(context.Context, string, string, []string) (interface{}, error) {
 	return nil, nil
 }
 

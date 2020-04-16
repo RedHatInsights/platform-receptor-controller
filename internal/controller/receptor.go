@@ -21,6 +21,7 @@ var (
 	connectionToReceptorNetworkLost = errors.New("Connection to receptor network lost")
 	requestCancelledBySender        = errors.New("Unable to complete the request.  Request cancelled by message sender.")
 	requestTimedOut                 = errors.New("Unable to complete the request.  Request timed out.")
+	accountMismatch                 = errors.New("Account mismatch.  Unable to complete the request.")
 )
 
 type ReceptorServiceFactory struct {
@@ -80,7 +81,11 @@ func (r *ReceptorService) UpdateRoutingTable(edges string, seen string) error {
 	return nil
 }
 
-func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, account string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+
+	if account != r.AccountNumber {
+		return nil, accountMismatch
+	}
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
@@ -109,7 +114,11 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, recipient st
 	return &messageID, nil
 }
 
-func (r *ReceptorService) Ping(msgSenderCtx context.Context, recipient string, route []string) (interface{}, error) {
+func (r *ReceptorService) Ping(msgSenderCtx context.Context, account string, recipient string, route []string) (interface{}, error) {
+
+	if account != r.AccountNumber {
+		return nil, accountMismatch
+	}
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
