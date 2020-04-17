@@ -65,7 +65,7 @@ type ReceptorService struct {
 }
 
 func (r *ReceptorService) RegisterConnection(peerNodeID string, metadata interface{}, transport *Transport) error {
-	r.logger.Debugf("Registering a connection to node %s", peerNodeID)
+	r.logger.Info("Registering a connection to node ", peerNodeID)
 
 	r.PeerNodeID = peerNodeID
 	r.Metadata = metadata

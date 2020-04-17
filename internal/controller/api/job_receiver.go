@@ -88,7 +88,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		logger = logger.WithFields(logrus.Fields{"recipient": jobRequest.Recipient,
 			"directive": jobRequest.Directive})
-		logger.Debug("Sending a message")
+		logger.Info("Sending a message")
 
 		jobID, err := client.SendMessage(req.Context(), jobRequest.Recipient,
 			[]string{jobRequest.Recipient},
@@ -104,7 +104,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 		}
 
-		logger.WithFields(logrus.Fields{"message_id": jobID}).Debug("Message sent")
+		logger.WithFields(logrus.Fields{"message_id": jobID}).Info("Message sent")
 
 		jobResponse := JobResponse{jobID.String()}
 
