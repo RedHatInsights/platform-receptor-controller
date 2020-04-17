@@ -173,6 +173,16 @@ Example work request using token auth:
   $ curl -v -X POST -d '{"account": "01", "recipient": "node-b", "payload": "fix_an_issue", "directive": "workername:action"}' -H "x-rh-receptor-controller-client-id:test_client_1" -H "x-rh-receptor-controller-account:0001" -H "x-rh-receptor-controller-psk:12345" http://localhost:9090/job
 ```
 
+### Debugging with pprof
+
+To view data gathered by pprof the `/debug` endpoint needs to be enabled. You can enable this endpoint by exporting the following variable:
+  - $ export RECEPTOR_CONTROLLER_ENABLE_PROFILE=true
+
+The profiles can be viewed by going to `localhost:9090/debug/pprof` in a browser. Profiles can also be viewed interactively through the command line:
+  - $ go tool pprof localhost:9090/debug/pprof/allocs (or a different profile)
+
+The above command will open an interactive terminal that can be used to go through the stack traces.
+
 ### Development
 
 Install the project dependencies:
