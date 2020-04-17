@@ -122,7 +122,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			return
 		}
 
-		logger.Debugf("Checking connection status for account:%s - node id:%s",
+		logger.Infof("Checking connection status for account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
 		var connectionStatus connectionStatusResponse
@@ -161,7 +161,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			return
 		}
 
-		logger.Debugf("Submitting ping for account:%s - node id:%s",
+		logger.Infof("Submitting ping for account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
 		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
