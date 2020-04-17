@@ -43,6 +43,7 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods(http.MethodPost)
 	if s.config.Profile {
+		logger.Log.Warn("WARNING: Enabling the profiler endpoint!!")
 		s.router.PathPrefix("/debug").Handler(http.DefaultServeMux)
 	}
 }
