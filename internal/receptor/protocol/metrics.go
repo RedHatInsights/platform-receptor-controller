@@ -16,10 +16,10 @@ func NewMetrics() *Metrics {
 		Name: "receptor_controller_payload_message_sizes",
 		Help: "Size of payloads posted",
 		Buckets: []float64{
+			512,
+			1024,
 			1024 * 10,
 			1024 * 100,
-			1024 * 1000,
-			1024 * 10000,
 		}})
 
 	return metrics
