@@ -2,25 +2,28 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
 type rcClient struct {
+	account string
 
 	// socket is the web socket for this client.
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan protocol.Message
+	send chan controller.SendMessage
 
-	controlChannel chan protocol.Message
+	controlChannel chan controller.SendMessage
 
-	errorChannel chan error
+	errorChannel chan controller.SendErrorMessage
 
 	// recv is a channel on which responses are sent.
 	recv chan protocol.Message
@@ -80,15 +83,19 @@ func (c *rcClient) configurePongHandler() {
 	}
 }
 
-func writeMessage(socket *websocket.Conn, writeWait time.Duration, msg protocol.Message) error {
+func (c *rcClient) writeMessage(msg controller.SendMessage) error {
 
-	socket.SetWriteDeadline(time.Now().Add(writeWait))
-	w, err := socket.NextWriter(websocket.BinaryMessage)
+	if err := c.verifyAccountNumber(msg.AccountNumber); err != nil {
+		return err
+	}
+
+	c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
+	w, err := c.socket.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		return err
 	}
 
-	err = protocol.WriteMessage(w, msg)
+	err = protocol.WriteMessage(w, msg.Message)
 	if err != nil {
 		return err
 	}
@@ -115,16 +122,22 @@ func (c *rcClient) write(ctx context.Context) {
 		case <-ctx.Done():
 			return
 
-		case err := <-c.errorChannel:
-			c.logger.WithFields(logrus.Fields{"error": err}).Error("Received an error from the sync layer")
+		case errMsg := <-c.errorChannel:
+			c.logger.WithFields(logrus.Fields{"error": errMsg.Error}).Error("Received an error from the sync layer")
+
+			if err := c.verifyAccountNumber(errMsg.AccountNumber); err != nil {
+				c.logger.WithFields(logrus.Fields{"error": err}).Error("Account mismatch while processing error from the sync layer")
+				break
+			}
+
 			c.socket.WriteMessage(websocket.CloseMessage,
-				websocket.FormatCloseMessage(websocket.CloseNormalClosure, err.Error()))
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, errMsg.Error.Error()))
 			// FIXME: is a sleep needed here??
 			return
 
 		case msg := <-c.controlChannel:
 			c.logger.Tracef("Sending message received from control channel: %+v", msg)
-			err := writeMessage(c.socket, c.config.WriteWait, msg)
+			err := c.writeMessage(msg)
 			if err != nil {
 				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a control message")
 				return
@@ -132,7 +145,7 @@ func (c *rcClient) write(ctx context.Context) {
 
 		case msg := <-c.send:
 			c.logger.Tracef("Sending message received from send channel: %+v", msg)
-			err := writeMessage(c.socket, c.config.WriteWait, msg)
+			err := c.writeMessage(msg)
 			if err != nil {
 				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a message")
 				return
@@ -161,4 +174,11 @@ func (c *rcClient) configurePingTicker() *time.Ticker {
 		ticker.Stop()
 		return ticker
 	}
+}
+
+func (c *rcClient) verifyAccountNumber(accountNumber string) error {
+	if c.account != accountNumber {
+		return errors.New("account mistmatch (invalid account number " + accountNumber + ")")
+	}
+	return nil
 }

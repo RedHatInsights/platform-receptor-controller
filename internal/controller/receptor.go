@@ -165,15 +165,19 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, account string, rec
 // FIXME:  Does it make sense to move this logic to the transport object?  Or am I missing an abstraction?
 func (r *ReceptorService) sendControlMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msgToSend)
+	msg := SendMessage{AccountNumber: r.AccountNumber, Message: msgToSend}
+
+	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.ControlChannel, msgSenderCtx, msg)
 }
 
 func (r *ReceptorService) sendMessage(msgSenderCtx context.Context, msgToSend protocol.Message) error {
 
-	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msgToSend)
+	msg := SendMessage{AccountNumber: r.AccountNumber, Message: msgToSend}
+
+	return sendMessage(r.logger, r.Transport.Ctx, r.Transport.Send, msgSenderCtx, msg)
 }
 
-func sendMessage(logger *logrus.Entry, transportCtx context.Context, sendChannel chan protocol.Message, msgSenderCtx context.Context, msgToSend protocol.Message) error {
+func sendMessage(logger *logrus.Entry, transportCtx context.Context, sendChannel chan SendMessage, msgSenderCtx context.Context, msgToSend SendMessage) error {
 	logger.Debug("Passing message to async layer")
 
 	select {

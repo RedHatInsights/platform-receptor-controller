@@ -69,11 +69,12 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		logger.Info("Accepted websocket connection")
 
 		client := &rcClient{
+			account:        rhIdentity.Identity.AccountNumber,
 			config:         rc.config,
 			socket:         socket,
-			send:           make(chan protocol.Message, rc.config.BufferedChannelSize),
-			controlChannel: make(chan protocol.Message, rc.config.BufferedChannelSize),
-			errorChannel:   make(chan error),
+			send:           make(chan controller.SendMessage, rc.config.BufferedChannelSize),
+			controlChannel: make(chan controller.SendMessage, rc.config.BufferedChannelSize),
+			errorChannel:   make(chan controller.SendErrorMessage),
 			recv:           make(chan protocol.Message, rc.config.BufferedChannelSize),
 			logger:         logger,
 		}

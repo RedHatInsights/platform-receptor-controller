@@ -23,13 +23,19 @@ type HandshakeHandler struct {
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	if m.Type() != protocol.HiMessageType {
-		hh.Transport.ErrorChannel <- fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m)
+		hh.Transport.ErrorChannel <- SendErrorMessage{
+			AccountNumber: hh.AccountNumber,
+			Error:         fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m),
+		}
 		return
 	}
 
 	hiMessage, ok := m.(*protocol.HiMessage)
 	if !ok {
-		hh.Transport.ErrorChannel <- fmt.Errorf("Unable to convert message into HiMessage")
+		hh.Transport.ErrorChannel <- SendErrorMessage{
+			AccountNumber: hh.AccountNumber,
+			Error:         fmt.Errorf("Unable to convert message into HiMessage"),
+		}
 		return
 	}
 
@@ -45,7 +51,9 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	case <-ctx.Done():
 		hh.Logger.Info("Request cancelled during handshake. Error: ", ctx.Err())
 		return
-	case hh.Transport.ControlChannel <- &responseHiMessage: // FIXME:  Why a pointer here??
+	case hh.Transport.ControlChannel <- SendMessage{
+		AccountNumber: hh.AccountNumber,
+		Message:       &responseHiMessage}:
 		break
 	}
 
@@ -64,7 +72,9 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		hh.Logger.WithFields(logrus.Fields{"error": err}).Infof("Unable to register connection "+
 			"(%s:%s) with connection manager.  Closing connection!", hh.AccountNumber, hiMessage.ID)
 
-		hh.Transport.ErrorChannel <- err
+		hh.Transport.ErrorChannel <- SendErrorMessage{
+			AccountNumber: hh.AccountNumber,
+			Error:         err}
 
 		return
 	}
