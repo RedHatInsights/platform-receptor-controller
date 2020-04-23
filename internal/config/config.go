@@ -83,7 +83,7 @@ func GetConfig() *Config {
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
 	options.SetDefault(RECEPTOR_SYNC_PING_TIMEOUT, 10)
-	options.SetDefault(HTTP_SHUTDOWN_TIMEOUT, 5)
+	options.SetDefault(HTTP_SHUTDOWN_TIMEOUT, 2)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
 	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
 	options.SetDefault(BUFFERED_CHANNEL_SIZE, 10)

@@ -96,24 +96,18 @@ func main() {
 	wsSrv.RegisterOnShutdown(func() { closeConnections(cm, wg, cfg.HttpShutdownTimeout) })
 
 	signalChan := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		sig := <-signalChan
-		logger.Log.Info("Received signal to shutdown: ", sig)
+	sig := <-signalChan
+	logger.Log.Info("Received signal to shutdown: ", sig)
 
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.HttpShutdownTimeout)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.HttpShutdownTimeout)
+	defer cancel()
 
-		utils.ShutdownHTTPServer(ctx, "management", apiSrv)
-		utils.ShutdownHTTPServer(ctx, "websocket", wsSrv)
+	utils.ShutdownHTTPServer(ctx, "management", apiSrv)
+	utils.ShutdownHTTPServer(ctx, "websocket", wsSrv)
 
-		wg.Wait()
-		done <- true
-	}()
-
-	<-done
+	wg.Wait()
 	logger.Log.Info("Receptor-Controller shutting down")
 }
