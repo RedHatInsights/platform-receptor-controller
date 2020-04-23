@@ -16,6 +16,7 @@ const (
 	PONG_WAIT                      = "WebSocket_Pong_Wait"
 	PING_PERIOD                    = "WebSocket_Ping_Period"
 	RECEPTOR_SYNC_PING_TIMEOUT     = "Receptor_Sync_Ping_Timeout"
+	HTTP_SHUTDOWN_TIMEOUT          = "HTTP_Shutdown_Timeout"
 	MAX_MESSAGE_SIZE               = "WebSocket_Max_Message_Size"
 	SOCKET_BUFFER_SIZE             = "WebSocket_IO_Buffer_Size"
 	BUFFERED_CHANNEL_SIZE          = "WebSocket_Buffered_Channel_Size"
@@ -39,6 +40,7 @@ type Config struct {
 	PongWait                    time.Duration
 	PingPeriod                  time.Duration
 	ReceptorSyncPingTimeout     time.Duration
+	HttpShutdownTimeout         time.Duration
 	MaxMessageSize              int64
 	SocketBufferSize            int
 	BufferedChannelSize         int
@@ -61,6 +63,7 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", PONG_WAIT, c.PongWait)
 	fmt.Fprintf(&b, "%s: %s\n", PING_PERIOD, c.PingPeriod)
 	fmt.Fprintf(&b, "%s: %s\n", RECEPTOR_SYNC_PING_TIMEOUT, c.ReceptorSyncPingTimeout)
+	fmt.Fprintf(&b, "%s: %s\n", HTTP_SHUTDOWN_TIMEOUT, c.HttpShutdownTimeout)
 	fmt.Fprintf(&b, "%s: %d\n", MAX_MESSAGE_SIZE, c.MaxMessageSize)
 	fmt.Fprintf(&b, "%s: %d\n", SOCKET_BUFFER_SIZE, c.SocketBufferSize)
 	fmt.Fprintf(&b, "%s: %d\n", BUFFERED_CHANNEL_SIZE, c.BufferedChannelSize)
@@ -83,6 +86,7 @@ func GetConfig() *Config {
 	options.SetDefault(WRITE_WAIT, 5)
 	options.SetDefault(PONG_WAIT, 25)
 	options.SetDefault(RECEPTOR_SYNC_PING_TIMEOUT, 10)
+	options.SetDefault(HTTP_SHUTDOWN_TIMEOUT, 2)
 	options.SetDefault(MAX_MESSAGE_SIZE, 1*1024*1024)
 	options.SetDefault(SOCKET_BUFFER_SIZE, 1024)
 	options.SetDefault(BUFFERED_CHANNEL_SIZE, 10)
@@ -109,6 +113,7 @@ func GetConfig() *Config {
 		PongWait:                    pongWait,
 		PingPeriod:                  pingPeriod,
 		ReceptorSyncPingTimeout:     options.GetDuration(RECEPTOR_SYNC_PING_TIMEOUT) * time.Second,
+		HttpShutdownTimeout:         options.GetDuration(HTTP_SHUTDOWN_TIMEOUT) * time.Second,
 		MaxMessageSize:              options.GetInt64(MAX_MESSAGE_SIZE),
 		SocketBufferSize:            options.GetInt(SOCKET_BUFFER_SIZE),
 		BufferedChannelSize:         options.GetInt(BUFFERED_CHANNEL_SIZE),

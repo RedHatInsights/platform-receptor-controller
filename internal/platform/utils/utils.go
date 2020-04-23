@@ -1,0 +1,35 @@
+package utils
+
+import (
+	"context"
+	"net/http"
+	"os"
+
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+)
+
+func StartHTTPServer(addr, name string, handler *mux.Router) *http.Server {
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: handlers.LoggingHandler(os.Stdout, handler),
+	}
+
+	go func() {
+		logger.Log.Infof("Starting %s server:  %s", name, addr)
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			logger.Log.WithFields(logrus.Fields{"error": err}).Fatalf("%s server error", name)
+		}
+	}()
+
+	return srv
+}
+
+func ShutdownHTTPServer(ctx context.Context, name string, srv *http.Server) {
+	logger.Log.Infof("Shutting down %s server", name)
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Log.Infof("Error shutting down %s server: %e", name, err)
+	}
+}

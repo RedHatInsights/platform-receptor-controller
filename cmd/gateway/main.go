@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -14,17 +16,27 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/ws"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 )
 
 const (
 	OPENAPI_SPEC_FILE = "/opt/app-root/src/api/api.spec.file"
 )
+
+func closeConnections(cm *c.ConnectionManager, wg *sync.WaitGroup, timeout time.Duration) {
+	defer wg.Done()
+	connections := cm.GetAllConnections()
+	for _, conn := range connections {
+		for _, client := range conn {
+			client.Close()
+		}
+	}
+	time.Sleep(timeout)
+}
 
 func main() {
 	var wsAddr = flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
@@ -76,24 +88,26 @@ func main() {
 
 	apiMux.Handle("/metrics", promhttp.Handler())
 
-	go func() {
-		logger.Log.Info("Starting management web server:  ", *mgmtAddr)
-		if err := http.ListenAndServe(*mgmtAddr, handlers.LoggingHandler(os.Stdout, apiMux)); err != nil {
-			logger.Log.WithFields(logrus.Fields{"error": err}).Fatal("managment web server error")
-		}
-	}()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
-	go func() {
-		logger.Log.Info("Starting websocket server on:  ", *wsAddr)
-		if err := http.ListenAndServe(*wsAddr, handlers.LoggingHandler(os.Stdout, wsMux)); err != nil {
-			logger.Log.WithFields(logrus.Fields{"error": err}).Fatal("websocket server error")
-		}
-	}()
+	apiSrv := utils.StartHTTPServer(*mgmtAddr, "management", apiMux)
+	wsSrv := utils.StartHTTPServer(*wsAddr, "websocket", wsMux)
+	wsSrv.RegisterOnShutdown(func() { closeConnections(cm, wg, cfg.HttpShutdownTimeout) })
 
 	signalChan := make(chan os.Signal, 1)
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	<-signalChan
-	logger.Log.Debug("Receptor-Controller shutting down")
+	sig := <-signalChan
+	logger.Log.Info("Received signal to shutdown: ", sig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.HttpShutdownTimeout)
+	defer cancel()
+
+	utils.ShutdownHTTPServer(ctx, "management", apiSrv)
+	utils.ShutdownHTTPServer(ctx, "websocket", wsSrv)
+
+	wg.Wait()
+	logger.Log.Info("Receptor-Controller shutting down")
 }
