@@ -72,9 +72,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			account:        rhIdentity.Identity.AccountNumber,
 			config:         rc.config,
 			socket:         socket,
-			send:           make(chan controller.SendMessage, rc.config.BufferedChannelSize),
-			controlChannel: make(chan controller.SendMessage, rc.config.BufferedChannelSize),
-			errorChannel:   make(chan controller.SendErrorMessage),
+			send:           make(chan controller.ReceptorMessage, rc.config.BufferedChannelSize),
+			controlChannel: make(chan controller.ReceptorMessage, rc.config.BufferedChannelSize),
+			errorChannel:   make(chan controller.ReceptorErrorMessage),
 			recv:           make(chan protocol.Message, rc.config.BufferedChannelSize),
 			logger:         logger,
 		}

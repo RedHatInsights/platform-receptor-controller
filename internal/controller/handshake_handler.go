@@ -23,7 +23,7 @@ type HandshakeHandler struct {
 
 func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message) {
 	if m.Type() != protocol.HiMessageType {
-		hh.Transport.ErrorChannel <- SendErrorMessage{
+		hh.Transport.ErrorChannel <- ReceptorErrorMessage{
 			AccountNumber: hh.AccountNumber,
 			Error:         fmt.Errorf("Invalid message type (type: %d): %v", m.Type(), m),
 		}
@@ -32,7 +32,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	hiMessage, ok := m.(*protocol.HiMessage)
 	if !ok {
-		hh.Transport.ErrorChannel <- SendErrorMessage{
+		hh.Transport.ErrorChannel <- ReceptorErrorMessage{
 			AccountNumber: hh.AccountNumber,
 			Error:         fmt.Errorf("Unable to convert message into HiMessage"),
 		}
@@ -51,7 +51,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 	case <-ctx.Done():
 		hh.Logger.Info("Request cancelled during handshake. Error: ", ctx.Err())
 		return
-	case hh.Transport.ControlChannel <- SendMessage{
+	case hh.Transport.ControlChannel <- ReceptorMessage{
 		AccountNumber: hh.AccountNumber,
 		Message:       &responseHiMessage}:
 		break
@@ -72,7 +72,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 		hh.Logger.WithFields(logrus.Fields{"error": err}).Infof("Unable to register connection "+
 			"(%s:%s) with connection manager.  Closing connection!", hh.AccountNumber, hiMessage.ID)
 
-		hh.Transport.ErrorChannel <- SendErrorMessage{
+		hh.Transport.ErrorChannel <- ReceptorErrorMessage{
 			AccountNumber: hh.AccountNumber,
 			Error:         err}
 

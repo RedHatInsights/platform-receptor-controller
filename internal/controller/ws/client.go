@@ -19,11 +19,11 @@ type rcClient struct {
 	socket *websocket.Conn
 
 	// send is a channel on which messages are sent.
-	send chan controller.SendMessage
+	send chan controller.ReceptorMessage
 
-	controlChannel chan controller.SendMessage
+	controlChannel chan controller.ReceptorMessage
 
-	errorChannel chan controller.SendErrorMessage
+	errorChannel chan controller.ReceptorErrorMessage
 
 	// recv is a channel on which responses are sent.
 	recv chan protocol.Message
@@ -83,7 +83,7 @@ func (c *rcClient) configurePongHandler() {
 	}
 }
 
-func (c *rcClient) writeMessage(msg controller.SendMessage) error {
+func (c *rcClient) writeMessage(msg controller.ReceptorMessage) error {
 
 	if err := c.verifyAccountNumber(msg.AccountNumber); err != nil {
 		return err
