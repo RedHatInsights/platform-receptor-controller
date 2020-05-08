@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -11,6 +12,7 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -36,9 +38,13 @@ func NewReceptorController(cfg *config.Config, cm controller.ConnectionManager, 
 	}
 }
 
+func loggingMiddleware(next http.Handler) http.Handler {
+	return handlers.LoggingHandler(os.Stdout, next)
+}
+
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
-	router.Use(identity.EnforceIdentity)
+	router.Use(loggingMiddleware, identity.EnforceIdentity)
 	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods(http.MethodGet)
 }
 

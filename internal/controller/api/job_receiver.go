@@ -1,8 +1,6 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
-
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
@@ -11,6 +9,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
+	"github.com/gorilla/mux"
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +33,7 @@ func NewJobReceiver(cm controller.ConnectionManager, r *mux.Router, kw *kafka.Wr
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: jr.config.ServiceToServiceCredentials}
-	securedSubRouter.Use(amw.Authenticate)
+	securedSubRouter.Use(loggingMiddleware, amw.Authenticate)
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 
