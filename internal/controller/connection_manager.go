@@ -24,18 +24,26 @@ func (d DuplicateConnectionError) Error() string {
 	return "duplicate node id"
 }
 
-type ConnectionManager struct {
+type ConnectionManager interface {
+	Register(account string, node_id string, client Receptor) error
+	Unregister(account string, node_id string)
+	GetConnection(account string, node_id string) Receptor
+	GetConnectionsByAccount(account string) map[string]Receptor
+	GetAllConnections() map[string]map[string]Receptor
+}
+
+type LocalConnectionManager struct {
 	connections map[string]map[string]Receptor
 	sync.RWMutex
 }
 
-func NewConnectionManager() *ConnectionManager {
-	return &ConnectionManager{
+func NewConnectionManager() ConnectionManager {
+	return &LocalConnectionManager{
 		connections: make(map[string]map[string]Receptor),
 	}
 }
 
-func (cm *ConnectionManager) Register(account string, node_id string, client Receptor) error {
+func (cm *LocalConnectionManager) Register(account string, node_id string, client Receptor) error {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
@@ -57,7 +65,7 @@ func (cm *ConnectionManager) Register(account string, node_id string, client Rec
 	return nil
 }
 
-func (cm *ConnectionManager) Unregister(account string, node_id string) {
+func (cm *LocalConnectionManager) Unregister(account string, node_id string) {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
@@ -73,7 +81,7 @@ func (cm *ConnectionManager) Unregister(account string, node_id string) {
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }
 
-func (cm *ConnectionManager) GetConnection(account string, node_id string) Receptor {
+func (cm *LocalConnectionManager) GetConnection(account string, node_id string) Receptor {
 	var conn Receptor
 
 	cm.RLock()
@@ -91,7 +99,7 @@ func (cm *ConnectionManager) GetConnection(account string, node_id string) Recep
 	return conn
 }
 
-func (cm *ConnectionManager) GetConnectionsByAccount(account string) map[string]Receptor {
+func (cm *LocalConnectionManager) GetConnectionsByAccount(account string) map[string]Receptor {
 	cm.RLock()
 	defer cm.RUnlock()
 
@@ -109,7 +117,7 @@ func (cm *ConnectionManager) GetConnectionsByAccount(account string) map[string]
 	return connectionsPerAccount
 }
 
-func (cm *ConnectionManager) GetAllConnections() map[string]map[string]Receptor {
+func (cm *LocalConnectionManager) GetAllConnections() map[string]map[string]Receptor {
 	cm.RLock()
 	defer cm.RUnlock()
 

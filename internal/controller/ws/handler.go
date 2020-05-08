@@ -17,7 +17,7 @@ import (
 )
 
 type ReceptorController struct {
-	connectionMgr            *controller.ConnectionManager
+	connectionMgr            controller.ConnectionManager
 	router                   *mux.Router
 	config                   *config.Config
 	responseReactorFactory   *controller.ResponseReactorFactory
@@ -25,7 +25,7 @@ type ReceptorController struct {
 	receptorServiceFactory   *controller.ReceptorServiceFactory
 }
 
-func NewReceptorController(cfg *config.Config, cm *controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
+func NewReceptorController(cfg *config.Config, cm controller.ConnectionManager, r *mux.Router, rd *controller.ResponseReactorFactory, md *controller.MessageDispatcherFactory, rs *controller.ReceptorServiceFactory) *ReceptorController {
 	return &ReceptorController{
 		connectionMgr:            cm,
 		router:                   r,

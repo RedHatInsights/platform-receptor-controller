@@ -11,7 +11,7 @@ import (
 type DisconnectHandler struct {
 	AccountNumber string
 	NodeID        string
-	ConnectionMgr *ConnectionManager
+	ConnectionMgr ConnectionManager
 	Logger        *logrus.Entry
 }
 

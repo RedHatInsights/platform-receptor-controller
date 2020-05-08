@@ -27,7 +27,7 @@ const (
 	OPENAPI_SPEC_FILE = "/opt/app-root/src/api/api.spec.file"
 )
 
-func closeConnections(cm *c.ConnectionManager, wg *sync.WaitGroup, timeout time.Duration) {
+func closeConnections(cm c.ConnectionManager, wg *sync.WaitGroup, timeout time.Duration) {
 	defer wg.Done()
 	connections := cm.GetAllConnections()
 	for _, conn := range connections {
