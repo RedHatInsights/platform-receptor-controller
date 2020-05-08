@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -12,7 +11,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -24,12 +22,12 @@ const (
 )
 
 type ManagementServer struct {
-	connectionMgr controller.ConnectionManager
+	connectionMgr *controller.ConnectionManager
 	router        *mux.Router
 	config        *config.Config
 }
 
-func NewManagementServer(cm controller.ConnectionManager, r *mux.Router, cfg *config.Config) *ManagementServer {
+func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, cfg *config.Config) *ManagementServer {
 	return &ManagementServer{
 		connectionMgr: cm,
 		router:        r,
@@ -37,17 +35,11 @@ func NewManagementServer(cm controller.ConnectionManager, r *mux.Router, cfg *co
 	}
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return handlers.LoggingHandler(os.Stdout, next)
-}
-
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 
 	amw := &middlewares.AuthMiddleware{Secrets: s.config.ServiceToServiceCredentials}
-
-	securedSubRouter.Use(loggingMiddleware, amw.Authenticate)
-
+	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods(http.MethodPost)

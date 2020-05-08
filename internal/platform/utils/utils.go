@@ -3,8 +3,10 @@ package utils
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -12,7 +14,7 @@ import (
 func StartHTTPServer(addr, name string, handler *mux.Router) *http.Server {
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: handlers.LoggingHandler(os.Stdout, handler),
 	}
 
 	go func() {
