@@ -20,7 +20,6 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -85,8 +84,6 @@ func main() {
 
 	jr := api.NewJobReceiver(cm, apiMux, kw, cfg)
 	jr.Routes()
-
-	apiMux.Handle("/metrics", promhttp.Handler())
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
