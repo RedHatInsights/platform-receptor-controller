@@ -40,7 +40,7 @@ func createConnectionStatusPostBody(account_number string, node_id string) io.Re
 var _ = Describe("Management", func() {
 
 	var (
-		cm                  *controller.ConnectionManager
+		cm                  controller.ConnectionManager
 		ms                  *ManagementServer
 		validIdentityHeader string
 	)

@@ -51,7 +51,7 @@ var _ = Describe("WsController", func() {
 	var (
 		identity string
 		wsMux    *mux.Router
-		cm       *controller.ConnectionManager
+		cm       controller.ConnectionManager
 		cfg      *config.Config
 		rc       *ReceptorController
 		kw       *kafka.Writer
