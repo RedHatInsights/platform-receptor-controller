@@ -37,7 +37,6 @@ func NewManagementServer(cm *controller.ConnectionManager, r *mux.Router, cfg *c
 
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
-
 	amw := &middlewares.AuthMiddleware{Secrets: s.config.ServiceToServiceCredentials}
 	securedSubRouter.Use(amw.Authenticate)
 	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
