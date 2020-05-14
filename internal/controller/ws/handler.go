@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,9 +57,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			"request_id": requestId,
 		})
 
-		metrics.TotalConnectionCounter.Inc()
-		metrics.ActiveConnectionCounter.Inc()
-		defer metrics.ActiveConnectionCounter.Dec()
+		metrics.TotalConnectionCounter.With(prometheus.Labels{"account": rhIdentity.Identity.AccountNumber}).Inc()
+		metrics.ActiveConnectionCounter.With(prometheus.Labels{"account": rhIdentity.Identity.AccountNumber}).Inc()
+		defer metrics.ActiveConnectionCounter.With(prometheus.Labels{"account": rhIdentity.Identity.AccountNumber}).Dec()
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {

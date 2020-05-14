@@ -6,8 +6,8 @@ import (
 )
 
 type Metrics struct {
-	TotalConnectionCounter       prometheus.Counter
-	ActiveConnectionCounter      prometheus.Gauge
+	TotalConnectionCounter       *prometheus.CounterVec
+	ActiveConnectionCounter      *prometheus.GaugeVec
 	TotalMessagesSentCounter     prometheus.Counter
 	TotalMessagesReceivedCounter prometheus.Counter
 }
@@ -15,15 +15,19 @@ type Metrics struct {
 func NewMetrics() *Metrics {
 	metrics := new(Metrics)
 
-	metrics.TotalConnectionCounter = promauto.NewCounter(prometheus.CounterOpts{
+	metrics.TotalConnectionCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "receptor_controller_websocket_total_connection_count",
 		Help: "The total number of receptor websocket connections received",
-	})
+	},
+		[]string{"account"},
+	)
 
-	metrics.ActiveConnectionCounter = promauto.NewGauge(prometheus.GaugeOpts{
+	metrics.ActiveConnectionCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "receptor_controller_websocket_active_connection_count",
 		Help: "The total number of active receptor websocket connections",
-	})
+	},
+		[]string{"account"},
+	)
 
 	metrics.TotalMessagesSentCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_websocket_total_messages_sent_count",
