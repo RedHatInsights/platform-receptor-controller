@@ -38,7 +38,9 @@ func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: s.config.ServiceToServiceCredentials}
 	securedSubRouter.Use(amw.Authenticate)
+	//securedSubRouter.Use(handlers.CORS())
 	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
+	securedSubRouter.HandleFunc("/{id:[0-9]+}", s.handleConnectionListingByAccount()).Methods(http.MethodGet)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/status", s.handleConnectionStatus()).Methods(http.MethodPost)
 	securedSubRouter.HandleFunc("/ping", s.handleConnectionPing()).Methods(http.MethodPost)
@@ -227,6 +229,38 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 			}
 
 			accountCount++
+		}
+
+		response := Response{Connections: connections}
+
+		writeJSONResponse(w, http.StatusOK, response)
+	}
+}
+
+func (s *ManagementServer) handleConnectionListingByAccount() http.HandlerFunc {
+
+	type Response struct {
+		Connections []string `json:"connections"`
+	}
+
+	return func(w http.ResponseWriter, req *http.Request) {
+
+		principal, _ := middlewares.GetPrincipal(req.Context())
+		requestId := request_id.GetReqID(req.Context())
+		accountId := mux.Vars(req)["id"]
+		logger := logger.Log.WithFields(logrus.Fields{
+			"account":    principal.GetAccount(),
+			"request_id": requestId})
+
+		logger.Debug("Getting connections for ", accountId)
+
+		accountConnections := s.connectionMgr.GetConnectionsByAccount(accountId)
+		connections := make([]string, len(accountConnections))
+
+		connCount := 0
+		for conn := range accountConnections {
+			connections[connCount] = conn
+			connCount++
 		}
 
 		response := Response{Connections: connections}
