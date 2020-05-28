@@ -365,7 +365,6 @@ var _ = Describe("Management", func() {
 
 				Expect(rr.Code).To(Equal(http.StatusOK))
 
-				// FIXME: need to verify that connection list
 				var m map[string][]string
 				expected := map[string][]string{"connections": []string{"345"}}
 				json.Unmarshal(rr.Body.Bytes(), &m)
