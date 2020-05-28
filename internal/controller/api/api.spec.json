@@ -80,6 +80,34 @@
         }
       }
     },
+    "/connection/{account}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get a list of open connections",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": {
+          "$ref": "#/components/parameters/AccountID"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionListAccountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connection/status": {
       "post": {
         "tags": [
@@ -150,6 +178,15 @@
     }
   },
   "components": {
+    "parameters": {
+      "AccountID": {
+        "in": "path",
+        "name": "account",
+        "description": "Account number",
+        "type": "string",
+        "pattern": "[0-9]+"
+      }
+    },
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",
@@ -205,6 +242,18 @@
                   }
                 }
               }
+            }
+          }
+        }
+      },
+      "ConnectionListAccountResponse": {
+        "type": "object",
+        "properties": {
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "node-a"
             }
           }
         }
