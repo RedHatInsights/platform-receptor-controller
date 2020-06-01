@@ -27,11 +27,12 @@ services:
       context: ./
       dockerfile: ./cmd/gateway/Dockerfile
     image: platform-receptor-controller-gateway
+    command: ./ws-gateway -wsAddr gateway:8888
     ports:
-      - 8080:8080 # websocket gateway
+      - 8888:8888 # websocket gateway
       - 9090:9090 # gateway management server
     environment:
-      - PLACEHOLDER_ENV_VAR=placeholder_env_var
+      - RECEPTOR_CONTROLLER_LOG_LEVEL=debug
     depends_on:
       - kafka
   job-receiver:

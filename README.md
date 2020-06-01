@@ -197,13 +197,28 @@ Install the project dependencies:
   $ make
 ```
 
-#### Local testing with receptor
+#### Running locally
 
 Start the server
 
 ```
   $ ./gateway
 ```
+
+By default, the receptor gateway will attempt to connect to a kafka server listening on `kafka:29092`.
+The kafka server that the receptor gateway connects to can be configured using the
+`RECEPTOR_CONTROLLER_KAFKA_BROKERS` environment variable.
+
+#### Running with Docker Compose
+
+A docker compose file is provided that starts kafka and the receptor gateway:
+
+```
+  $ docker-compose -f docker-compose.yml up
+```
+
+When using the docker-compose approach, the receptor gateway process listens on port 8888 for websocket connections.
+
 
 ##### Receptor node configuration
 
