@@ -30,6 +30,10 @@ const (
 	RESPONSES_BATCH_SIZE           = "Kafka_Responses_Batch_Size"
 	RESPONSES_BATCH_BYTES          = "Kafka_Responses_Batch_Bytes"
 	DEFAULT_BROKER_ADDRESS         = "kafka:29092"
+	REDIS_HOST                     = "Redis Host"
+	REDIS_PORT                     = "Redis Port"
+	REDIS_PASSWORD                 = "Redis Password"
+	REDIS_DB                       = "Redis DB"
 
 	NODE_ID = "ReceptorControllerNodeId"
 )
@@ -54,6 +58,10 @@ type Config struct {
 	KafkaResponsesBatchBytes    int
 	KafkaGroupID                string
 	KafkaConsumerOffset         int64
+	RedisHost                   string
+	RedisPort                   string
+	RedisPassword               string
+	RedisDB                     int
 }
 
 func (c Config) String() string {
@@ -75,7 +83,10 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_SIZE, c.KafkaResponsesBatchSize)
 	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, c.KafkaResponsesBatchBytes)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, c.KafkaGroupID)
-	fmt.Fprintf(&b, "%s: %d", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
+	fmt.Fprintf(&b, "%s: %d\n", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
+	fmt.Fprintf(&b, "%s: %s\n", REDIS_HOST, c.RedisHost)
+	fmt.Fprintf(&b, "%s: %s\n", REDIS_PORT, c.RedisPort)
+	fmt.Fprintf(&b, "%s: %d\n", REDIS_DB, c.RedisDB)
 	return b.String()
 }
 
@@ -100,6 +111,10 @@ func GetConfig() *Config {
 	options.SetDefault(RESPONSES_BATCH_BYTES, 1048576)
 	options.SetDefault(JOBS_GROUP_ID, "receptor-controller")
 	options.SetDefault(JOBS_CONSUMER_OFFSET, -1)
+	options.SetDefault(REDIS_HOST, "localhost")
+	options.SetDefault(REDIS_PORT, "6379")
+	options.SetDefault(REDIS_PASSWORD, "")
+	options.SetDefault(REDIS_DB, 0)
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
 
@@ -127,6 +142,10 @@ func GetConfig() *Config {
 		KafkaResponsesBatchBytes:    options.GetInt(RESPONSES_BATCH_BYTES),
 		KafkaGroupID:                options.GetString(JOBS_GROUP_ID),
 		KafkaConsumerOffset:         options.GetInt64(JOBS_CONSUMER_OFFSET),
+		RedisHost:                   options.GetString(REDIS_HOST),
+		RedisPort:                   options.GetString(REDIS_PORT),
+		RedisPassword:               options.GetString(REDIS_PASSWORD),
+		RedisDB:                     options.GetInt(REDIS_DB),
 	}
 }
 

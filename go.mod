@@ -3,6 +3,7 @@ module github.com/RedHatInsights/platform-receptor-controller
 require (
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/go-playground/validator/v10 v10.2.0
+	github.com/go-redis/redis v6.15.8+incompatible
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.2.0
 	github.com/google/uuid v1.1.1

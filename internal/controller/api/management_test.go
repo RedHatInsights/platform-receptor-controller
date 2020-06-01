@@ -32,6 +32,22 @@ func init() {
 	logger.InitLogger()
 }
 
+// FIXME: Need central location for mocks
+type MockRedisManager struct {
+	exists bool
+}
+
+func (mrm *MockRedisManager) Exists(account, node_id string) bool {
+	return mrm.exists
+}
+
+func (mrm *MockRedisManager) Register(account, node_id string) error {
+	return nil
+}
+
+func (mrm *MockRedisManager) Unregister(account, node_id string) {
+}
+
 func createConnectionStatusPostBody(account_number string, node_id string) io.Reader {
 	jsonString := fmt.Sprintf("{\"account\": \"%s\", \"node_id\": \"%s\"}", account_number, node_id)
 	return strings.NewReader(jsonString)
@@ -47,7 +63,7 @@ var _ = Describe("Management", func() {
 
 	BeforeEach(func() {
 		apiMux := mux.NewRouter()
-		cm = controller.NewConnectionManager()
+		cm = controller.NewConnectionManager(&MockRedisManager{exists: false})
 		mc := MockClient{}
 		cm.Register(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
 		cfg := config.GetConfig()

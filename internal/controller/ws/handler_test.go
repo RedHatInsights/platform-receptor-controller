@@ -43,6 +43,21 @@ func writeSocket(c *websocket.Conn, message protocol.Message) error {
 	return err
 }
 
+type MockRedisManager struct {
+	exists bool
+}
+
+func (mrm *MockRedisManager) Exists(account, node_id string) bool {
+	return mrm.exists
+}
+
+func (mrm *MockRedisManager) Register(account, node_id string) error {
+	return nil
+}
+
+func (mrm *MockRedisManager) Unregister(account, node_id string) {
+}
+
 func leaks() error {
 	return goleak.Find(goleak.IgnoreTopFunction("github.com/onsi/ginkgo/internal/specrunner.(*SpecRunner).registerForInterrupts"))
 }
@@ -62,7 +77,7 @@ var _ = Describe("WsController", func() {
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
 		cfg = config.GetConfig()
-		cm = controller.NewConnectionManager()
+		cm = controller.NewConnectionManager(&MockRedisManager{exists: false})
 		kc := &queue.ConsumerConfig{
 			Brokers:        cfg.KafkaBrokers,
 			Topic:          cfg.KafkaJobsTopic,

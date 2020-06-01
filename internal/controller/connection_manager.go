@@ -34,20 +34,28 @@ type ConnectionManager interface {
 
 type LocalConnectionManager struct {
 	connections map[string]map[string]Receptor
+	rm          RedisInterface
 	sync.RWMutex
 }
 
-func NewConnectionManager() ConnectionManager {
+func NewConnectionManager(rm RedisInterface) ConnectionManager {
 	return &LocalConnectionManager{
 		connections: make(map[string]map[string]Receptor),
+		rm:          rm,
 	}
 }
 
 func (cm *LocalConnectionManager) Register(account string, node_id string, client Receptor) error {
 	cm.Lock()
 	defer cm.Unlock()
+	if cm.rm.Exists(account, node_id) { // checking connection globally
+		logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
+		logger.Warn("Attempting to register duplicate connection")
+		metrics.duplicateConnectionCounter.Inc()
+		return DuplicateConnectionError{}
+	}
 	_, exists := cm.connections[account]
-	if exists == true {
+	if exists == true { // checking connection locally
 		_, exists = cm.connections[account][node_id]
 		if exists == true {
 			logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
@@ -56,9 +64,11 @@ func (cm *LocalConnectionManager) Register(account string, node_id string, clien
 			return DuplicateConnectionError{}
 		}
 		cm.connections[account][node_id] = client
+		cm.rm.Register(account, node_id)
 	} else {
 		cm.connections[account] = make(map[string]Receptor)
 		cm.connections[account][node_id] = client
+		cm.rm.Register(account, node_id)
 	}
 
 	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
@@ -71,13 +81,13 @@ func (cm *LocalConnectionManager) Unregister(account string, node_id string) {
 	_, exists := cm.connections[account]
 	if exists == false {
 		return
-	} else {
-		delete(cm.connections[account], node_id)
-
-		if len(cm.connections[account]) == 0 {
-			delete(cm.connections, account)
-		}
 	}
+	delete(cm.connections[account], node_id)
+
+	if len(cm.connections[account]) == 0 {
+		delete(cm.connections, account)
+	}
+	cm.rm.Unregister(account, node_id)
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }
 

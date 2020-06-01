@@ -33,3 +33,12 @@ func ShutdownHTTPServer(ctx context.Context, name string, srv *http.Server) {
 		logger.Log.Infof("Error shutting down %s server: %e", name, err)
 	}
 }
+
+func GetHostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		logger.Log.Info("Error getting hostname")
+	}
+
+	return name
+}
