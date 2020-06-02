@@ -16,7 +16,7 @@ type HandshakeHandler struct {
 	Transport                *Transport
 	ReceptorServiceFactory   *ReceptorServiceFactory
 	ResponseReactor          ResponseReactor
-	ConnectionMgr            ConnectionManager
+	ConnectionMgr            ConnectionRegistrar
 	MessageDispatcherFactory *MessageDispatcherFactory
 	Logger                   *logrus.Entry
 }
