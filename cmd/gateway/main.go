@@ -68,11 +68,12 @@ func main() {
 	}
 
 	rm := c.NewRedisManager(cfg)
-	cm := c.NewConnectionManager(rm)
+	localCM := c.NewConnectionManager()
+	gatewayCM := c.NewGatewayConnectionManager(rm, localCM)
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
-	rc := ws.NewReceptorController(cfg, cm, wsMux, rd, md, rs)
+	rc := ws.NewReceptorController(cfg, gatewayCM, wsMux, rd, md, rs)
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
@@ -81,10 +82,10 @@ func main() {
 	apiSpecServer := api.NewApiSpecServer(apiMux, OPENAPI_SPEC_FILE)
 	apiSpecServer.Routes()
 
-	mgmtServer := api.NewManagementServer(cm, apiMux, cfg)
+	mgmtServer := api.NewManagementServer(localCM, apiMux, cfg)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(cm, apiMux, kw, cfg)
+	jr := api.NewJobReceiver(localCM, apiMux, kw, cfg)
 	jr.Routes()
 
 	apiMux.Handle("/metrics", promhttp.Handler())
@@ -94,7 +95,7 @@ func main() {
 
 	apiSrv := utils.StartHTTPServer(*mgmtAddr, "management", apiMux)
 	wsSrv := utils.StartHTTPServer(*wsAddr, "websocket", wsMux)
-	wsSrv.RegisterOnShutdown(func() { closeConnections(cm, wg, cfg.HttpShutdownTimeout) })
+	wsSrv.RegisterOnShutdown(func() { closeConnections(localCM, wg, cfg.HttpShutdownTimeout) })
 
 	signalChan := make(chan os.Signal, 1)
 

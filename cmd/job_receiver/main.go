@@ -23,8 +23,7 @@ func main() {
 
 	cfg := config.GetConfig()
 
-	rm := c.NewRedisManager(cfg)
-	cm := c.NewConnectionManager(rm)
+	cm := c.NewConnectionManager()
 	mgmtMux := mux.NewRouter()
 	mgmtServer := api.NewManagementServer(cm, mgmtMux, cfg)
 	mgmtServer.Routes()
