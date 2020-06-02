@@ -6,19 +6,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type GatewayConnectionManager struct {
-	rm                     RedisInterface
-	localConnectionManager ConnectionManager
+type GatewayConnectionRegistrar struct {
+	rm                       RedisInterface
+	localConnectionRegistrar ConnectionRegistrar
 }
 
-func NewGatewayConnectionManager(rm RedisInterface, cm ConnectionManager) ConnectionManager {
-	return &GatewayConnectionManager{
-		rm:                     rm,
-		localConnectionManager: cm,
+func NewGatewayConnectionRegistrar(rm RedisInterface, cm ConnectionRegistrar) ConnectionRegistrar {
+	return &GatewayConnectionRegistrar{
+		rm:                       rm,
+		localConnectionRegistrar: cm,
 	}
 }
 
-func (rcm *GatewayConnectionManager) Register(account string, node_id string, client Receptor) error {
+func (rcm *GatewayConnectionRegistrar) Register(account string, node_id string, client Receptor) error {
 	if rcm.rm.Exists(account, node_id) { // checking connection globally
 		logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
 		logger.Warn("Attempting to register duplicate connection")
@@ -31,7 +31,7 @@ func (rcm *GatewayConnectionManager) Register(account string, node_id string, cl
 		return err
 	}
 
-	err = rcm.localConnectionManager.Register(account, node_id, client)
+	err = rcm.localConnectionRegistrar.Register(account, node_id, client)
 	if err != nil {
 		rcm.Unregister(account, node_id)
 		return err
@@ -41,20 +41,8 @@ func (rcm *GatewayConnectionManager) Register(account string, node_id string, cl
 	return nil
 }
 
-func (rcm *GatewayConnectionManager) Unregister(account string, node_id string) {
+func (rcm *GatewayConnectionRegistrar) Unregister(account string, node_id string) {
 	rcm.rm.Unregister(account, node_id)
-	rcm.localConnectionManager.Unregister(account, node_id)
+	rcm.localConnectionRegistrar.Unregister(account, node_id)
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
-}
-
-func (rcm *GatewayConnectionManager) GetConnection(account string, node_id string) Receptor {
-	return rcm.localConnectionManager.GetConnection(account, node_id)
-}
-
-func (rcm *GatewayConnectionManager) GetConnectionsByAccount(account string) map[string]Receptor {
-	return rcm.localConnectionManager.GetConnectionsByAccount(account)
-}
-
-func (rcm *GatewayConnectionManager) GetAllConnections() map[string]map[string]Receptor {
-	return rcm.localConnectionManager.GetAllConnections()
 }

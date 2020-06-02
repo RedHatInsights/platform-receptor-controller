@@ -24,9 +24,12 @@ func (d DuplicateConnectionError) Error() string {
 	return "duplicate node id"
 }
 
-type ConnectionManager interface {
+type ConnectionRegistrar interface {
 	Register(account string, node_id string, client Receptor) error
 	Unregister(account string, node_id string)
+}
+
+type ConnectionLocator interface {
 	GetConnection(account string, node_id string) Receptor
 	GetConnectionsByAccount(account string) map[string]Receptor
 	GetAllConnections() map[string]map[string]Receptor
@@ -37,7 +40,7 @@ type LocalConnectionManager struct {
 	sync.RWMutex
 }
 
-func NewConnectionManager() ConnectionManager {
+func NewLocalConnectionManager() *LocalConnectionManager {
 	return &LocalConnectionManager{
 		connections: make(map[string]map[string]Receptor),
 	}

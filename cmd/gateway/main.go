@@ -27,7 +27,7 @@ const (
 	OPENAPI_SPEC_FILE = "/opt/app-root/src/api/api.spec.file"
 )
 
-func closeConnections(cm c.ConnectionManager, wg *sync.WaitGroup, timeout time.Duration) {
+func closeConnections(cm c.ConnectionLocator, wg *sync.WaitGroup, timeout time.Duration) {
 	defer wg.Done()
 	connections := cm.GetAllConnections()
 	for _, conn := range connections {
@@ -68,8 +68,8 @@ func main() {
 	}
 
 	rm := c.NewRedisManager(cfg)
-	localCM := c.NewConnectionManager()
-	gatewayCM := c.NewGatewayConnectionManager(rm, localCM)
+	localCM := c.NewLocalConnectionManager()
+	gatewayCM := c.NewGatewayConnectionRegistrar(rm, localCM)
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)

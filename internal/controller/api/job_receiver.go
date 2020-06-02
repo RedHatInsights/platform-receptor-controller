@@ -16,13 +16,13 @@ import (
 )
 
 type JobReceiver struct {
-	connectionMgr controller.ConnectionManager
+	connectionMgr controller.ConnectionLocator
 	router        *mux.Router
 	producer      *kafka.Writer
 	config        *config.Config
 }
 
-func NewJobReceiver(cm controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
+func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
