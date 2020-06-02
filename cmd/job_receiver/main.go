@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -10,23 +11,51 @@ import (
 	"syscall"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
-	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 )
+
+func initRedis() (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	pong, err := client.Ping().Result()
+	fmt.Println(pong, err)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
 
 func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
 	flag.Parse()
 
-	cfg := config.GetConfig()
+	logger.InitLogger()
 
-	var cm c.ConnectionLocator
-	cm = &c.RedisConnectionLocator{}
+	logger.Log.Info("Starting Receptor-Controller Job-Receiver service")
+
+	cfg := config.GetConfig()
+	logger.Log.Info("Receptor Controller configuration:\n", cfg)
+
+	redisClient, err := initRedis()
+	if err != nil {
+		log.Fatal("Unable to connect to Redis:", err)
+	}
+
+	var connectionLocator controller.ConnectionLocator
+	connectionLocator = &api.RedisConnectionLocator{redisClient}
 	mgmtMux := mux.NewRouter()
-	mgmtServer := api.NewManagementServer(cm, mgmtMux, cfg)
+	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
 	mgmtServer.Routes()
 
 	kw := queue.StartProducer(&queue.ProducerConfig{
@@ -34,7 +63,7 @@ func main() {
 		Topic:   cfg.KafkaResponsesTopic,
 	})
 
-	jr := api.NewJobReceiver(cm, mgmtMux, kw, cfg)
+	jr := api.NewJobReceiver(connectionLocator, mgmtMux, kw, cfg)
 	jr.Routes()
 
 	go func() {
