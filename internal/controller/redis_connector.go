@@ -1,48 +1,54 @@
 package controller
 
 import (
-	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
 	"github.com/go-redis/redis"
 )
 
-type RedisConnector interface {
+type RedisManager interface {
 	Exists(account, nodeID string) bool
 	Register(account, nodeID string) error
 	Unregister(account, nodeID string)
 }
 
-type redisConnection struct {
-	client   *redis.Client
-	cfg      *config.Config
-	hostname string
+type RedisLocator interface {
+	Lookup(index string) ([]string, error)
+	GetConnection(account, node_id string) (string, error)
 }
 
-func NewRedisConnector(cfg *config.Config) RedisConnector {
-	return &redisConnection{
-		client: redis.NewClient(&redis.Options{
-			Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
-			Password: cfg.RedisPassword,
-			DB:       cfg.RedisDB,
-		}),
-		cfg:      cfg,
+func NewRedisManager(client *redis.Client) RedisManager {
+	return &manager{
+		client:   client,
 		hostname: utils.GetHostname(),
 	}
 }
 
-func (rc *redisConnection) updateIndexes(account, nodeID, hostname string) {
-	rc.client.SAdd("connections", account+":"+nodeID+":"+rc.hostname) // get all connections
-	rc.client.SAdd(account, nodeID+":"+rc.hostname)                   // get all account connections
-	rc.client.SAdd(rc.hostname, account+":"+nodeID)                   // get all pod connections
+func NewRedisLocator(client *redis.Client) RedisLocator {
+	return &locator{client: client}
 }
 
-func (rc *redisConnection) Exists(account, nodeID string) bool {
-	return rc.client.Exists(account+":"+nodeID).Val() != 0
+type manager struct {
+	client   *redis.Client
+	hostname string
 }
 
-func (rc *redisConnection) Register(account, nodeID string) error {
-	res, err := rc.client.SetNX(account+":"+nodeID, rc.hostname, 0).Result()
+type locator struct {
+	client *redis.Client
+}
+
+func (m *manager) updateIndexes(account, nodeID, hostname string) {
+	m.client.SAdd("connections", account+":"+nodeID+":"+m.hostname) // get all connections
+	m.client.SAdd(account, nodeID+":"+m.hostname)                   // get all account connections
+	m.client.SAdd(m.hostname, account+":"+nodeID)                   // get all pod connections
+}
+
+func (m *manager) Exists(account, nodeID string) bool {
+	return m.client.Exists(account+":"+nodeID).Val() != 0
+}
+
+func (m *manager) Register(account, nodeID string) error {
+	res, err := m.client.SetNX(account+":"+nodeID, m.hostname, 0).Result()
 
 	if err != nil {
 		logger.Log.Warn("Error attempting to register connection")
@@ -53,31 +59,35 @@ func (rc *redisConnection) Register(account, nodeID string) error {
 		return nil
 	}
 
-	rc.updateIndexes(account, nodeID, rc.hostname)
+	m.updateIndexes(account, nodeID, m.hostname)
 	logger.Log.Printf("Registered a connection (%s, %s)", account, nodeID)
 	return nil
 }
 
-func (rc *redisConnection) Unregister(account, nodeID string) {
-	if res := rc.client.Del(account + ":" + nodeID).Val(); res != 1 {
+func (m *manager) Unregister(account, nodeID string) {
+	if res := m.client.Del(account + ":" + nodeID).Val(); res != 1 {
 		logger.Log.Warn("Attempting to unregister a connection that does not exist")
 		return
 	}
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, nodeID)
 }
 
-func (rc *redisConnection) GetConnection(account, nodeID string) string {
-	return rc.client.Get(account + ":" + nodeID).Val()
+func (l *locator) GetConnection(account, nodeID string) (string, error) {
+	return l.client.Get(account + ":" + nodeID).Result()
 }
 
-func (rc *redisConnection) GetConnectionsByAccount(account string) []string {
-	return rc.client.SMembers(account).Val()
+func (l *locator) Lookup(index string) ([]string, error) {
+	return l.client.SMembers(index).Result()
 }
 
-func (rc *redisConnection) GetConnectionsByHost(hostname string) []string {
-	return rc.client.SMembers(hostname).Val()
-}
+// func (rc *redisConnection) GetConnectionsByAccount(account string) []string {
+// 	return rc.client.SMembers(account).Val()
+// }
 
-func (rc *redisConnection) GetAllConnections() []string {
-	return rc.client.SMembers("connections").Val()
-}
+// func (rc *redisConnection) GetConnectionsByHost(hostname string) []string {
+// 	return rc.client.SMembers(hostname).Val()
+// }
+
+// func (rc *redisConnection) GetAllConnections() []string {
+// 	return rc.client.SMembers("connections").Val()
+// }

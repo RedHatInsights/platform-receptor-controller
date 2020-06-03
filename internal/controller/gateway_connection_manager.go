@@ -7,11 +7,11 @@ import (
 )
 
 type GatewayConnectionRegistrar struct {
-	rm                       RedisConnector
+	rm                       RedisManager
 	localConnectionRegistrar ConnectionRegistrar
 }
 
-func NewGatewayConnectionRegistrar(rm RedisConnector, cm ConnectionRegistrar) ConnectionRegistrar {
+func NewGatewayConnectionRegistrar(rm RedisManager, cm ConnectionRegistrar) ConnectionRegistrar {
 	return &GatewayConnectionRegistrar{
 		rm:                       rm,
 		localConnectionRegistrar: cm,
@@ -38,6 +38,7 @@ func (rcm *GatewayConnectionRegistrar) Register(account string, node_id string, 
 	}
 
 	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
+	//logger.Log.Printf("ALL CONNECTIONS: ", rcm.rm.)
 	return nil
 }
 

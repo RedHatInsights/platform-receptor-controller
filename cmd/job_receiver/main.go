@@ -20,11 +20,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func initRedis() (*redis.Client, error) {
+func initRedis(cfg *config.Config) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
+		Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
 	})
 
 	pong, err := client.Ping().Result()
@@ -47,13 +47,14 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Log.Info("Receptor Controller configuration:\n", cfg)
 
-	redisClient, err := initRedis()
+	redisClient, err := initRedis(cfg)
 	if err != nil {
 		log.Fatal("Unable to connect to Redis:", err)
 	}
 
+	rl := controller.NewRedisLocator(redisClient)
 	var connectionLocator controller.ConnectionLocator
-	connectionLocator = &api.RedisConnectionLocator{redisClient}
+	connectionLocator = &api.RedisConnectionLocator{rl}
 	mgmtMux := mux.NewRouter()
 	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
 	mgmtServer.Routes()
