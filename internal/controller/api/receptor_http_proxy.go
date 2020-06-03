@@ -112,5 +112,30 @@ func (rhp *ReceptorHttpProxy) Close() {
 
 func (rhp *ReceptorHttpProxy) GetCapabilities() interface{} {
 	logger.Log.Printf("GetCapabilities")
-	return nil
+	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
+	jsonStr, err := json.Marshal(postPayload)
+	logger.Log.Printf("jsonStr: %s", jsonStr)
+
+	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/status", bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "appliation/json")
+	// FIXME:  this should be the PSK
+	req.Header.Set("x-rh-identity", "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil
+	}
+
+	defer resp.Body.Close()
+
+	statusResponse := connectionStatusResponse{}
+
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&statusResponse); err != nil {
+		logger.Log.Error("Unable to read response from receptor-gateway")
+		return nil
+	}
+
+	return statusResponse.Capabilities
 }
