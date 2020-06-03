@@ -67,7 +67,7 @@ func main() {
 		ConsumerOffset: cfg.KafkaConsumerOffset,
 	}
 
-	rm := c.NewRedisManager(cfg)
+	rm := c.NewRedisConnector(cfg)
 	localCM := c.NewLocalConnectionManager()
 	gatewayCM := c.NewGatewayConnectionRegistrar(rm, localCM)
 	rd := c.NewResponseReactorFactory()

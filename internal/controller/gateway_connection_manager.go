@@ -7,11 +7,11 @@ import (
 )
 
 type GatewayConnectionRegistrar struct {
-	rm                       RedisInterface
+	rm                       RedisConnector
 	localConnectionRegistrar ConnectionRegistrar
 }
 
-func NewGatewayConnectionRegistrar(rm RedisInterface, cm ConnectionRegistrar) ConnectionRegistrar {
+func NewGatewayConnectionRegistrar(rm RedisConnector, cm ConnectionRegistrar) ConnectionRegistrar {
 	return &GatewayConnectionRegistrar{
 		rm:                       rm,
 		localConnectionRegistrar: cm,
