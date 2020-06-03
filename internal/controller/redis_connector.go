@@ -55,7 +55,7 @@ func (m *manager) Register(account, nodeID string) error {
 		return err
 	}
 	if !res {
-		logger.Log.Printf("Connection (%s, %s) already found. Not registering.")
+		logger.Log.Warnf("Connection (%s, %s) already found. Not registering.", account, nodeID)
 		return nil
 	}
 

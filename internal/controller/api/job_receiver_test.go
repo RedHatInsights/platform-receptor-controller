@@ -58,7 +58,7 @@ var _ = Describe("JobReceiver", func() {
 
 	BeforeEach(func() {
 		apiMux := mux.NewRouter()
-		cm := controller.NewConnectionManager(&MockRedisManager{exists: false})
+		cm := controller.NewLocalConnectionManager()
 		mc := MockClient{}
 		cm.Register("1234", "345", mc)
 		cfg := config.GetConfig()

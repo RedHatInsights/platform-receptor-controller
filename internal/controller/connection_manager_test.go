@@ -34,24 +34,10 @@ func (mr *MockReceptor) GetCapabilities() interface{} {
 	return nil
 }
 
-type MockRedisManager struct {
-	exists bool
-}
-
-func (mrm *MockRedisManager) Exists(account, node_id string) bool {
-	return mrm.exists
-}
-
-func (mrm *MockRedisManager) Register(account, node_id string) error {
-	return nil
-}
-
-func (mrm *MockRedisManager) Unregister(account, node_id string) {
-}
-
 func TestCheckForConnectionThatDoesNotExist(t *testing.T) {
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
-	receptorConnection := cm.GetConnection("not gonna find me", "or me")
+	var cl ConnectionLocator
+	cl = NewLocalConnectionManager()
+	receptorConnection := cl.GetConnection("not gonna find me", "or me")
 	if receptorConnection != nil {
 		t.Fatalf("Expected to not find a connection, but a connection was found")
 	}
@@ -59,9 +45,9 @@ func TestCheckForConnectionThatDoesNotExist(t *testing.T) {
 
 func TestCheckForConnectionThatDoesNotExistButAccountExists(t *testing.T) {
 	registeredAccount := "123"
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
-	cm.Register(registeredAccount, "456", &MockReceptor{})
-	receptorConnection := cm.GetConnection(registeredAccount, "not gonna find me")
+	lcm := NewLocalConnectionManager()
+	lcm.Register(registeredAccount, "456", &MockReceptor{})
+	receptorConnection := lcm.GetConnection(registeredAccount, "not gonna find me")
 	if receptorConnection != nil {
 		t.Fatalf("Expected to not find a connection, but a connection was found")
 	}
@@ -69,7 +55,7 @@ func TestCheckForConnectionThatDoesNotExistButAccountExists(t *testing.T) {
 
 func TestCheckForConnectionThatDoesExist(t *testing.T) {
 	mockReceptor := &MockReceptor{}
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	cm.Register("123", "456", mockReceptor)
 	receptorConnection := cm.GetConnection("123", "456")
 	if receptorConnection == nil {
@@ -91,7 +77,7 @@ func TestRegisterAndUnregisterMultipleConnectionsPerAccount(t *testing.T) {
 		{accountNumber, "node-a", &MockReceptor{}},
 		{accountNumber, "node-b", &MockReceptor{}},
 	}
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	for _, r := range testReceptors {
 		cm.Register(r.account, r.node_id, r.receptor)
 
@@ -111,7 +97,7 @@ func TestRegisterAndUnregisterMultipleConnectionsPerAccount(t *testing.T) {
 }
 
 func TestUnregisterConnectionThatDoesNotExist(t *testing.T) {
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	cm.Unregister("not gonna find me", "or me")
 }
 
@@ -125,7 +111,7 @@ func TestGetConnectionsByAccount(t *testing.T) {
 		{accountNumber, "node-a", &MockReceptor{}},
 		{accountNumber, "node-b", &MockReceptor{}},
 	}
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	for _, r := range testReceptors {
 		cm.Register(r.account, r.node_id, r.receptor)
 	}
@@ -137,7 +123,7 @@ func TestGetConnectionsByAccount(t *testing.T) {
 }
 
 func TestGetConnectionsByAccountWithNoRegisteredReceptors(t *testing.T) {
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	receptorMap := cm.GetConnectionsByAccount("0000001")
 	if len(receptorMap) != 0 {
 		t.Fatalf("Expected to find 0 connections, but found %d connections", len(receptorMap))
@@ -152,7 +138,7 @@ func TestGetAllConnections(t *testing.T) {
 		"0000002": {"node-a": &MockReceptor{}},
 		"0000003": {"node-a": &MockReceptor{}},
 	}
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	for account, receptorMap := range testReceptors {
 		for nodeID, receptor := range receptorMap {
 			cm.Register(account, nodeID, receptor)
@@ -168,7 +154,7 @@ func TestGetAllConnections(t *testing.T) {
 }
 
 func TestGetAllConnectionsWithNoRegisteredReceptors(t *testing.T) {
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 	receptorMap := cm.GetAllConnections()
 	if len(receptorMap) != 0 {
 		t.Fatalf("Expected to find 0 connections, but found %d connections", len(receptorMap))
@@ -186,7 +172,7 @@ func TestRegisterConnectionsWithDuplicateNodeIDs(t *testing.T) {
 		t.Fatalf("Expected the test receptor objects to be different")
 	}
 
-	cm := NewConnectionManager(&MockRedisManager{exists: false})
+	cm := NewLocalConnectionManager()
 
 	err := cm.Register(accountNumber, nodeID, expectedReceptorObj)
 	if err != nil {

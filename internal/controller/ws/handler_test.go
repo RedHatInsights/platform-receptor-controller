@@ -43,21 +43,6 @@ func writeSocket(c *websocket.Conn, message protocol.Message) error {
 	return err
 }
 
-type MockRedisManager struct {
-	exists bool
-}
-
-func (mrm *MockRedisManager) Exists(account, node_id string) bool {
-	return mrm.exists
-}
-
-func (mrm *MockRedisManager) Register(account, node_id string) error {
-	return nil
-}
-
-func (mrm *MockRedisManager) Unregister(account, node_id string) {
-}
-
 func leaks() error {
 	return goleak.Find(goleak.IgnoreTopFunction("github.com/onsi/ginkgo/internal/specrunner.(*SpecRunner).registerForInterrupts"))
 }
@@ -66,7 +51,7 @@ var _ = Describe("WsController", func() {
 	var (
 		identity string
 		wsMux    *mux.Router
-		cm       controller.ConnectionManager
+		cr       controller.ConnectionRegistrar
 		cfg      *config.Config
 		rc       *ReceptorController
 		kw       *kafka.Writer
@@ -77,7 +62,7 @@ var _ = Describe("WsController", func() {
 	BeforeEach(func() {
 		wsMux = mux.NewRouter()
 		cfg = config.GetConfig()
-		cm = controller.NewConnectionManager(&MockRedisManager{exists: false})
+		cr = controller.NewLocalConnectionManager()
 		kc := &queue.ConsumerConfig{
 			Brokers:        cfg.KafkaBrokers,
 			Topic:          cfg.KafkaJobsTopic,
@@ -91,7 +76,7 @@ var _ = Describe("WsController", func() {
 		})
 		rd := controller.NewResponseReactorFactory()
 		rs := controller.NewReceptorServiceFactory(kw, cfg)
-		rc = NewReceptorController(cfg, cm, wsMux, rd, md, rs)
+		rc = NewReceptorController(cfg, cr, wsMux, rd, md, rs)
 		rc.Routes()
 
 		d = wstest.NewDialer(rc.router)

@@ -56,14 +56,14 @@ func createConnectionStatusPostBody(account_number string, node_id string) io.Re
 var _ = Describe("Management", func() {
 
 	var (
-		cm                  controller.ConnectionManager
+		cm                  *controller.LocalConnectionManager
 		ms                  *ManagementServer
 		validIdentityHeader string
 	)
 
 	BeforeEach(func() {
 		apiMux := mux.NewRouter()
-		cm = controller.NewConnectionManager(&MockRedisManager{exists: false})
+		cm = controller.NewLocalConnectionManager()
 		mc := MockClient{}
 		cm.Register(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
 		cfg := config.GetConfig()
