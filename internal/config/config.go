@@ -30,10 +30,14 @@ const (
 	RESPONSES_BATCH_SIZE           = "Kafka_Responses_Batch_Size"
 	RESPONSES_BATCH_BYTES          = "Kafka_Responses_Batch_Bytes"
 	DEFAULT_BROKER_ADDRESS         = "kafka:29092"
-	REDIS_HOST                     = "Redis Host"
-	REDIS_PORT                     = "Redis Port"
-	REDIS_PASSWORD                 = "Redis Password"
-	REDIS_DB                       = "Redis DB"
+	REDIS_HOST                     = "Redis_Host"
+	REDIS_PORT                     = "Redis_Port"
+	REDIS_PASSWORD                 = "Redis_Password"
+	REDIS_DB                       = "Redis_DB"
+	JOB_RECEIVER_CLIENT_ID         = "Job_Receiver_ClientID"
+	JOB_RECEIVER_PSK               = "Job_Receiver_PSK"
+	RECEPTOR_PROXY_SCHEME          = "Receptor_Proxy_Scheme"
+	RECEPTOR_PROXY_PORT            = "Receptor_Proxy_Port"
 
 	NODE_ID = "ReceptorControllerNodeId"
 )
@@ -62,6 +66,10 @@ type Config struct {
 	RedisPort                   string
 	RedisPassword               string
 	RedisDB                     int
+	JobReceiverClientID         string
+	JobReceiverPSK              string
+	ReceptorProxyScheme         string
+	ReceptorProxyPort           string
 }
 
 func (c Config) String() string {
@@ -87,6 +95,9 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_HOST, c.RedisHost)
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_PORT, c.RedisPort)
 	fmt.Fprintf(&b, "%s: %d\n", REDIS_DB, c.RedisDB)
+	fmt.Fprintf(&b, "%s: %s\n", JOB_RECEIVER_CLIENT_ID, c.JobReceiverClientID)
+	fmt.Fprintf(&b, "%s: %s\n", RECEPTOR_PROXY_SCHEME, c.ReceptorProxyScheme)
+	fmt.Fprintf(&b, "%s: %s\n", RECEPTOR_PROXY_PORT, c.ReceptorProxyPort)
 	return b.String()
 }
 
@@ -115,6 +126,10 @@ func GetConfig() *Config {
 	options.SetDefault(REDIS_PORT, "6379")
 	options.SetDefault(REDIS_PASSWORD, "")
 	options.SetDefault(REDIS_DB, 0)
+	options.SetDefault(JOB_RECEIVER_CLIENT_ID, "job_receiver")
+	options.SetDefault(JOB_RECEIVER_PSK, "")
+	options.SetDefault(RECEPTOR_PROXY_SCHEME, "http")
+	options.SetDefault(RECEPTOR_PROXY_PORT, "9090")
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
 
@@ -146,6 +161,10 @@ func GetConfig() *Config {
 		RedisPort:                   options.GetString(REDIS_PORT),
 		RedisPassword:               options.GetString(REDIS_PASSWORD),
 		RedisDB:                     options.GetInt(REDIS_DB),
+		JobReceiverClientID:         options.GetString(JOB_RECEIVER_CLIENT_ID),
+		JobReceiverPSK:              options.GetString(JOB_RECEIVER_PSK),
+		ReceptorProxyScheme:         options.GetString(RECEPTOR_PROXY_SCHEME),
+		ReceptorProxyPort:           options.GetString(RECEPTOR_PROXY_PORT),
 	}
 }
 
