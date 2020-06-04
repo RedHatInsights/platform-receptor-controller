@@ -4,6 +4,7 @@ import (
 	"fmt"
 	//"os"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/go-redis/redis"
@@ -11,6 +12,7 @@ import (
 
 type RedisConnectionLocator struct {
 	Client *redis.Client
+	Cfg    *config.Config
 }
 
 func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string) controller.Receptor {
@@ -40,9 +42,15 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 		return nil
 	}
 
-	url := fmt.Sprintf("http://%s:9090", podName)
+	url := fmt.Sprintf("%s://%s:%s", rcl.Cfg.ReceptorProxyScheme, podName, rcl.Cfg.ReceptorProxyPort)
 
-	conn = &ReceptorHttpProxy{Url: url, AccountNumber: account, NodeID: node_id}
+	conn = &ReceptorHttpProxy{
+		Url:           url,
+		AccountNumber: account,
+		NodeID:        node_id,
+		ClientID:      rcl.Cfg.JobReceiverClientID,
+		PSK:           rcl.Cfg.JobReceiverPSK,
+	}
 
 	return conn
 }
