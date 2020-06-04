@@ -66,7 +66,7 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
 	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/ping", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
 	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
 	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
@@ -98,7 +98,7 @@ func (rhp *ReceptorHttpProxy) Close() {
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
 	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/disconnect", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
 	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
 	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
