@@ -7,10 +7,11 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/go-redis/redis"
 )
 
 type RedisConnectionLocator struct {
-	Locator controller.RedisLocator
+	Client *redis.Client
 }
 
 func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string) controller.Receptor {
@@ -28,7 +29,7 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 	var podName string
 	var err error
 
-	if podName, err = rcl.Locator.GetConnection(account, node_id); err != nil {
+	if podName, err = controller.GetRedisConnection(rcl.Client, account, node_id); err != nil {
 		// FIXME: log error, return an error
 		return nil
 	}
@@ -51,7 +52,7 @@ func (rcl *RedisConnectionLocator) GetConnectionsByAccount(account string) map[s
 
 	connectionsPerAccount := make(map[string]controller.Receptor)
 
-	accountConnections, err := rcl.Locator.Lookup(account)
+	accountConnections, err := controller.GetRedisConnectionsByAccount(rcl.Client, account)
 	if err != nil {
 		// FIXME: Update connectionlocator interface methods to return error
 		logger.Log.Warnf("Error during lookup for account: %s", account)
@@ -73,7 +74,7 @@ func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]con
 
 	connectionMap := make(map[string]map[string]controller.Receptor)
 
-	connections, err := rcl.Locator.Lookup("connections")
+	connections, err := controller.GetAllRedisConnections(rcl.Client)
 	if err != nil {
 		// FIXME: Update connectionlocator interface methods to return error
 		logger.Log.Warn("Error during lookup for all connections")

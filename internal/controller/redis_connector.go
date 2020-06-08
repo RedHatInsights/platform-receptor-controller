@@ -6,88 +6,71 @@ import (
 	"github.com/go-redis/redis"
 )
 
-type RedisManager interface {
-	Exists(account, nodeID string) bool
-	Register(account, nodeID string) error
-	Unregister(account, nodeID string)
+var hostname string = utils.GetHostname()
+
+func addIndexes(client *redis.Client, account, nodeID, hostname string) {
+	client.SAdd("connections", account+":"+nodeID+":"+hostname) // get all connections
+	client.SAdd(account, nodeID+":"+hostname)                   // get all account connections
+	client.SAdd(hostname, account+":"+nodeID)                   // get all pod connections
 }
 
-type RedisLocator interface {
-	Lookup(index string) ([]string, error)
-	GetConnection(account, node_id string) (string, error)
+func removeIndexes(client *redis.Client, account, nodeID, hostname string) {
+	client.SRem("connections", account+":"+nodeID+":"+hostname)
+	client.SRem(account, nodeID+":"+hostname)
+	client.SRem(hostname, account+":"+nodeID)
 }
 
-func NewRedisManager(client *redis.Client) RedisManager {
-	return &manager{
-		client:   client,
-		hostname: utils.GetHostname(),
-	}
+func ExistsInRedis(client *redis.Client, account, nodeID string) bool {
+	return client.Exists(account+":"+nodeID).Val() != 0
 }
 
-func NewRedisLocator(client *redis.Client) RedisLocator {
-	return &locator{client: client}
-}
+func RegisterWithRedis(client *redis.Client, account, nodeID string) error {
+	var res bool
+	var regErr error
 
-type manager struct {
-	client   *redis.Client
-	hostname string
-}
-
-type locator struct {
-	client *redis.Client
-}
-
-func (m *manager) updateIndexes(account, nodeID, hostname string) {
-	m.client.SAdd("connections", account+":"+nodeID+":"+m.hostname) // get all connections
-	m.client.SAdd(account, nodeID+":"+m.hostname)                   // get all account connections
-	m.client.SAdd(m.hostname, account+":"+nodeID)                   // get all pod connections
-}
-
-func (m *manager) Exists(account, nodeID string) bool {
-	return m.client.Exists(account+":"+nodeID).Val() != 0
-}
-
-func (m *manager) Register(account, nodeID string) error {
-	res, err := m.client.SetNX(account+":"+nodeID, m.hostname, 0).Result()
+	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
+		res, regErr = client.SetNX(account+":"+nodeID, hostname, 0).Result()
+		addIndexes(client, account, nodeID, hostname)
+		return regErr
+	})
 
 	if err != nil {
-		logger.Log.Warn("Error attempting to register connection")
+		logger.Log.Print("Error attempting to register connection to Redis")
 		return err
 	}
 	if !res {
-		logger.Log.Warnf("Connection (%s, %s) already found. Not registering.", account, nodeID)
-		return nil
+		logger.Log.Printf("Connection (%s, %s) already found. Not registering.", account, nodeID)
+		return DuplicateConnectionError{}
 	}
 
-	m.updateIndexes(account, nodeID, m.hostname)
-	logger.Log.Printf("Registered a connection (%s, %s)", account, nodeID)
+	logger.Log.Printf("Registered a connection (%s, %s) to Redis", account, nodeID)
 	return nil
 }
 
-func (m *manager) Unregister(account, nodeID string) {
-	if res := m.client.Del(account + ":" + nodeID).Val(); res != 1 {
-		logger.Log.Warn("Attempting to unregister a connection that does not exist")
-		return
+func UnregisterWithRedis(client *redis.Client, account, nodeID string) {
+	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
+		client.Del(account + ":" + nodeID)
+		removeIndexes(client, account, nodeID, hostname)
+		return nil
+	})
+
+	if err != nil {
+		logger.Log.Print("Error attempting to unregister connection from Redis")
 	}
-	logger.Log.Printf("Unregistered a connection (%s, %s)", account, nodeID)
 }
 
-func (l *locator) GetConnection(account, nodeID string) (string, error) {
-	return l.client.Get(account + ":" + nodeID).Result()
+func GetRedisConnection(client *redis.Client, account, nodeID string) (string, error) {
+	return client.Get(account + ":" + nodeID).Result()
 }
 
-func (l *locator) Lookup(index string) ([]string, error) {
-	return l.client.SMembers(index).Result()
+func GetRedisConnectionsByAccount(client *redis.Client, account string) ([]string, error) {
+	return client.SMembers(account).Result()
 }
 
-// func (rc *redisConnection) GetConnectionsByAccount(account string) []string {
-// 	return rc.client.SMembers(account).Val()
-// }
+func GetRedisConnectionsByHost(client *redis.Client, hostname string) ([]string, error) {
+	return client.SMembers(hostname).Result()
+}
 
-// func (rc *redisConnection) GetConnectionsByHost(hostname string) []string {
-// 	return rc.client.SMembers(hostname).Val()
-// }
-
-// func (rc *redisConnection) GetAllConnections() []string {
-// 	return rc.client.SMembers("connections").Val()
-// }
+func GetAllRedisConnections(client *redis.Client) ([]string, error) {
+	return client.SMembers("connections").Result()
+}

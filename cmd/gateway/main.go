@@ -75,9 +75,8 @@ func main() {
 		DB:       cfg.RedisDB,
 	})
 
-	rm := c.NewRedisManager(redisClient)
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(rm, localCM)
+	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM)
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)

@@ -52,9 +52,8 @@ func main() {
 		log.Fatal("Unable to connect to Redis:", err)
 	}
 
-	rl := controller.NewRedisLocator(redisClient)
 	var connectionLocator controller.ConnectionLocator
-	connectionLocator = &api.RedisConnectionLocator{rl}
+	connectionLocator = &api.RedisConnectionLocator{Client: redisClient}
 	mgmtMux := mux.NewRouter()
 	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
 	mgmtServer.Routes()
