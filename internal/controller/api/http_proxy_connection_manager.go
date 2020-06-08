@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	//"os"
-	"strings"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -59,12 +58,9 @@ func (rcl *RedisConnectionLocator) GetConnectionsByAccount(account string) map[s
 		return nil
 	}
 
-	for _, conn := range accountConnections {
-		s := strings.Split(conn, ":")
-		nodeID := s[0]
+	for nodeID, _ := range accountConnections {
 		proxy := rcl.GetConnection(account, nodeID)
-		// FIXME: Is this a good key?
-		connectionsPerAccount[account+":"+nodeID] = proxy
+		connectionsPerAccount[nodeID] = proxy
 	}
 
 	return connectionsPerAccount
@@ -81,9 +77,7 @@ func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]con
 		return nil
 	}
 
-	for _, conn := range connections {
-		s := strings.Split(conn, ":")
-		account, nodeID := s[0], s[1]
+	for account, nodeID := range connections {
 		proxy := rcl.GetConnection(account, nodeID)
 		if _, exists := connectionMap[account]; !exists {
 			connectionMap[account] = make(map[string]controller.Receptor)
