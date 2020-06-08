@@ -77,12 +77,14 @@ func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]con
 		return nil
 	}
 
-	for account, nodeID := range connections {
-		proxy := rcl.GetConnection(account, nodeID)
+	for account, conn := range connections {
 		if _, exists := connectionMap[account]; !exists {
 			connectionMap[account] = make(map[string]controller.Receptor)
 		}
-		connectionMap[account][nodeID] = proxy
+		for node, _ := range conn {
+			proxy := rcl.GetConnection(account, node)
+			connectionMap[account][node] = proxy
+		}
 	}
 
 	return connectionMap
