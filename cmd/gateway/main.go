@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-redis/redis"
+
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	c "github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
@@ -67,9 +69,14 @@ func main() {
 		ConsumerOffset: cfg.KafkaConsumerOffset,
 	}
 
-	rm := c.NewRedisManager(cfg)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(rm, localCM)
+	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM)
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
