@@ -16,6 +16,8 @@ type ReceptorHttpProxy struct {
 	Url           string
 	AccountNumber string
 	NodeID        string
+	ClientID      string
+	PSK           string
 }
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
@@ -26,9 +28,10 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
 	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/job", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
-	// FIXME:  this should be the PSK
-	req.Header.Set("x-rh-identity", "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
+	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
+	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -63,9 +66,10 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
 	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/ping", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
-	// FIXME:  this should be the PSK
-	req.Header.Set("x-rh-identity", "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
+	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
+	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -94,9 +98,10 @@ func (rhp *ReceptorHttpProxy) Close() {
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
 	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/disconnect", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
-	// FIXME:  this should be the PSK
-	req.Header.Set("x-rh-identity", "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
+	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
+	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

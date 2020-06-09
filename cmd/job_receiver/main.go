@@ -53,7 +53,7 @@ func main() {
 	}
 
 	var connectionLocator controller.ConnectionLocator
-	connectionLocator = &api.RedisConnectionLocator{Client: redisClient}
+	connectionLocator = &api.RedisConnectionLocator{Client: redisClient, Cfg: cfg}
 	mgmtMux := mux.NewRouter()
 	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
 	mgmtServer.Routes()
