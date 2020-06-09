@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	//"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -17,16 +16,6 @@ type RedisConnectionLocator struct {
 
 func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string) controller.Receptor {
 	var conn controller.Receptor
-
-	/*
-		var url string
-		url = os.Getenv("GATEWAY_URL")
-		if len(url) == 0 {
-			logger.Log.Printf("GATEWAY_URL env var is not set\n")
-		}
-		logger.Log.Printf("GATEWAY_URL: %s\n", url)
-	*/
-
 	var podName string
 	var err error
 
@@ -34,9 +23,6 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 		// FIXME: log error, return an error
 		return nil
 	}
-	fmt.Println("get by account/nodeid result:", podName)
-	fmt.Printf("get by account/nodeid result (type):%T\n", podName)
-	fmt.Println("get by account/nodeid err:", err)
 
 	if podName == "" {
 		return nil

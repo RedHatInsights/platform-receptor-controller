@@ -5,12 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 
 	"github.com/google/uuid"
 )
+
+// FIXME:
+//   - request_id
+//   - timeouts
+//   - improve error reporting
 
 type ReceptorHttpProxy struct {
 	Url           string
@@ -20,6 +27,28 @@ type ReceptorHttpProxy struct {
 	PSK           string
 }
 
+func makeHttpRequest(method, url, clientID, accountNumber, psk string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("clientID:", clientID)
+	fmt.Println("accountNumber:", accountNumber)
+	fmt.Println("psk:", psk)
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
+	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
+	req.Header.Set("x-rh-receptor-controller-psk", psk)
+
+	// FIXME: add request_id
+
+	client := &http.Client{}
+
+	return client.Do(req)
+}
+
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 	logger.Log.Printf("SendMessage")
 
@@ -27,15 +56,10 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	jsonStr, err := json.Marshal(postPayload)
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
-	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/job", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
-	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
-	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/job", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
 	if err != nil {
+		logger.Log.Println("ERROR: ", err)
+		// FIXME:
 		return nil, err
 	}
 
@@ -65,15 +89,10 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	jsonStr, err := json.Marshal(postPayload)
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
-	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/ping", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
-	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
-	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/connection/ping", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
 	if err != nil {
+		logger.Log.Println("ERROR: ", err)
+		// FIXME:
 		return nil, err
 	}
 
@@ -97,14 +116,12 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	jsonStr, err := json.Marshal(postPayload)
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
-	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/disconnect", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rh-receptor-controller-client-id", rhp.ClientID)
-	req.Header.Set("x-rh-receptor-controller-account", rhp.AccountNumber)
-	req.Header.Set("x-rh-receptor-controller-psk", rhp.PSK)
+	resp, err := makeHttpRequest(
+		http.MethodPost,
+		rhp.Url+"/connection/disconnect",
+		rhp.ClientID, rhp.AccountNumber, rhp.PSK,
+		bytes.NewBuffer(jsonStr))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
 	if err != nil {
 		logger.Log.Printf("ERROR:%s\n", err)
 		// FIXME:
@@ -122,14 +139,15 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	jsonStr, err := json.Marshal(postPayload)
 	logger.Log.Printf("jsonStr: %s", jsonStr)
 
-	req, err := http.NewRequest(http.MethodPost, rhp.Url+"/connection/status", bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "appliation/json")
-	// FIXME:  this should be the PSK
-	req.Header.Set("x-rh-identity", "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=")
+	resp, err := makeHttpRequest(
+		http.MethodPost,
+		rhp.Url+"/connection/status",
+		rhp.ClientID, rhp.AccountNumber, rhp.PSK,
+		bytes.NewBuffer(jsonStr))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
 	if err != nil {
+		logger.Log.Println("ERROR: ", err)
+		// FIXME: log and return an error
 		return nil, err
 	}
 
@@ -143,5 +161,6 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 		return nil, err
 	}
 
+	// FIXME: return an error
 	return statusResponse.Capabilities, nil
 }
