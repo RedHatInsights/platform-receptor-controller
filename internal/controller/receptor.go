@@ -281,28 +281,29 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 }
 
-func (r *ReceptorService) Close() {
+func (r *ReceptorService) Close(ctx context.Context) error {
 	r.Transport.Cancel()
+	return nil
 }
 
-func (r *ReceptorService) GetCapabilities() interface{} {
+func (r *ReceptorService) GetCapabilities(ctx context.Context) (interface{}, error) {
 	emptyCapabilities := struct{}{}
 
 	if r.Metadata == nil {
-		return emptyCapabilities
+		return emptyCapabilities, nil
 	}
 
 	metadata, ok := r.Metadata.(map[string]interface{})
 	if ok != true {
-		return emptyCapabilities
+		return emptyCapabilities, nil
 	}
 
 	capabilities, exist := metadata["capabilities"]
 	if exist != true {
-		return emptyCapabilities
+		return emptyCapabilities, nil
 	}
 
-	return capabilities
+	return capabilities, nil
 }
 
 type DispatcherTable struct {

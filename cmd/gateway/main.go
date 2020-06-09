@@ -32,7 +32,7 @@ func closeConnections(cm c.ConnectionManager, wg *sync.WaitGroup, timeout time.D
 	connections := cm.GetAllConnections()
 	for _, conn := range connections {
 		for _, client := range conn {
-			client.Close()
+			client.Close(context.TODO())
 		}
 	}
 	time.Sleep(timeout)
