@@ -139,7 +139,9 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			connectionStatus.Status = CONNECTED_STATUS
 			capabilities, err := client.GetCapabilities(req.Context())
 			if err != nil {
-				logger.Infof("Unable to retrieve the capabilities of node %s", connID.NodeID)
+				logger.WithFields(
+					logrus.Fields{"error": err},
+				).Errorf("Unable to retrieve the capabilities of node %s", connID.NodeID)
 			}
 			connectionStatus.Capabilities = capabilities
 		} else {
