@@ -139,7 +139,7 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	if err != nil {
 		failedToMarshalJsonPayload(err)
 		// FIXME:  SPECIFIC error message
-		return
+		return err
 	}
 
 	resp, err := makeHttpRequest(
@@ -170,7 +170,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	if err != nil {
 		failedToMarshalJsonPayload(err)
 		// FIXME:  SPECIFIC error message
-		return nil
+		return nil, err
 	}
 
 	resp, err := makeHttpRequest(
