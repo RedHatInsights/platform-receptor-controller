@@ -90,7 +90,7 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	return pingResponse.Payload, nil
 }
 
-func (rhp *ReceptorHttpProxy) Close() {
+func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	logger.Log.Printf("Close")
 
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
@@ -108,14 +108,15 @@ func (rhp *ReceptorHttpProxy) Close() {
 	if err != nil {
 		logger.Log.Printf("ERROR:%s\n", err)
 		// FIXME:
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	return
+	return nil
 }
 
-func (rhp *ReceptorHttpProxy) GetCapabilities() interface{} {
+func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{}, error) {
 	logger.Log.Printf("GetCapabilities")
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
@@ -129,7 +130,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities() interface{} {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	defer resp.Body.Close()
@@ -139,8 +140,8 @@ func (rhp *ReceptorHttpProxy) GetCapabilities() interface{} {
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&statusResponse); err != nil {
 		logger.Log.Error("Unable to read response from receptor-gateway")
-		return nil
+		return nil, err
 	}
 
-	return statusResponse.Capabilities
+	return statusResponse.Capabilities, nil
 }
