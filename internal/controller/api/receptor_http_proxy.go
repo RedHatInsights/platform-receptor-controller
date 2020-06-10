@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 
@@ -26,7 +28,11 @@ type ReceptorHttpProxy struct {
 	Config        *config.Config
 }
 
-func makeHttpRequest(method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
+func makeHttpRequest(ctx context.Context, method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -35,6 +41,10 @@ func makeHttpRequest(method, url, accountNumber string, config *config.Config, b
 	clientID := config.JobReceiverClientID
 	psk := config.JobReceiverPSK
 
+	if clientID == "" || psk == "" {
+		fmt.Println("[WARN] clientID / psk is nil")
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
 	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
@@ -42,9 +52,7 @@ func makeHttpRequest(method, url, accountNumber string, config *config.Config, b
 
 	// FIXME: add request_id
 
-	client := &http.Client{}
-
-	return client.Do(req)
+	return http.DefaultClient.Do(req.WithContext(ctx))
 }
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
@@ -59,6 +67,7 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	}
 
 	resp, err := makeHttpRequest(
+		ctx,
 		http.MethodPost,
 		rhp.Url+"/job",
 		rhp.AccountNumber,
@@ -105,6 +114,7 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	}
 
 	resp, err := makeHttpRequest(
+		ctx,
 		http.MethodPost,
 		rhp.Url+"/connection/ping",
 		rhp.AccountNumber,
@@ -145,6 +155,7 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	}
 
 	resp, err := makeHttpRequest(
+		ctx,
 		http.MethodPost,
 		rhp.Url+"/connection/disconnect",
 		rhp.AccountNumber,
@@ -175,6 +186,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	}
 
 	resp, err := makeHttpRequest(
+		ctx,
 		http.MethodPost,
 		rhp.Url+"/connection/status",
 		rhp.AccountNumber,
