@@ -13,8 +13,8 @@ import (
 type Receptor interface {
 	SendMessage(context.Context, string, string, []string, interface{}, string) (*uuid.UUID, error)
 	Ping(context.Context, string, string, []string) (interface{}, error)
-	Close()
-	GetCapabilities() interface{}
+	Close(context.Context) error
+	GetCapabilities(context.Context) (interface{}, error)
 }
 
 type DuplicateConnectionError struct {

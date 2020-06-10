@@ -38,11 +38,12 @@ func (mc MockClient) Ping(context.Context, string, string, []string) (interface{
 	return nil, nil
 }
 
-func (mc MockClient) Close() {
+func (mc MockClient) Close(context.Context) error {
+	return nil
 }
 
-func (mc MockClient) GetCapabilities() interface{} {
-	return struct{}{}
+func (mc MockClient) GetCapabilities(context.Context) (interface{}, error) {
+	return struct{}{}, nil
 }
 
 func init() {

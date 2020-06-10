@@ -101,7 +101,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 		logger.Infof("Attempting to disconnect account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
-		client.Close()
+		client.Close(req.Context())
 
 		writeJSONResponse(w, http.StatusOK, struct{}{})
 	}
@@ -137,7 +137,13 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client != nil {
 			connectionStatus.Status = CONNECTED_STATUS
-			connectionStatus.Capabilities = client.GetCapabilities()
+			capabilities, err := client.GetCapabilities(req.Context())
+			if err != nil {
+				logger.WithFields(
+					logrus.Fields{"error": err},
+				).Errorf("Unable to retrieve the capabilities of node %s", connID.NodeID)
+			}
+			connectionStatus.Capabilities = capabilities
 		} else {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}

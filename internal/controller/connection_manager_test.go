@@ -27,11 +27,12 @@ func (mr *MockReceptor) Ping(context.Context, string, string, []string) (interfa
 	return nil, nil
 }
 
-func (mr *MockReceptor) Close() {
+func (mr *MockReceptor) Close(context.Context) error {
+	return nil
 }
 
-func (mr *MockReceptor) GetCapabilities() interface{} {
-	return nil
+func (mr *MockReceptor) GetCapabilities(context.Context) (interface{}, error) {
+	return nil, nil
 }
 
 func TestCheckForConnectionThatDoesNotExist(t *testing.T) {
