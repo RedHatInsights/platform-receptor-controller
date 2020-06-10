@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
+
 	"github.com/google/uuid"
 )
 
@@ -21,15 +23,17 @@ type ReceptorHttpProxy struct {
 	Url           string
 	AccountNumber string
 	NodeID        string
-	ClientID      string
-	PSK           string
+	Config        *config.Config
 }
 
-func makeHttpRequest(method, url, clientID, accountNumber, psk string, body io.Reader) (*http.Response, error) {
+func makeHttpRequest(method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
+
+	clientID := config.JobReceiverClientID
+	psk := config.JobReceiverPSK
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
@@ -57,9 +61,8 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/job",
-		rhp.ClientID,
 		rhp.AccountNumber,
-		rhp.PSK,
+		rhp.Config,
 		bytes.NewBuffer(jsonStr),
 	)
 
@@ -104,9 +107,8 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/connection/ping",
-		rhp.ClientID,
 		rhp.AccountNumber,
-		rhp.PSK,
+		rhp.Config,
 		bytes.NewBuffer(jsonStr),
 	)
 
@@ -145,9 +147,8 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/connection/disconnect",
-		rhp.ClientID,
 		rhp.AccountNumber,
-		rhp.PSK,
+		rhp.Config,
 		bytes.NewBuffer(jsonStr),
 	)
 
@@ -176,9 +177,8 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/connection/status",
-		rhp.ClientID,
 		rhp.AccountNumber,
-		rhp.PSK,
+		rhp.Config,
 		bytes.NewBuffer(jsonStr),
 	)
 

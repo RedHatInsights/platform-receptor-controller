@@ -34,8 +34,7 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 		Url:           url,
 		AccountNumber: account,
 		NodeID:        node_id,
-		ClientID:      rcl.Cfg.JobReceiverClientID,
-		PSK:           rcl.Cfg.JobReceiverPSK,
+		Config:        rcl.Cfg,
 	}
 
 	return conn
