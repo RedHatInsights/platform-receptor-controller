@@ -96,12 +96,12 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			jobRequest.Directive)
 
 		if err != nil {
-			// FIXME:  Handle this better!?!?
 			logger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
 			errorResponse := errorResponse{Title: "Error passing message to receptor",
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusInternalServerError,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
+			return
 		}
 
 		logger.WithFields(logrus.Fields{"message_id": jobID}).Info("Message sent")
