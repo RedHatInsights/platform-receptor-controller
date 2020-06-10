@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -32,10 +31,6 @@ func makeHttpRequest(method, url, clientID, accountNumber, psk string, body io.R
 		return nil, err
 	}
 
-	fmt.Println("clientID:", clientID)
-	fmt.Println("accountNumber:", accountNumber)
-	fmt.Println("psk:", psk)
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
 	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
@@ -59,7 +54,15 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 		return nil, err
 	}
 
-	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/job", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
+	resp, err := makeHttpRequest(
+		http.MethodPost,
+		rhp.Url+"/job",
+		rhp.ClientID,
+		rhp.AccountNumber,
+		rhp.PSK,
+		bytes.NewBuffer(jsonStr),
+	)
+
 	if err != nil {
 		failedToCreateHttpRequest(err)
 		// FIXME:  SPECIFIC error message
@@ -98,7 +101,15 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 		return nil, err
 	}
 
-	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/connection/ping", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
+	resp, err := makeHttpRequest(
+		http.MethodPost,
+		rhp.Url+"/connection/ping",
+		rhp.ClientID,
+		rhp.AccountNumber,
+		rhp.PSK,
+		bytes.NewBuffer(jsonStr),
+	)
+
 	if err != nil {
 		failedToCreateHttpRequest(err)
 		// FIXME:
@@ -165,8 +176,11 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/connection/status",
-		rhp.ClientID, rhp.AccountNumber, rhp.PSK,
-		bytes.NewBuffer(jsonStr))
+		rhp.ClientID,
+		rhp.AccountNumber,
+		rhp.PSK,
+		bytes.NewBuffer(jsonStr),
+	)
 
 	if err != nil {
 		failedToCreateHttpRequest(err)
