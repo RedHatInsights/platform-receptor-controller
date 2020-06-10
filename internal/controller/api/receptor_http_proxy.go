@@ -9,8 +9,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-
 	"github.com/google/uuid"
 )
 
@@ -18,6 +16,7 @@ import (
 //   - request_id
 //   - timeouts
 //   - improve error reporting
+//   - verify account number and recipient
 
 type ReceptorHttpProxy struct {
 	Url           string
@@ -50,16 +49,20 @@ func makeHttpRequest(method, url, clientID, accountNumber, psk string, body io.R
 }
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
-	logger.Log.Printf("SendMessage")
+	sendingMessage(accountNumber, recipient)
 
 	postPayload := jobRequest{accountNumber, recipient, payload, directive}
 	jsonStr, err := json.Marshal(postPayload)
-	logger.Log.Printf("jsonStr: %s", jsonStr)
+	if err != nil {
+		failedToMarshalJsonPayload(err)
+		// FIXME:  SPECIFIC error message
+		return nil, err
+	}
 
 	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/job", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		logger.Log.Println("ERROR: ", err)
-		// FIXME:
+		failedToCreateHttpRequest(err)
+		// FIXME:  SPECIFIC error message
 		return nil, err
 	}
 
@@ -69,29 +72,35 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&jobResponse); err != nil {
-		logger.Log.Error("Unable to read response from receptor-gateway")
-		return nil, errors.New("Unable to read response from receptor-gateway")
+		failedToParseHttpResponse(err)
+		// FIXME:  SPECIFIC error message
+		return nil, err // errors.New(errMsg)
 	}
 
 	messageID, err := uuid.Parse(jobResponse.JobID)
 	if err != nil {
-		logger.Log.Error("Unable to read message id from receptor-gateway")
-		return nil, errors.New("Unable to read response from receptor-gateway")
+		failedToParseMessageID(err)
+		// FIXME:  SPECIFIC error message
+		return nil, err // errors.New(errMsg)
 	}
 
 	return &messageID, nil
 }
 
 func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, recipient string, route []string) (interface{}, error) {
-	logger.Log.Printf("Ping")
+	pingingNode(accountNumber, recipient)
 
 	postPayload := connectionID{accountNumber, recipient}
 	jsonStr, err := json.Marshal(postPayload)
-	logger.Log.Printf("jsonStr: %s", jsonStr)
+	if err != nil {
+		failedToMarshalJsonPayload(err)
+		// FIXME:  SPECIFIC error message
+		return nil, err
+	}
 
 	resp, err := makeHttpRequest(http.MethodPost, rhp.Url+"/connection/ping", rhp.ClientID, rhp.AccountNumber, rhp.PSK, bytes.NewBuffer(jsonStr))
 	if err != nil {
-		logger.Log.Println("ERROR: ", err)
+		failedToCreateHttpRequest(err)
 		// FIXME:
 		return nil, err
 	}
@@ -102,7 +111,7 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&pingResponse); err != nil {
-		logger.Log.Error("Unable to read response from receptor-gateway")
+		failedToParseHttpResponse(err)
 		return nil, errors.New("Unable to read response from receptor-gateway")
 	}
 
@@ -110,21 +119,30 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 }
 
 func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
-	logger.Log.Printf("Close")
+
+	closingConnection(rhp.AccountNumber, rhp.NodeID)
 
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
-	logger.Log.Printf("jsonStr: %s", jsonStr)
+
+	if err != nil {
+		failedToMarshalJsonPayload(err)
+		// FIXME:  SPECIFIC error message
+		return
+	}
 
 	resp, err := makeHttpRequest(
 		http.MethodPost,
 		rhp.Url+"/connection/disconnect",
-		rhp.ClientID, rhp.AccountNumber, rhp.PSK,
-		bytes.NewBuffer(jsonStr))
+		rhp.ClientID,
+		rhp.AccountNumber,
+		rhp.PSK,
+		bytes.NewBuffer(jsonStr),
+	)
 
 	if err != nil {
-		logger.Log.Printf("ERROR:%s\n", err)
-		// FIXME:
+		failedToCreateHttpRequest(err)
+		// FIXME:  SPECIFIC error message
 		return err
 	}
 
@@ -134,10 +152,15 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 }
 
 func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{}, error) {
-	logger.Log.Printf("GetCapabilities")
+	gettingCapabilities(rhp.AccountNumber, rhp.NodeID)
+
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
-	logger.Log.Printf("jsonStr: %s", jsonStr)
+	if err != nil {
+		failedToMarshalJsonPayload(err)
+		// FIXME:  SPECIFIC error message
+		return nil
+	}
 
 	resp, err := makeHttpRequest(
 		http.MethodPost,
@@ -146,8 +169,8 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 		bytes.NewBuffer(jsonStr))
 
 	if err != nil {
-		logger.Log.Println("ERROR: ", err)
-		// FIXME: log and return an error
+		failedToCreateHttpRequest(err)
+		// FIXME:  SPECIFIC error message
 		return nil, err
 	}
 
@@ -157,7 +180,8 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&statusResponse); err != nil {
-		logger.Log.Error("Unable to read response from receptor-gateway")
+		failedToParseHttpResponse(err)
+		// FIXME:  SPECIFIC error message
 		return nil, err
 	}
 
