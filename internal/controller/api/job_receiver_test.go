@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -27,15 +28,22 @@ const (
 )
 
 type MockClient struct {
+	returnAnError bool
 }
 
 func (mc MockClient) SendMessage(ctx context.Context, account string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
+	if mc.returnAnError {
+		return nil, errors.New("ImaError")
+	}
 	myUUID, _ := uuid.NewRandom()
 	return &myUUID, nil
 }
 
 func (mc MockClient) Ping(context.Context, string, string, []string) (interface{}, error) {
-	return nil, nil
+	if mc.returnAnError {
+		return nil, errors.New("ImaErrorToo")
+	}
+	return struct{}{}, nil
 }
 
 func (mc MockClient) Close() {
@@ -61,6 +69,8 @@ var _ = Describe("JobReceiver", func() {
 		cm := controller.NewConnectionManager()
 		mc := MockClient{}
 		cm.Register("1234", "345", mc)
+		errorMC := MockClient{returnAnError: true}
+		cm.Register("1234", "error-client", errorMC)
 		cfg := config.GetConfig()
 		jr = NewJobReceiver(cm, apiMux, nil, cfg)
 		jr.Routes()
@@ -89,6 +99,28 @@ var _ = Describe("JobReceiver", func() {
 				var m map[string]string
 				json.Unmarshal(rr.Body.Bytes(), &m)
 				Expect(m).Should(HaveKey("id"))
+			})
+
+			It("Should be able to send a job to a connected customer but get an error", func() {
+
+				postBody := "{\"account\": \"1234\", \"recipient\": \"error-client\", \"payload\": [\"678\"], \"directive\": \"fred:flintstone\"}"
+
+				req, err := http.NewRequest("POST", "/job", strings.NewReader(postBody))
+				Expect(err).NotTo(HaveOccurred())
+
+				req.Header.Add(IDENTITY_HEADER_NAME, validIdentityHeader)
+
+				rr := httptest.NewRecorder()
+
+				jr.router.ServeHTTP(rr, req)
+
+				Expect(rr.Code).To(Equal(http.StatusInternalServerError))
+
+				var m map[string]string
+				json.Unmarshal(rr.Body.Bytes(), &m)
+				Expect(m).Should(HaveKey("status"))
+				Expect(m).Should(HaveKey("title"))
+				Expect(m).Should(HaveKey("detail"))
 			})
 
 			It("Should not allow sending a job to a disconnected customer", func() {
