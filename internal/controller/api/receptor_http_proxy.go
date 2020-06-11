@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 
@@ -22,37 +21,10 @@ import (
 //   - verify account number and recipient
 
 type ReceptorHttpProxy struct {
-	Url           string
+	Hostname      string
 	AccountNumber string
 	NodeID        string
 	Config        *config.Config
-}
-
-func makeHttpRequest(ctx context.Context, method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
-
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	clientID := config.JobReceiverClientID
-	psk := config.JobReceiverPSK
-
-	if clientID == "" || psk == "" {
-		fmt.Println("[WARN] clientID / psk is nil")
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
-	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
-	req.Header.Set("x-rh-receptor-controller-psk", psk)
-
-	// FIXME: add request_id
-
-	return http.DefaultClient.Do(req.WithContext(ctx))
 }
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
@@ -69,7 +41,7 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	resp, err := makeHttpRequest(
 		ctx,
 		http.MethodPost,
-		rhp.Url+"/job",
+		rhp.generateUrl("job"),
 		rhp.AccountNumber,
 		rhp.Config,
 		bytes.NewBuffer(jsonStr),
@@ -116,7 +88,7 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	resp, err := makeHttpRequest(
 		ctx,
 		http.MethodPost,
-		rhp.Url+"/connection/ping",
+		rhp.generateUrl("connection/ping"),
 		rhp.AccountNumber,
 		rhp.Config,
 		bytes.NewBuffer(jsonStr),
@@ -157,7 +129,7 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	resp, err := makeHttpRequest(
 		ctx,
 		http.MethodPost,
-		rhp.Url+"/connection/disconnect",
+		rhp.generateUrl("connection/disconnect"),
 		rhp.AccountNumber,
 		rhp.Config,
 		bytes.NewBuffer(jsonStr),
@@ -188,7 +160,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	resp, err := makeHttpRequest(
 		ctx,
 		http.MethodPost,
-		rhp.Url+"/connection/status",
+		rhp.generateUrl("connection/status"),
 		rhp.AccountNumber,
 		rhp.Config,
 		bytes.NewBuffer(jsonStr),
@@ -213,4 +185,39 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 
 	// FIXME: return an error
 	return statusResponse.Capabilities, nil
+}
+
+func (rhp *ReceptorHttpProxy) generateUrl(path string) string {
+	return fmt.Sprintf("%s://%s:%d/%s",
+		rhp.Config.JobReceiverReceptorProxyScheme,
+		rhp.Hostname,
+		rhp.Config.JobReceiverReceptorProxyPort,
+		path)
+}
+
+func makeHttpRequest(ctx context.Context, method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, config.JobReceiverReceptorProxyTimeout)
+	defer cancel()
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	clientID := config.JobReceiverReceptorProxyClientID
+	psk := config.JobReceiverReceptorProxyPSK
+
+	if clientID == "" || psk == "" {
+		fmt.Println("[WARN] clientID / psk is nil")
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
+	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
+	req.Header.Set("x-rh-receptor-controller-psk", psk)
+
+	// FIXME: add request_id
+
+	return http.DefaultClient.Do(req.WithContext(ctx))
 }

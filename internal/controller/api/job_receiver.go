@@ -102,6 +102,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 				Status: http.StatusUnprocessableEntity,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
+			return
 		}
 
 		logger.WithFields(logrus.Fields{"message_id": jobID}).Info("Message sent")

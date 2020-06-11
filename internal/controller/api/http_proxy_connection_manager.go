@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -28,10 +26,8 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 		return nil
 	}
 
-	url := fmt.Sprintf("%s://%s:%s", rcl.Cfg.ReceptorProxyScheme, podName, rcl.Cfg.ReceptorProxyPort)
-
 	conn = &ReceptorHttpProxy{
-		Url:           url,
+		Hostname:      podName,
 		AccountNumber: account,
 		NodeID:        node_id,
 		Config:        rcl.Cfg,
