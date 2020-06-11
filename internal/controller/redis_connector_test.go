@@ -156,3 +156,99 @@ func TestUpdatedIndexesOnUnregister(t *testing.T) {
 	assert.Equal(t, c.SMembers("connections").Val(), []string{})
 	assert.Equal(t, c.SMembers(testHost).Val(), []string{})
 }
+
+func TestGetRedisConnection(t *testing.T) {
+	s, _ := miniredis.Run()
+	defer s.Close()
+
+	c := newTestRedisClient(s.Addr())
+
+	c.Set("01:node-a", "localhost", 0)
+
+	tests := []struct {
+		account string
+		nodeID  string
+		want    string
+		err     error
+	}{
+		{account: "01", nodeID: "node-a", want: "localhost", err: nil},
+		{account: "01", nodeID: "bad-node", want: "", err: redis.Nil},
+	}
+
+	for _, tc := range tests {
+		conn, err := GetRedisConnection(c, tc.account, tc.nodeID)
+		assert.Equal(t, conn, tc.want)
+		assert.Equal(t, err, tc.err)
+	}
+}
+
+func TestGetRedisConnectionsByAccount(t *testing.T) {
+	s, _ := miniredis.Run()
+	defer s.Close()
+
+	c := newTestRedisClient(s.Addr())
+
+	c.SAdd("01", "node-a:localhost", "node-b:localhost")
+	c.SAdd("02", "node-c:localhost")
+
+	tests := []struct {
+		account string
+		want    map[string]string
+		err     error
+	}{
+		{account: "01", want: map[string]string{"node-a": "localhost", "node-b": "localhost"}, err: nil},
+		{account: "02", want: map[string]string{"node-c": "localhost"}, err: nil},
+		{account: "not-found", want: map[string]string{}, err: nil},
+	}
+
+	for _, tc := range tests {
+		res, err := GetRedisConnectionsByAccount(c, tc.account)
+		assert.Equal(t, res, tc.want)
+		assert.Equal(t, err, tc.err)
+	}
+}
+
+func TestGetRedisConnectionsByHost(t *testing.T) {
+	s, _ := miniredis.Run()
+	defer s.Close()
+
+	c := newTestRedisClient(s.Addr())
+
+	c.SAdd("localhost", "01:node-a", "02:node-b", "01:node-b")
+	c.SAdd("gateway-pod-9", "03:node-c")
+
+	tests := []struct {
+		hostname string
+		want     map[string][]string
+		err      error
+	}{
+		{hostname: "localhost", want: map[string][]string{"01": {"node-a", "node-b"}, "02": {"node-b"}}, err: nil},
+		{hostname: "gateway-pod-9", want: map[string][]string{"03": {"node-c"}}, err: nil},
+		{hostname: "not-found", want: map[string][]string{}, err: nil},
+	}
+
+	for _, tc := range tests {
+		res, err := GetRedisConnectionsByHost(c, tc.hostname)
+		assert.Equal(t, res, tc.want)
+		assert.Equal(t, err, tc.err)
+	}
+}
+
+func TestGetAllRedisConnections(t *testing.T) {
+	s, _ := miniredis.Run()
+	defer s.Close()
+
+	c := newTestRedisClient(s.Addr())
+
+	c.SAdd("connections", "01:node-a:localhost", "02:node-b:localhost", "01:node-b:localhost")
+
+	res, err := GetAllRedisConnections(c)
+	if err != nil {
+		t.Fatalf("error getting all connections: %v", err)
+	}
+
+	assert.Equal(t, map[string]map[string]string{
+		"01": {"node-a": "localhost", "node-b": "localhost"},
+		"02": {"node-b": "localhost"},
+	}, res)
+}

@@ -97,15 +97,19 @@ func GetRedisConnectionsByAccount(client *redis.Client, account string) (map[str
 	return connectionsMap, err
 }
 
-func GetRedisConnectionsByHost(client *redis.Client, hostname string) (map[string]string, error) {
-	connectionsMap := make(map[string]string)
+func GetRedisConnectionsByHost(client *redis.Client, hostname string) (map[string][]string, error) {
+	connectionsMap := make(map[string][]string)
 	podConnections, err := client.SMembers(hostname).Result()
 	if err != nil {
 		return connectionsMap, err
 	}
 	for _, conn := range podConnections {
 		s := strings.Split(conn, ":")
-		connectionsMap[s[0]] = s[1]
+		account, nodeID := s[0], s[1]
+		if _, exists := connectionsMap[account]; !exists {
+			connectionsMap[account] = []string{}
+		}
+		connectionsMap[account] = append(connectionsMap[account], nodeID)
 	}
 	return connectionsMap, err
 }
