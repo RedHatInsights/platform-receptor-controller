@@ -20,6 +20,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func initRedis(cfg *config.Config) (*redis.Client, error) {
@@ -56,9 +57,13 @@ func main() {
 
 	var connectionLocator controller.ConnectionLocator
 	connectionLocator = &api.RedisConnectionLocator{Client: redisClient, Cfg: cfg}
-	mgmtMux := mux.NewRouter()
-	mgmtMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
-	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
+
+	apiMux := mux.NewRouter()
+	apiMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
+
+	apiMux.Handle("/metrics", promhttp.Handler())
+
+	mgmtServer := api.NewManagementServer(connectionLocator, apiMux, cfg)
 	mgmtServer.Routes()
 
 	kw := queue.StartProducer(&queue.ProducerConfig{
@@ -66,12 +71,12 @@ func main() {
 		Topic:   cfg.KafkaResponsesTopic,
 	})
 
-	jr := api.NewJobReceiver(connectionLocator, mgmtMux, kw, cfg)
+	jr := api.NewJobReceiver(connectionLocator, apiMux, kw, cfg)
 	jr.Routes()
 
 	go func() {
 		log.Println("Starting management web server on", *mgmtAddr)
-		if err := http.ListenAndServe(*mgmtAddr, mgmtMux); err != nil {
+		if err := http.ListenAndServe(*mgmtAddr, apiMux); err != nil {
 			log.Fatal("ListenAndServe:", err)
 		}
 	}()

@@ -124,9 +124,8 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
-
 	if err != nil {
-		probe.failedToMarshalJsonPayload(err)
+		probe.failedToSendCloseConnectionMessage("Unable to close connection.  Failed to marshal JSON payload.", err)
 		return errUnableToSendMessage
 	}
 
@@ -140,7 +139,7 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	)
 
 	if err != nil {
-		probe.failedToCreateHttpRequest(err)
+		probe.failedToSendCloseConnectionMessage("Unable to close connection.  Failed to create HTTP Request.", err)
 		return errUnableToSendMessage
 	}
 
@@ -157,7 +156,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
 	if err != nil {
-		probe.failedToMarshalJsonPayload(err)
+		probe.failedToRetrieveCapabilities("Unable to retrieve capabilities.  Failed to marshal JSON payload.", err)
 		return nil, errUnableToSendMessage
 	}
 
@@ -171,7 +170,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	)
 
 	if err != nil {
-		probe.failedToCreateHttpRequest(err)
+		probe.failedToRetrieveCapabilities("Unable to retrieve capabilities.  Failed to create HTTP Request.", err)
 		return nil, errUnableToSendMessage
 	}
 
@@ -181,7 +180,7 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&statusResponse); err != nil {
-		probe.failedToParseHttpResponse(err)
+		probe.failedToRetrieveCapabilities("Unable to read response from receptor-gateway", err)
 		return nil, errUnableToProcessResponse
 	}
 
@@ -220,6 +219,7 @@ func addPreSharedKeyHeaders(headers http.Header, config *config.Config, accountN
 	psk := config.JobReceiverReceptorProxyPSK
 
 	if clientID == "" || psk == "" {
+		// FIXME:
 		fmt.Println("[WARN] clientID / psk is nil")
 	}
 

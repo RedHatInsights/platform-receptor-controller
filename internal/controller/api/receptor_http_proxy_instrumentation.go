@@ -13,13 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ReceptorHttpProxyProbe struct {
-	logger *logrus.Entry
+var (
+	metrics = newMetrics()
+)
 
-	metrics *metrics
+type receptorHttpProxyProbe struct {
+	logger *logrus.Entry
 }
 
-func createProbe(ctx context.Context) *ReceptorHttpProxyProbe {
+func createProbe(ctx context.Context) *receptorHttpProxyProbe {
 
 	principal, _ := middlewares.GetPrincipal(ctx)
 	requestId := request_id.GetReqID(ctx)
@@ -27,74 +29,84 @@ func createProbe(ctx context.Context) *ReceptorHttpProxyProbe {
 	logger := logger.Log.WithFields(logrus.Fields{"account": principal.GetAccount(),
 		"request_id": requestId})
 
-	return &ReceptorHttpProxyProbe{logger: logger, metrics: newMetrics()}
+	return &receptorHttpProxyProbe{logger: logger}
 }
 
-func (rhpp *ReceptorHttpProxyProbe) sendingMessage(accountNumber, recipient string) {
+func (rhpp *receptorHttpProxyProbe) sendingMessage(accountNumber, recipient string) {
 	rhpp.logger.Infof("Sending message to receptor-gateway - %s:%s\n", accountNumber, recipient)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) messageSent(messageID uuid.UUID) {
-	rhpp.metrics.receptorProxyMessageSentCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) messageSent(messageID uuid.UUID) {
+	metrics.receptorProxyMessageSentCounter.Inc()
 	rhpp.logger.WithFields(logrus.Fields{"message_id": messageID}).Info("Message sent to receptor-gateway")
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToSendMessage(errorMsg string, err error) {
-	rhpp.metrics.receptorProxyMessageSendFailureCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) failedToSendMessage(errorMsg string, err error) {
+	metrics.receptorProxyMessageSendFailureCounter.Inc()
 	logError(rhpp.logger, err, errorMsg)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) sendingPing(accountNumber, recipient string) {
+func (rhpp *receptorHttpProxyProbe) sendingPing(accountNumber, recipient string) {
 	rhpp.logger.Infof("Sending ping message to receptor-gateway - %s:%s\n", accountNumber, recipient)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) pingMessageSent() {
-	rhpp.metrics.receptorProxyPingMessageSentCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) pingMessageSent() {
+	metrics.receptorProxyPingMessageSentCounter.Inc()
 	rhpp.logger.Info("Ping message sent to receptor-gateway")
 }
 
-func (rhpp *ReceptorHttpProxyProbe) closingConnection(accountNumber, recipient string) {
+func (rhpp *receptorHttpProxyProbe) closingConnection(accountNumber, recipient string) {
 	rhpp.logger.Info("Sending close message to receptor-gateway")
 }
 
-func (rhpp *ReceptorHttpProxyProbe) gettingCapabilities(accountNumber, recipient string) {
+func (rhpp *receptorHttpProxyProbe) gettingCapabilities(accountNumber, recipient string) {
 	rhpp.logger.Info("Getting node capabilities from receptor-gateway")
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToProcessMessageResponse(errorMsg string, err error) {
-	rhpp.metrics.receptorProxyMessageResponseProcessFailureCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) failedToProcessMessageResponse(errorMsg string, err error) {
+	metrics.receptorProxyMessageResponseProcessFailureCounter.Inc()
 	logError(rhpp.logger, err, errorMsg)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToSendPingMessage(errorMsg string, err error) {
-	rhpp.metrics.receptorProxyPingMessageSendFailureCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) failedToSendPingMessage(errorMsg string, err error) {
+	metrics.receptorProxyPingMessageSendFailureCounter.Inc()
 	logError(rhpp.logger, err, errorMsg)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToProcessPingMessageResponse(errorMsg string, err error) {
-	rhpp.metrics.receptorProxyPingMessageResponseProcessFailureCounter.Inc()
+func (rhpp *receptorHttpProxyProbe) failedToProcessPingMessageResponse(errorMsg string, err error) {
+	metrics.receptorProxyPingMessageResponseProcessFailureCounter.Inc()
 	logError(rhpp.logger, err, errorMsg)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToCreateHttpRequest(err error) {
+func (rhpp *receptorHttpProxyProbe) failedToSendCloseConnectionMessage(errorMsg string, err error) {
+	logError(rhpp.logger, err, errorMsg)
+}
+
+func (rhpp *receptorHttpProxyProbe) failedToRetrieveCapabilities(errorMsg string, err error) {
+	logError(rhpp.logger, err, errorMsg)
+}
+
+/*
+func (rhpp *receptorHttpProxyProbe) failedToCreateHttpRequest(err error) {
 	logError(rhpp.logger, err, "Unable to send message.  Failed to create HTTP Request.")
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToParseHttpResponse(err error) {
+func (rhpp *receptorHttpProxyProbe) failedToParseHttpResponse(err error) {
 	errMsg := "Unable to parse response from receptor-gateway."
 	logError(rhpp.logger, err, errMsg)
 }
 
-func (rhpp *ReceptorHttpProxyProbe) failedToParseMessageID(err error) {
+func (rhpp *receptorHttpProxyProbe) failedToParseMessageID(err error) {
 	errMsg := "Unable to read message id from receptor-gateway"
 	logError(rhpp.logger, err, errMsg)
 }
+*/
 
 func logError(logger *logrus.Entry, err error, errMsg string) {
 	logger.WithFields(logrus.Fields{"error": err}).Error(errMsg)
 }
 
-type metrics struct {
+type Metrics struct {
 	receptorProxyMessageSentCounter                   prometheus.Counter
 	receptorProxyMessageSendFailureCounter            prometheus.Counter
 	receptorProxyMessageResponseProcessFailureCounter prometheus.Counter
@@ -104,8 +116,8 @@ type metrics struct {
 	receptorProxyPingMessageResponseProcessFailureCounter prometheus.Counter
 }
 
-func newMetrics() *metrics {
-	metrics := new(metrics)
+func newMetrics() *Metrics {
+	metrics := new(Metrics)
 
 	metrics.receptorProxyMessageSentCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_receptor_proxy_messages_sent_count",
