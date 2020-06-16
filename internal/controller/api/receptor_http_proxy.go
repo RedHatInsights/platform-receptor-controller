@@ -10,15 +10,15 @@ import (
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/google/uuid"
 )
 
-// FIXME:
-//   - request_id
-//   - timeouts
-//   - improve error reporting
-//   - verify account number and recipient
+var (
+	errUnableToSendMessage     = errors.New("unable to send message")
+	errUnableToProcessResponse = errors.New("unable to process response")
+)
 
 type ReceptorHttpProxy struct {
 	Hostname      string
@@ -28,14 +28,16 @@ type ReceptorHttpProxy struct {
 }
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
-	sendingMessage(accountNumber, recipient)
+
+	probe := createProbe(ctx)
+
+	probe.sendingMessage(accountNumber, recipient)
 
 	postPayload := jobRequest{accountNumber, recipient, payload, directive}
 	jsonStr, err := json.Marshal(postPayload)
 	if err != nil {
-		failedToMarshalJsonPayload(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToSendMessage("Unable to send message.  Failed to marshal JSON payload.", err)
+		return nil, errUnableToSendMessage
 	}
 
 	resp, err := makeHttpRequest(
@@ -48,9 +50,8 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 	)
 
 	if err != nil {
-		failedToCreateHttpRequest(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToSendMessage("Unable to send message.  Failed to create HTTP Request.", err)
+		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
@@ -59,30 +60,31 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&jobResponse); err != nil {
-		failedToParseHttpResponse(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err // errors.New(errMsg)
+		probe.failedToProcessMessageResponse("Unable to parse response from receptor-gateway.", err)
+		return nil, errUnableToProcessResponse
 	}
 
 	messageID, err := uuid.Parse(jobResponse.JobID)
 	if err != nil {
-		failedToParseMessageID(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err // errors.New(errMsg)
+		probe.failedToProcessMessageResponse("Unable to read message id from receptor-gateway", err)
+		return nil, errUnableToProcessResponse
 	}
+
+	probe.messageSent(messageID)
 
 	return &messageID, nil
 }
 
 func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, recipient string, route []string) (interface{}, error) {
-	pingingNode(accountNumber, recipient)
+	probe := createProbe(ctx)
+
+	probe.sendingPing(accountNumber, recipient)
 
 	postPayload := connectionID{accountNumber, recipient}
 	jsonStr, err := json.Marshal(postPayload)
 	if err != nil {
-		failedToMarshalJsonPayload(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToSendPingMessage("Unable to send message.  Failed to marshal JSON payload.", err)
+		return nil, errUnableToSendMessage
 	}
 
 	resp, err := makeHttpRequest(
@@ -95,9 +97,8 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 	)
 
 	if err != nil {
-		failedToCreateHttpRequest(err)
-		// FIXME:
-		return nil, err
+		probe.failedToSendPingMessage("Unable to send message.  Failed to create HTTP Request.", err)
+		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
@@ -106,24 +107,27 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&pingResponse); err != nil {
-		failedToParseHttpResponse(err)
-		return nil, errors.New("Unable to read response from receptor-gateway")
+		probe.failedToProcessPingMessageResponse("Unable to read response from receptor-gateway", err)
+		return nil, errUnableToProcessResponse
 	}
+
+	probe.pingMessageSent()
 
 	return pingResponse.Payload, nil
 }
 
 func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 
-	closingConnection(rhp.AccountNumber, rhp.NodeID)
+	probe := createProbe(ctx)
+
+	probe.closingConnection(rhp.AccountNumber, rhp.NodeID)
 
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
 
 	if err != nil {
-		failedToMarshalJsonPayload(err)
-		// FIXME:  SPECIFIC error message
-		return err
+		probe.failedToMarshalJsonPayload(err)
+		return errUnableToSendMessage
 	}
 
 	resp, err := makeHttpRequest(
@@ -136,9 +140,8 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 	)
 
 	if err != nil {
-		failedToCreateHttpRequest(err)
-		// FIXME:  SPECIFIC error message
-		return err
+		probe.failedToCreateHttpRequest(err)
+		return errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
@@ -147,14 +150,15 @@ func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 }
 
 func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{}, error) {
-	gettingCapabilities(rhp.AccountNumber, rhp.NodeID)
+	probe := createProbe(ctx)
+
+	probe.gettingCapabilities(rhp.AccountNumber, rhp.NodeID)
 
 	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
 	jsonStr, err := json.Marshal(postPayload)
 	if err != nil {
-		failedToMarshalJsonPayload(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToMarshalJsonPayload(err)
+		return nil, errUnableToSendMessage
 	}
 
 	resp, err := makeHttpRequest(
@@ -167,9 +171,8 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 	)
 
 	if err != nil {
-		failedToCreateHttpRequest(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToCreateHttpRequest(err)
+		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
@@ -178,12 +181,10 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 
 	dec := json.NewDecoder(resp.Body)
 	if err := dec.Decode(&statusResponse); err != nil {
-		failedToParseHttpResponse(err)
-		// FIXME:  SPECIFIC error message
-		return nil, err
+		probe.failedToParseHttpResponse(err)
+		return nil, errUnableToProcessResponse
 	}
 
-	// FIXME: return an error
 	return statusResponse.Capabilities, nil
 }
 
@@ -205,6 +206,16 @@ func makeHttpRequest(ctx context.Context, method, url, accountNumber string, con
 		return nil, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+
+	addPreSharedKeyHeaders(req.Header, config, accountNumber)
+
+	addRequestIdHeader(req.Header, ctx)
+
+	return http.DefaultClient.Do(req.WithContext(ctx))
+}
+
+func addPreSharedKeyHeaders(headers http.Header, config *config.Config, accountNumber string) {
 	clientID := config.JobReceiverReceptorProxyClientID
 	psk := config.JobReceiverReceptorProxyPSK
 
@@ -212,12 +223,12 @@ func makeHttpRequest(ctx context.Context, method, url, accountNumber string, con
 		fmt.Println("[WARN] clientID / psk is nil")
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-rh-receptor-controller-client-id", clientID)
-	req.Header.Set("x-rh-receptor-controller-account", accountNumber)
-	req.Header.Set("x-rh-receptor-controller-psk", psk)
+	headers.Set("x-rh-receptor-controller-client-id", clientID)
+	headers.Set("x-rh-receptor-controller-account", accountNumber)
+	headers.Set("x-rh-receptor-controller-psk", psk)
+}
 
-	// FIXME: add request_id
-
-	return http.DefaultClient.Do(req.WithContext(ctx))
+func addRequestIdHeader(headers http.Header, ctx context.Context) {
+	requestId := request_id.GetReqID(ctx)
+	headers.Set("x-rh-insights-request-id", requestId)
 }

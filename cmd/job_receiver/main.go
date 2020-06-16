@@ -16,6 +16,8 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
+
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 )
@@ -55,6 +57,7 @@ func main() {
 	var connectionLocator controller.ConnectionLocator
 	connectionLocator = &api.RedisConnectionLocator{Client: redisClient, Cfg: cfg}
 	mgmtMux := mux.NewRouter()
+	mgmtMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 	mgmtServer := api.NewManagementServer(connectionLocator, mgmtMux, cfg)
 	mgmtServer.Routes()
 
