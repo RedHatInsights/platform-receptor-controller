@@ -4,11 +4,10 @@ import (
 	"strings"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
 	"github.com/go-redis/redis"
 )
 
-var hostname string = utils.GetHostname()
+//var hostname string = utils.GetHostname()
 var allConnectionsKey = "connections"
 
 func getConnectionKey(account, nodeID string) string {
@@ -43,7 +42,7 @@ func ExistsInRedis(client *redis.Client, account, nodeID string) bool {
 	return client.Exists(account+":"+nodeID).Val() != 0
 }
 
-func RegisterWithRedis(client *redis.Client, account, nodeID string) error {
+func RegisterWithRedis(client *redis.Client, account, nodeID, hostname string) error {
 	var res bool
 	var regErr error
 
@@ -68,7 +67,7 @@ func RegisterWithRedis(client *redis.Client, account, nodeID string) error {
 	return nil
 }
 
-func UnregisterWithRedis(client *redis.Client, account, nodeID string) {
+func UnregisterWithRedis(client *redis.Client, account, nodeID, hostname string) {
 	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
 		client.Del(getConnectionKey(account, nodeID))
 		removeIndexes(client, account, nodeID, hostname)

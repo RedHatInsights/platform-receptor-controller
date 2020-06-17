@@ -76,7 +76,7 @@ func main() {
 	})
 
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM)
+	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM, utils.GetHostname())
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
