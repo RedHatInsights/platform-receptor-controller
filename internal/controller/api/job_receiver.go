@@ -33,7 +33,7 @@ func NewJobReceiver(cm controller.ConnectionManager, r *mux.Router, kw *kafka.Wr
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: jr.config.ServiceToServiceCredentials}
-	securedSubRouter.Use(loggingMiddleware, amw.Authenticate)
+	securedSubRouter.Use(accessLoggerMiddleware, amw.Authenticate)
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 

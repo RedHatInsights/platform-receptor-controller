@@ -37,7 +37,7 @@ func NewManagementServer(cm controller.ConnectionManager, r *mux.Router, cfg *co
 func (s *ManagementServer) Routes() {
 	securedSubRouter := s.router.PathPrefix("/connection").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: s.config.ServiceToServiceCredentials}
-	securedSubRouter.Use(loggingMiddleware, amw.Authenticate)
+	securedSubRouter.Use(accessLoggerMiddleware, amw.Authenticate)
 	securedSubRouter.HandleFunc("", s.handleConnectionListing()).Methods(http.MethodGet)
 	securedSubRouter.HandleFunc("/{id:[0-9]+}", s.handleConnectionListingByAccount()).Methods(http.MethodGet)
 	securedSubRouter.HandleFunc("/disconnect", s.handleDisconnect()).Methods(http.MethodPost)

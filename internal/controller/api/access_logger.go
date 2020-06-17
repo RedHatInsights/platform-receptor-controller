@@ -12,67 +12,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-/*
-type LogFormatter func(writer io.Writer, params LogFormatterParams)
-
-type LogFormatterParams struct {
-    Request    *http.Request
-    URL        url.URL
-    TimeStamp  time.Time
-    StatusCode int
-    Size       int
+func accessLoggerMiddleware(next http.Handler) http.Handler {
+	return handlers.CustomLoggingHandler(ioutil.Discard, next, logrusAccessLogAdapter)
 }
 
-
-func CustomLoggingHandler(out io.Writer, h http.Handler, f LogFormatter) http.Handler
-
-
-params.Request:&{Method:POST URL:/job Proto:HTTP/1.1 ProtoMajor:1 ProtoMinor:1 Header:map[Accept:[] Content-Length:[
-155] Content-Type:[application/x-www-form-urlencoded] User-Agent:[curl/7.66.0] X-Rh-Identity:[eyJpZGVudGl0eSI6IHsiYWNjb
-3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=]] Body:0xc0000ca1c0 GetBody:<nil> Conte
-ntLength:155 TransferEncoding:[] Close:false Host:localhost:9090 Form:map[] PostForm:map[] MultipartForm:<nil> Trailer:
-map[] RemoteAddr:[::1]:54684 RequestURI:/job TLS:<nil> Cancel:<nil> Response:<nil> ctx:0xc000412510}
-
-
-
-*/
-
-func logrusAccessLogShim(w io.Writer, params handlers.LogFormatterParams) {
-	fmt.Printf("\n\nparams:%+v\n", params)
-	fmt.Printf("\n\nparams.Request:%+v\n", params.Request)
+func logrusAccessLogAdapter(w io.Writer, params handlers.LogFormatterParams) {
 	request := fmt.Sprintf("%s %s %s", params.Request.Method, params.Request.URL, params.Request.Proto)
+	requestID := getRequestIdFromRequest(params.Request)
 	logger.Log.WithFields(logrus.Fields{
-		"request": request,
-		"status":  params.StatusCode,
-		"size":    params.Size}).Info("access")
-
-	/*
-	   fmt.Println("\nSHITBALLS")
-
-	*/
-	//fmt.Fprintf(w, "{\"path\": \"%s\", \"status\": %d}", params.URL.Path, params.StatusCode)
+		"remote_addr": params.Request.RemoteAddr,
+		"request":     request,
+		"request_id":  requestID,
+		"status":      params.StatusCode,
+		"size":        params.Size},
+	).Info("access")
 }
 
-/*
-type log2LogrusWriter struct {
-    logger *logrus.Logger
-}
-
-func (w *log2LogrusWriter) Write(b []byte) (int, error) {
- fmt.Println("HERE")
- n := len(b)
- if n > 0 && b[n-1] == '\n' {
-  b = b[:n-1]
- }
- w.logger.Warning(string(b))
- return n, nil
-}
-*/
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	//return handlers.CustomLoggingHandler(os.Stdout, next, shitballs)
-	//logWriter := &log2LogrusWriter{logger.Log}
-	//return handlers.CustomLoggingHandler(logWriter, next, shitballs)
-	//return handlers.CustomLoggingHandler(logger.Log.Writer(), next, shitballs)
-	return handlers.CustomLoggingHandler(ioutil.Discard, next, logrusAccessLogShim)
+func getRequestIdFromRequest(request *http.Request) *string {
+	var requestID *string
+	requestIDHeader := request.Header["X-Rh-Insights-Request-Id"]
+	if len(requestIDHeader) > 0 {
+		requestID = &requestIDHeader[0]
+	}
+	return requestID
 }
