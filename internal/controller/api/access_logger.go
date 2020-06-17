@@ -16,6 +16,10 @@ func accessLoggerMiddleware(next http.Handler) http.Handler {
 	return handlers.CustomLoggingHandler(ioutil.Discard, next, logrusAccessLogAdapter)
 }
 
+// This is a bit of a hack as well.  This method should be writing to the io.Writer.
+// Unfortunately, it doesn't seem possible to use the logrus Fields when writing
+// to the io.Writer object directly.  It might be cleaner to implement our own
+// logging handler eventually.
 func logrusAccessLogAdapter(w io.Writer, params handlers.LogFormatterParams) {
 	request := fmt.Sprintf("%s %s %s", params.Request.Method, params.Request.URL, params.Request.Proto)
 	requestID := getRequestIdFromRequest(params.Request)
