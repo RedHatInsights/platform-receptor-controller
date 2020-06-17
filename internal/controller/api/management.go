@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
@@ -12,7 +11,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -34,10 +32,6 @@ func NewManagementServer(cm controller.ConnectionManager, r *mux.Router, cfg *co
 		router:        r,
 		config:        cfg,
 	}
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return handlers.LoggingHandler(os.Stdout, next)
 }
 
 func (s *ManagementServer) Routes() {
