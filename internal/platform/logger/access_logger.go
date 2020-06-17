@@ -1,4 +1,4 @@
-package api
+package logger
 
 import (
 	"fmt"
@@ -6,13 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-
 	"github.com/gorilla/handlers"
 	"github.com/sirupsen/logrus"
 )
 
-func accessLoggerMiddleware(next http.Handler) http.Handler {
+func AccessLoggerMiddleware(next http.Handler) http.Handler {
 	return handlers.CustomLoggingHandler(ioutil.Discard, next, logrusAccessLogAdapter)
 }
 
@@ -23,7 +21,7 @@ func accessLoggerMiddleware(next http.Handler) http.Handler {
 func logrusAccessLogAdapter(w io.Writer, params handlers.LogFormatterParams) {
 	request := fmt.Sprintf("%s %s %s", params.Request.Method, params.Request.URL, params.Request.Proto)
 	requestID := getRequestIdFromRequest(params.Request)
-	logger.Log.WithFields(logrus.Fields{
+	Log.WithFields(logrus.Fields{
 		"remote_addr": params.Request.RemoteAddr,
 		"request":     request,
 		"request_id":  requestID,
