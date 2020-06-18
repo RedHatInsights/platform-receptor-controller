@@ -86,27 +86,11 @@ func (rhpp *receptorHttpProxyProbe) failedToRetrieveCapabilities(errorMsg string
 	logError(rhpp.logger, err, errorMsg)
 }
 
-/*
-func (rhpp *receptorHttpProxyProbe) failedToCreateHttpRequest(err error) {
-	logError(rhpp.logger, err, "Unable to send message.  Failed to create HTTP Request.")
-}
-
-func (rhpp *receptorHttpProxyProbe) failedToParseHttpResponse(err error) {
-	errMsg := "Unable to parse response from receptor-gateway."
-	logError(rhpp.logger, err, errMsg)
-}
-
-func (rhpp *receptorHttpProxyProbe) failedToParseMessageID(err error) {
-	errMsg := "Unable to read message id from receptor-gateway"
-	logError(rhpp.logger, err, errMsg)
-}
-*/
-
 func logError(logger *logrus.Entry, err error, errMsg string) {
 	logger.WithFields(logrus.Fields{"error": err}).Error(errMsg)
 }
 
-type Metrics struct {
+type receptorHttpProxyMetrics struct {
 	receptorProxyMessageSentCounter                   prometheus.Counter
 	receptorProxyMessageSendFailureCounter            prometheus.Counter
 	receptorProxyMessageResponseProcessFailureCounter prometheus.Counter
@@ -116,8 +100,8 @@ type Metrics struct {
 	receptorProxyPingMessageResponseProcessFailureCounter prometheus.Counter
 }
 
-func newMetrics() *Metrics {
-	metrics := new(Metrics)
+func newMetrics() *receptorHttpProxyMetrics {
+	metrics := new(receptorHttpProxyMetrics)
 
 	metrics.receptorProxyMessageSentCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_receptor_proxy_messages_sent_count",
