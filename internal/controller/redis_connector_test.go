@@ -83,54 +83,59 @@ func TestDuplicateRegisterWithRedis(t *testing.T) {
 	c := newTestRedisClient(s.Addr())
 
 	tests := []struct {
-		account      string
-		nodeID       string
-		hostname     string
-		expectedHost string
-		accIndex     []string
-		connIndex    []string
-		podIndex     []string
-		err          error
+		account          string
+		nodeID           string
+		hostname         string
+		expectedHost     string
+		accIndex         []string
+		connIndex        []string
+		podIndex         []string
+		expectedPodIndex []string
+		err              error
 	}{
 		{
-			account:      "01",
-			nodeID:       "node-a",
-			hostname:     testHost,
-			expectedHost: testHost,
-			accIndex:     []string{"node-a:" + testHost},
-			connIndex:    []string{"01:node-a:" + testHost},
-			podIndex:     []string{"01:node-a"},
-			err:          nil,
+			account:          "01",
+			nodeID:           "node-a",
+			hostname:         testHost,
+			expectedHost:     testHost,
+			accIndex:         []string{"node-a:" + testHost},
+			connIndex:        []string{"01:node-a:" + testHost},
+			podIndex:         []string{"01:node-a"},
+			expectedPodIndex: []string{"01:node-a"},
+			err:              nil,
 		},
 		{
-			account:      "01",
-			nodeID:       "node-a",
-			hostname:     "dupe-conn",
-			expectedHost: testHost,
-			accIndex:     []string{"node-a:" + testHost},
-			connIndex:    []string{"01:node-a:" + testHost},
-			podIndex:     []string{},
-			err:          DuplicateConnectionError{},
+			account:          "01",
+			nodeID:           "node-a",
+			hostname:         "dupe-conn",
+			expectedHost:     testHost,
+			accIndex:         []string{"node-a:" + testHost},
+			connIndex:        []string{"01:node-a:" + testHost},
+			podIndex:         []string{},
+			expectedPodIndex: []string{"01:node-a"},
+			err:              DuplicateConnectionError{},
 		},
 		{
-			account:      "02",
-			nodeID:       "node-a",
-			hostname:     testHost,
-			expectedHost: testHost,
-			accIndex:     []string{"node-a:" + testHost},
-			connIndex:    []string{"01:node-a:" + testHost, "02:node-a:" + testHost},
-			podIndex:     []string{"01:node-a", "02:node-a"},
-			err:          nil,
+			account:          "02",
+			nodeID:           "node-a",
+			hostname:         testHost,
+			expectedHost:     testHost,
+			accIndex:         []string{"node-a:" + testHost},
+			connIndex:        []string{"01:node-a:" + testHost, "02:node-a:" + testHost},
+			podIndex:         []string{"01:node-a", "02:node-a"},
+			expectedPodIndex: []string{"01:node-a", "02:node-a"},
+			err:              nil,
 		},
 		{
-			account:      "02",
-			nodeID:       "node-a",
-			hostname:     "dupe-conn",
-			expectedHost: testHost,
-			accIndex:     []string{"node-a:" + testHost},
-			connIndex:    []string{"01:node-a:" + testHost, "02:node-a:" + testHost},
-			podIndex:     []string{},
-			err:          DuplicateConnectionError{},
+			account:          "02",
+			nodeID:           "node-a",
+			hostname:         "dupe-conn",
+			expectedHost:     testHost,
+			accIndex:         []string{"node-a:" + testHost},
+			connIndex:        []string{"01:node-a:" + testHost, "02:node-a:" + testHost},
+			podIndex:         []string{},
+			expectedPodIndex: []string{"01:node-a", "02:node-a"},
+			err:              DuplicateConnectionError{},
 		},
 	}
 
@@ -143,6 +148,7 @@ func TestDuplicateRegisterWithRedis(t *testing.T) {
 		assert.Equal(t, c.SMembers(tc.account).Val(), tc.accIndex)
 		assert.Equal(t, c.SMembers("connections").Val(), tc.connIndex)
 		assert.Equal(t, c.SMembers(tc.hostname).Val(), tc.podIndex)
+		assert.Equal(t, c.SMembers(tc.expectedHost).Val(), tc.expectedPodIndex)
 	}
 }
 
@@ -155,16 +161,17 @@ func TestUnregisterWithRedis(t *testing.T) {
 	_ = RegisterWithRedis(c, "01", "node-a", testHost)
 	_ = RegisterWithRedis(c, "01", "node-b", testHost)
 	_ = RegisterWithRedis(c, "01", "node-c", testHost)
+	_ = RegisterWithRedis(c, "01", "node-d", testHost)
 
 	tests := []struct {
 		account   string
 		nodeID    string
 		remaining []string
 	}{
-		{account: "01", nodeID: "node-a", remaining: []string{"01:node-b", "01:node-c"}},
-		{account: "01", nodeID: "node-not-found", remaining: []string{"01:node-b", "01:node-c"}},
-		{account: "01", nodeID: "node-b", remaining: []string{"01:node-c"}},
-		{account: "01", nodeID: "node-c", remaining: []string{}},
+		{account: "01", nodeID: "node-a", remaining: []string{"01:node-b", "01:node-c", "01:node-d"}},
+		{account: "01", nodeID: "node-not-found", remaining: []string{"01:node-b", "01:node-c", "01:node-d"}},
+		{account: "01", nodeID: "node-b", remaining: []string{"01:node-c", "01:node-d"}},
+		{account: "01", nodeID: "node-c", remaining: []string{"01:node-d"}},
 	}
 
 	for _, tc := range tests {
@@ -173,9 +180,9 @@ func TestUnregisterWithRedis(t *testing.T) {
 		assert.Equal(t, c.SMembers(testHost).Val(), tc.remaining)
 	}
 
-	assert.Equal(t, c.SMembers("01").Val(), []string{})
-	assert.Equal(t, c.SMembers("connections").Val(), []string{})
-	assert.Equal(t, c.SMembers(testHost).Val(), []string{})
+	assert.Equal(t, c.SMembers("01").Val(), []string{"node-d:" + testHost})
+	assert.Equal(t, c.SMembers("connections").Val(), []string{"01:node-d:" + testHost})
+	assert.Equal(t, c.SMembers(testHost).Val(), []string{"01:node-d"})
 }
 
 func TestGetRedisConnection(t *testing.T) {

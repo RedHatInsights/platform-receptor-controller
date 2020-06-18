@@ -7,7 +7,6 @@ import (
 	"github.com/go-redis/redis"
 )
 
-//var hostname string = utils.GetHostname()
 var allConnectionsKey = "connections"
 
 func getConnectionKey(account, nodeID string) string {
