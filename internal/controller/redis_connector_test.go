@@ -183,6 +183,7 @@ func TestUnregisterWithRedis(t *testing.T) {
 	assert.Equal(t, c.SMembers("01").Val(), []string{"node-d:" + testHost})
 	assert.Equal(t, c.SMembers("connections").Val(), []string{"01:node-d:" + testHost})
 	assert.Equal(t, c.SMembers(testHost).Val(), []string{"01:node-d"})
+	assert.Equal(t, c.Get("01:node-d").Val(), testHost)
 }
 
 func TestGetRedisConnection(t *testing.T) {
