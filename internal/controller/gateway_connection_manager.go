@@ -10,12 +10,14 @@ import (
 type GatewayConnectionRegistrar struct {
 	redisClient              *redis.Client
 	localConnectionRegistrar ConnectionRegistrar
+	hostname                 string
 }
 
-func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar) ConnectionRegistrar {
+func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar, host string) ConnectionRegistrar {
 	return &GatewayConnectionRegistrar{
 		redisClient:              rdc,
 		localConnectionRegistrar: cm,
+		hostname:                 host,
 	}
 }
 
@@ -27,7 +29,7 @@ func (rcm *GatewayConnectionRegistrar) Register(account string, node_id string, 
 		return DuplicateConnectionError{}
 	}
 
-	err := RegisterWithRedis(rcm.redisClient, account, node_id)
+	err := RegisterWithRedis(rcm.redisClient, account, node_id, rcm.hostname)
 	if err != nil {
 		return err
 	}
@@ -43,7 +45,7 @@ func (rcm *GatewayConnectionRegistrar) Register(account string, node_id string, 
 }
 
 func (rcm *GatewayConnectionRegistrar) Unregister(account string, node_id string) {
-	UnregisterWithRedis(rcm.redisClient, account, node_id)
+	UnregisterWithRedis(rcm.redisClient, account, node_id, rcm.hostname)
 	rcm.localConnectionRegistrar.Unregister(account, node_id)
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }

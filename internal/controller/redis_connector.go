@@ -4,11 +4,9 @@ import (
 	"strings"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
 	"github.com/go-redis/redis"
 )
 
-var hostname string = utils.GetHostname()
 var allConnectionsKey = "connections"
 
 func getConnectionKey(account, nodeID string) string {
@@ -43,7 +41,7 @@ func ExistsInRedis(client *redis.Client, account, nodeID string) bool {
 	return client.Exists(account+":"+nodeID).Val() != 0
 }
 
-func RegisterWithRedis(client *redis.Client, account, nodeID string) error {
+func RegisterWithRedis(client *redis.Client, account, nodeID, hostname string) error {
 	var res bool
 	var regErr error
 
@@ -68,7 +66,7 @@ func RegisterWithRedis(client *redis.Client, account, nodeID string) error {
 	return nil
 }
 
-func UnregisterWithRedis(client *redis.Client, account, nodeID string) {
+func UnregisterWithRedis(client *redis.Client, account, nodeID, hostname string) {
 	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
 		client.Del(getConnectionKey(account, nodeID))
 		removeIndexes(client, account, nodeID, hostname)
@@ -97,15 +95,19 @@ func GetRedisConnectionsByAccount(client *redis.Client, account string) (map[str
 	return connectionsMap, err
 }
 
-func GetRedisConnectionsByHost(client *redis.Client, hostname string) (map[string]string, error) {
-	connectionsMap := make(map[string]string)
+func GetRedisConnectionsByHost(client *redis.Client, hostname string) (map[string][]string, error) {
+	connectionsMap := make(map[string][]string)
 	podConnections, err := client.SMembers(hostname).Result()
 	if err != nil {
 		return connectionsMap, err
 	}
 	for _, conn := range podConnections {
 		s := strings.Split(conn, ":")
-		connectionsMap[s[0]] = s[1]
+		account, nodeID := s[0], s[1]
+		if _, exists := connectionsMap[account]; !exists {
+			connectionsMap[account] = []string{}
+		}
+		connectionsMap[account] = append(connectionsMap[account], nodeID)
 	}
 	return connectionsMap, err
 }
