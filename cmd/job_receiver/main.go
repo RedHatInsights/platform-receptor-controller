@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -39,6 +39,18 @@ func initRedis(cfg *config.Config) (*redis.Client, error) {
 	return client, nil
 }
 
+func verifyConfiguration(cfg *config.Config) error {
+	if cfg.JobReceiverReceptorProxyClientID == "" {
+		return errors.New(config.JOB_RECEIVER_RECEPTOR_PROXY_CLIENT_ID + " configuration missing")
+	}
+
+	if cfg.JobReceiverReceptorProxyPSK == "" {
+		return errors.New(config.JOB_RECEIVER_RECEPTOR_PROXY_PSK + " configuration missing")
+	}
+
+	return nil
+}
+
 func main() {
 	var mgmtAddr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
 	flag.Parse()
@@ -50,9 +62,14 @@ func main() {
 	cfg := config.GetConfig()
 	logger.Log.Info("Receptor Controller configuration:\n", cfg)
 
+	err := verifyConfiguration(cfg)
+	if err != nil {
+		logger.Log.Fatal("Configuration error encountered during startup: ", err)
+	}
+
 	redisClient, err := initRedis(cfg)
 	if err != nil {
-		log.Fatal("Unable to connect to Redis:", err)
+		logger.Log.Fatal("Unable to connect to Redis: ", err)
 	}
 
 	var connectionLocator controller.ConnectionLocator
@@ -75,9 +92,9 @@ func main() {
 	jr.Routes()
 
 	go func() {
-		log.Println("Starting management web server on", *mgmtAddr)
+		logger.Log.Println("Starting management web server on", *mgmtAddr)
 		if err := http.ListenAndServe(*mgmtAddr, apiMux); err != nil {
-			log.Fatal("ListenAndServe:", err)
+			logger.Log.Fatal("ListenAndServe:", err)
 		}
 	}()
 
@@ -85,6 +102,6 @@ func main() {
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("Blocking waiting for signal")
+	logger.Log.Println("Blocking waiting for signal")
 	<-signalChan
 }

@@ -218,11 +218,6 @@ func addPreSharedKeyHeaders(headers http.Header, config *config.Config, accountN
 	clientID := config.JobReceiverReceptorProxyClientID
 	psk := config.JobReceiverReceptorProxyPSK
 
-	if clientID == "" || psk == "" {
-		// FIXME:
-		fmt.Println("[WARN] clientID / psk is nil")
-	}
-
 	headers.Set("x-rh-receptor-controller-client-id", clientID)
 	headers.Set("x-rh-receptor-controller-account", accountNumber)
 	headers.Set("x-rh-receptor-controller-psk", psk)
