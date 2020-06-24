@@ -4,7 +4,9 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
 )
 
 type RedisConnectionLocator struct {
@@ -17,12 +19,15 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 	var podName string
 	var err error
 
+	log := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
+
 	if podName, err = controller.GetRedisConnection(rcl.Client, account, node_id); err != nil {
-		// FIXME: log error, return an error
+		log.WithFields(logrus.Fields{"error": err}).Error("Error during connection lookup for account ", account)
 		return nil
 	}
 
 	if podName == "" {
+		log.Error("Redis lookup returned empty podname")
 		return nil
 	}
 
@@ -38,12 +43,13 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 
 func (rcl *RedisConnectionLocator) GetConnectionsByAccount(account string) map[string]controller.Receptor {
 
+	log := logger.Log.WithFields(logrus.Fields{"account": account})
+
 	connectionsPerAccount := make(map[string]controller.Receptor)
 
 	accountConnections, err := controller.GetRedisConnectionsByAccount(rcl.Client, account)
 	if err != nil {
-		// FIXME: Update connectionlocator interface methods to return error
-		logger.Log.Warnf("Error during lookup for account: %s", account)
+		log.WithFields(logrus.Fields{"error": err}).Error("Error during connection lookup for account ", account)
 		return nil
 	}
 
@@ -61,8 +67,7 @@ func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]con
 
 	connections, err := controller.GetAllRedisConnections(rcl.Client)
 	if err != nil {
-		// FIXME: Update connectionlocator interface methods to return error
-		logger.Log.Warn("Error during lookup for all connections")
+		logger.Log.WithFields(logrus.Fields{"error": err}).Error("Error during connection lookup for all connections")
 		return nil
 	}
 

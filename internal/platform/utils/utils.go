@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/gorilla/mux"
