@@ -32,6 +32,7 @@ echo "---> Copying binaries into place..."
 mkdir -p $INSTALL_DIR
 cp gateway $INSTALL_DIR
 cp job-receiver $INSTALL_DIR
+cp response_consumer $INSTALL_DIR
 
 echo "---> Copying openapi spec into place..."
 mkdir -p $API_SPEC_DIR

@@ -38,7 +38,7 @@ func NewReceptorController(cfg *config.Config, cm controller.ConnectionRegistrar
 
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
-	router.Use(identity.EnforceIdentity)
+	router.Use(logger.AccessLoggerMiddleware, identity.EnforceIdentity)
 	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods(http.MethodGet)
 }
 

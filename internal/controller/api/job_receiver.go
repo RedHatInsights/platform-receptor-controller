@@ -1,8 +1,6 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
-
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
@@ -11,6 +9,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
+	"github.com/gorilla/mux"
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +33,7 @@ func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, kw *kafka.Wr
 func (jr *JobReceiver) Routes() {
 	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
 	amw := &middlewares.AuthMiddleware{Secrets: jr.config.ServiceToServiceCredentials}
-	securedSubRouter.Use(amw.Authenticate)
+	securedSubRouter.Use(logger.AccessLoggerMiddleware, amw.Authenticate)
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 
@@ -96,10 +95,9 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			jobRequest.Directive)
 
 		if err != nil {
-			// FIXME:  Handle this better!?!?
 			logger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
 			errorResponse := errorResponse{Title: "Error passing message to receptor",
-				Status: http.StatusUnprocessableEntity,
+				Status: http.StatusInternalServerError,
 				Detail: err.Error()}
 			writeJSONResponse(w, errorResponse.Status, errorResponse)
 			return
