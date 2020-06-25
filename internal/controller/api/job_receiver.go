@@ -15,13 +15,13 @@ import (
 )
 
 type JobReceiver struct {
-	connectionMgr controller.ConnectionManager
+	connectionMgr controller.ConnectionLocator
 	router        *mux.Router
 	producer      *kafka.Writer
 	config        *config.Config
 }
 
-func NewJobReceiver(cm controller.ConnectionManager, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
+func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
@@ -37,18 +37,18 @@ func (jr *JobReceiver) Routes() {
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 
+type jobRequest struct {
+	Account   string      `json:"account" validate:"required"`
+	Recipient string      `json:"recipient" validate:"required"`
+	Payload   interface{} `json:"payload" validate:"required"`
+	Directive string      `json:"directive" validate:"required"`
+}
+
+type jobResponse struct {
+	JobID string `json:"id"`
+}
+
 func (jr *JobReceiver) handleJob() http.HandlerFunc {
-
-	type JobRequest struct {
-		Account   string      `json:"account" validate:"required"`
-		Recipient string      `json:"recipient" validate:"required"`
-		Payload   interface{} `json:"payload" validate:"required"`
-		Directive string      `json:"directive" validate:"required"`
-	}
-
-	type JobResponse struct {
-		JobID string `json:"id"`
-	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
@@ -58,7 +58,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			"account":    principal.GetAccount(),
 			"request_id": requestId})
 
-		var jobRequest JobRequest
+		var jobRequest jobRequest
 
 		body := http.MaxBytesReader(w, req.Body, 1048576)
 
@@ -105,7 +105,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		logger.WithFields(logrus.Fields{"message_id": jobID}).Info("Message sent")
 
-		jobResponse := JobResponse{jobID.String()}
+		jobResponse := jobResponse{jobID.String()}
 
 		writeJSONResponse(w, http.StatusCreated, jobResponse)
 	}

@@ -46,11 +46,12 @@ func (mc MockClient) Ping(context.Context, string, string, []string) (interface{
 	return struct{}{}, nil
 }
 
-func (mc MockClient) Close() {
+func (mc MockClient) Close(context.Context) error {
+	return nil
 }
 
-func (mc MockClient) GetCapabilities() interface{} {
-	return struct{}{}
+func (mc MockClient) GetCapabilities(context.Context) (interface{}, error) {
+	return struct{}{}, nil
 }
 
 func init() {
@@ -66,7 +67,7 @@ var _ = Describe("JobReceiver", func() {
 
 	BeforeEach(func() {
 		apiMux := mux.NewRouter()
-		cm := controller.NewConnectionManager()
+		cm := controller.NewLocalConnectionManager()
 		mc := MockClient{}
 		cm.Register("1234", "345", mc)
 		errorMC := MockClient{returnAnError: true}

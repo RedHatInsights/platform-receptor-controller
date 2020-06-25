@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/gorilla/mux"
@@ -30,4 +31,13 @@ func ShutdownHTTPServer(ctx context.Context, name string, srv *http.Server) {
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Log.Infof("Error shutting down %s server: %e", name, err)
 	}
+}
+
+func GetHostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		logger.Log.Info("Error getting hostname")
+	}
+
+	return name
 }
