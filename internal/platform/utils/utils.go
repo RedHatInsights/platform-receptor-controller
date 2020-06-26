@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"os"
 
@@ -40,4 +41,15 @@ func GetHostname() string {
 	}
 
 	return name
+}
+
+func GetIPAddress() net.IP {
+	host, _ := os.Hostname()
+	addrs, _ := net.LookupIP(host)
+	for _, addr := range addrs {
+		if ipv4 := addr.To4(); ipv4 != nil {
+			return ipv4
+		}
+	}
+	return nil
 }

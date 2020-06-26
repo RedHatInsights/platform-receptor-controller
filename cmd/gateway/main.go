@@ -75,8 +75,13 @@ func main() {
 		DB:       cfg.RedisDB,
 	})
 
+	ipAddr := utils.GetIPAddress()
+	if ipAddr == nil {
+		logger.Log.Fatal("Unable to determine IP address")
+	}
+
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM, utils.GetHostname())
+	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
