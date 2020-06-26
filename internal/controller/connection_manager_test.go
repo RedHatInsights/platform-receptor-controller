@@ -35,7 +35,7 @@ func (mr *MockReceptor) GetCapabilities(context.Context) (interface{}, error) {
 	return nil, nil
 }
 
-func TestCheckForConnectionThatDoesNotExist(t *testing.T) {
+func TestCheckForLocalConnectionThatDoesNotExist(t *testing.T) {
 	var cl ConnectionLocator
 	cl = NewLocalConnectionManager()
 	receptorConnection := cl.GetConnection("not gonna find me", "or me")
@@ -44,7 +44,7 @@ func TestCheckForConnectionThatDoesNotExist(t *testing.T) {
 	}
 }
 
-func TestCheckForConnectionThatDoesNotExistButAccountExists(t *testing.T) {
+func TestCheckForLocalConnectionThatDoesNotExistButAccountExists(t *testing.T) {
 	registeredAccount := "123"
 	lcm := NewLocalConnectionManager()
 	lcm.Register(registeredAccount, "456", &MockReceptor{})
@@ -54,7 +54,7 @@ func TestCheckForConnectionThatDoesNotExistButAccountExists(t *testing.T) {
 	}
 }
 
-func TestCheckForConnectionThatDoesExist(t *testing.T) {
+func TestCheckForLocalConnectionThatDoesExist(t *testing.T) {
 	mockReceptor := &MockReceptor{}
 	cm := NewLocalConnectionManager()
 	cm.Register("123", "456", mockReceptor)
@@ -68,7 +68,7 @@ func TestCheckForConnectionThatDoesExist(t *testing.T) {
 	}
 }
 
-func TestRegisterAndUnregisterMultipleConnectionsPerAccount(t *testing.T) {
+func TestRegisterAndUnregisterMultipleLocalConnectionsPerAccount(t *testing.T) {
 	accountNumber := "0000001"
 	var testReceptors = []struct {
 		account  string
@@ -97,12 +97,12 @@ func TestRegisterAndUnregisterMultipleConnectionsPerAccount(t *testing.T) {
 	}
 }
 
-func TestUnregisterConnectionThatDoesNotExist(t *testing.T) {
+func TestUnregisterLocalConnectionThatDoesNotExist(t *testing.T) {
 	cm := NewLocalConnectionManager()
 	cm.Unregister("not gonna find me", "or me")
 }
 
-func TestGetConnectionsByAccount(t *testing.T) {
+func TestGetLocalConnectionsByAccount(t *testing.T) {
 	accountNumber := "0000001"
 	var testReceptors = []struct {
 		account  string
@@ -123,7 +123,7 @@ func TestGetConnectionsByAccount(t *testing.T) {
 	}
 }
 
-func TestGetConnectionsByAccountWithNoRegisteredReceptors(t *testing.T) {
+func TestGetLocalConnectionsByAccountWithNoRegisteredReceptors(t *testing.T) {
 	cm := NewLocalConnectionManager()
 	receptorMap := cm.GetConnectionsByAccount("0000001")
 	if len(receptorMap) != 0 {
@@ -131,7 +131,7 @@ func TestGetConnectionsByAccountWithNoRegisteredReceptors(t *testing.T) {
 	}
 }
 
-func TestGetAllConnections(t *testing.T) {
+func TestGetAllLocalConnections(t *testing.T) {
 
 	var testReceptors = map[string]map[string]Receptor{
 		"0000001": {"node-a": &MockReceptor{},
@@ -154,7 +154,7 @@ func TestGetAllConnections(t *testing.T) {
 	}
 }
 
-func TestGetAllConnectionsWithNoRegisteredReceptors(t *testing.T) {
+func TestGetAllLocalConnectionsWithNoRegisteredReceptors(t *testing.T) {
 	cm := NewLocalConnectionManager()
 	receptorMap := cm.GetAllConnections()
 	if len(receptorMap) != 0 {
@@ -162,7 +162,7 @@ func TestGetAllConnectionsWithNoRegisteredReceptors(t *testing.T) {
 	}
 }
 
-func TestRegisterConnectionsWithDuplicateNodeIDs(t *testing.T) {
+func TestRegisterLocalConnectionsWithDuplicateNodeIDs(t *testing.T) {
 	accountNumber := "123"
 	nodeID := "456"
 	expectedReceptorObj := new(MockReceptor)
