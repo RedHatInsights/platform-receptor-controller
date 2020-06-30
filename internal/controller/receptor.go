@@ -282,6 +282,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 }
 
 func (r *ReceptorService) Close(ctx context.Context) error {
+	r.logger.Info("Closing connection")
 	r.Transport.Cancel()
 	return nil
 }

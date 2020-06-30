@@ -15,7 +15,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/go-redis/redis"
@@ -83,12 +82,7 @@ func main() {
 	mgmtServer := api.NewManagementServer(connectionLocator, apiMux, cfg)
 	mgmtServer.Routes()
 
-	kw := queue.StartProducer(&queue.ProducerConfig{
-		Brokers: cfg.KafkaBrokers,
-		Topic:   cfg.KafkaResponsesTopic,
-	})
-
-	jr := api.NewJobReceiver(connectionLocator, apiMux, kw, cfg)
+	jr := api.NewJobReceiver(connectionLocator, apiMux, cfg)
 	jr.Routes()
 
 	go func() {

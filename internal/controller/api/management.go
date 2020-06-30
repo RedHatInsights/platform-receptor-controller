@@ -147,6 +147,9 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
+		logger.Infof("Connection status for account:%s - node id:%s => %s\n",
+			connID.Account, connID.NodeID, connectionStatus.Status)
+
 		writeJSONResponse(w, http.StatusOK, connectionStatus)
 	}
 }
