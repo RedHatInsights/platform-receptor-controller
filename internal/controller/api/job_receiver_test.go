@@ -73,7 +73,7 @@ var _ = Describe("JobReceiver", func() {
 		errorMC := MockClient{returnAnError: true}
 		cm.Register("1234", "error-client", errorMC)
 		cfg := config.GetConfig()
-		jr = NewJobReceiver(cm, apiMux, nil, cfg)
+		jr = NewJobReceiver(cm, apiMux, cfg)
 		jr.Routes()
 
 		identity := `{ "identity": {"account_number": "540155", "type": "User", "internal": { "org_id": "1979710" } } }`

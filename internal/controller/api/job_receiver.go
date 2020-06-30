@@ -10,22 +10,19 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
-	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
 
 type JobReceiver struct {
 	connectionMgr controller.ConnectionLocator
 	router        *mux.Router
-	producer      *kafka.Writer
 	config        *config.Config
 }
 
-func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, kw *kafka.Writer, cfg *config.Config) *JobReceiver {
+func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, cfg *config.Config) *JobReceiver {
 	return &JobReceiver{
 		connectionMgr: cm,
 		router:        r,
-		producer:      kw,
 		config:        cfg,
 	}
 }

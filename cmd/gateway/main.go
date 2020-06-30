@@ -97,7 +97,7 @@ func main() {
 	mgmtServer := api.NewManagementServer(localCM, apiMux, cfg)
 	mgmtServer.Routes()
 
-	jr := api.NewJobReceiver(localCM, apiMux, kw, cfg)
+	jr := api.NewJobReceiver(localCM, apiMux, cfg)
 	jr.Routes()
 
 	apiMux.Handle("/metrics", promhttp.Handler())
