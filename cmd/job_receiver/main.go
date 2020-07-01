@@ -1,11 +1,10 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,8 +12,8 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
-
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/go-redis/redis"
@@ -85,17 +84,19 @@ func main() {
 	jr := api.NewJobReceiver(connectionLocator, apiMux, cfg)
 	jr.Routes()
 
-	go func() {
-		logger.Log.Println("Starting management web server on", *mgmtAddr)
-		if err := http.ListenAndServe(*mgmtAddr, apiMux); err != nil {
-			logger.Log.Fatal("ListenAndServe:", err)
-		}
-	}()
+	apiSrv := utils.StartHTTPServer(*mgmtAddr, "management", apiMux)
 
 	signalChan := make(chan os.Signal, 1)
 
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	logger.Log.Println("Blocking waiting for signal")
-	<-signalChan
+	sig := <-signalChan
+	logger.Log.Info("Received signal to shutdown: ", sig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.HttpShutdownTimeout)
+	defer cancel()
+
+	utils.ShutdownHTTPServer(ctx, "management", apiSrv)
+
+	logger.Log.Info("Receptor-Controller shutting down")
 }
