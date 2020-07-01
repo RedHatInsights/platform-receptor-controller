@@ -106,9 +106,11 @@
             "PSKAuthKey": []
           }
         ],
-        "parameters": {
-          "$ref": "#/components/parameters/AccountID"
-        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AccountID"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -208,8 +210,11 @@
         "in": "path",
         "name": "account",
         "description": "Account number",
-        "type": "string",
-        "pattern": "[0-9]+"
+        "schema": {
+          "type": "string",
+          "pattern": "[0-9]+"
+        },
+        "required": true
       }
     },
     "securitySchemes": {
