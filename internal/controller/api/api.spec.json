@@ -27,6 +27,11 @@
         "security": [
           {
             "ApiKeyAuth": []
+          },
+          {
+            "PSKAuthClientID": [],
+            "PSKAuthAccount": [],
+            "PSKAuthKey": []
           }
         ],
         "requestBody": {
@@ -64,6 +69,11 @@
         "security": [
           {
             "ApiKeyAuth": []
+          },
+          {
+            "PSKAuthClientID": [],
+            "PSKAuthAccount": [],
+            "PSKAuthKey": []
           }
         ],
         "responses": {
@@ -89,6 +99,11 @@
         "security": [
           {
             "ApiKeyAuth": []
+          },
+          {
+            "PSKAuthClientID": [],
+            "PSKAuthAccount": [],
+            "PSKAuthKey": []
           }
         ],
         "parameters": {
@@ -117,6 +132,11 @@
         "security": [
           {
             "ApiKeyAuth": []
+          },
+          {
+            "PSKAuthClientID": [],
+            "PSKAuthAccount": [],
+            "PSKAuthKey": []
           }
         ],
         "requestBody": {
@@ -151,6 +171,11 @@
         "security": [
           {
             "ApiKeyAuth": []
+          },
+          {
+            "PSKAuthClientID": [],
+            "PSKAuthAccount": [],
+            "PSKAuthKey": []
           }
         ],
         "requestBody": {
@@ -193,6 +218,24 @@
         "in": "header",
         "name": "x-rh-identity",
         "description": "Base64-encoded JSON identity header provided by 3Scale. Contains an account number of the user issuing the request. Format of the JSON: {\"identity\": {\"account_number\": \"12345678\"}}"
+      },
+      "PSKAuthClientID": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-rh-receptor-controller-client-id",
+        "description": "Name of the service that is making the request"
+      },
+      "PSKAuthKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-rh-receptor-controller-psk",
+        "description": "Key supplied by the platform infrastructure team"
+      },
+      "PSKAuthAccount": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-rh-receptor-controller-account",
+        "description": "Account the request is being made on behalf of"
       }
     },
     "schemas": {
