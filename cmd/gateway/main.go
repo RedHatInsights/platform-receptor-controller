@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -69,19 +70,36 @@ func main() {
 		ConsumerOffset: cfg.KafkaConsumerOffset,
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
-		Password: cfg.RedisPassword,
-		DB:       cfg.RedisDB,
-	})
-
-	ipAddr := utils.GetIPAddress()
-	if ipAddr == nil {
-		logger.Log.Fatal("Unable to determine IP address")
-	}
+	var gatewayCM c.ConnectionRegistrar
 
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
+
+	switch strings.ToLower(cfg.GatewayConnectionRegistrarImpl) {
+	case "redis":
+		logger.Log.Info("Using GatewayConnectionRegistrar as the ConnectionRegistrar impl." +
+			"  Connections will be registered with Redis.")
+
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
+			Password: cfg.RedisPassword,
+			DB:       cfg.RedisDB,
+		})
+
+		ipAddr := utils.GetIPAddress()
+		if ipAddr == nil {
+			logger.Log.Fatal("Unable to determine IP address")
+		}
+
+		gatewayCM = c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
+	case "local":
+		logger.Log.Info("Using LocalConnectionManager as the ConnectionRegistrar impl." +
+			"  Connections will NOT be registered with Redis.")
+
+		gatewayCM = localCM
+	default:
+		logger.Log.Fatalf("Invalid configuration value for %s!", config.GATEWAY_CONNECTION_REGISTRAR_IMPL)
+	}
+
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
