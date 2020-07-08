@@ -39,6 +39,7 @@ const (
 	JOB_RECEIVER_RECEPTOR_PROXY_SCHEME    = "Job_Receiver_Receptor_Proxy_Scheme"
 	JOB_RECEIVER_RECEPTOR_PROXY_PORT      = "Job_Receiver_Receptor_Proxy_Port"
 	JOB_RECEIVER_RECEPTOR_PROXY_TIMEOUT   = "Job_Receiver_Receptor_Proxy_Timeout"
+	GATEWAY_CONNECTION_REGISTRAR_IMPL     = "Gateway_Connection_Registrar_Impl"
 
 	NODE_ID = "ReceptorControllerNodeId"
 )
@@ -72,6 +73,7 @@ type Config struct {
 	JobReceiverReceptorProxyScheme   string
 	JobReceiverReceptorProxyPort     int
 	JobReceiverReceptorProxyTimeout  time.Duration
+	GatewayConnectionRegistrarImpl   string
 }
 
 func (c Config) String() string {
@@ -101,6 +103,7 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", JOB_RECEIVER_RECEPTOR_PROXY_SCHEME, c.JobReceiverReceptorProxyScheme)
 	fmt.Fprintf(&b, "%s: %d\n", JOB_RECEIVER_RECEPTOR_PROXY_PORT, c.JobReceiverReceptorProxyPort)
 	fmt.Fprintf(&b, "%s: %s\n", JOB_RECEIVER_RECEPTOR_PROXY_TIMEOUT, c.JobReceiverReceptorProxyTimeout)
+	fmt.Fprintf(&b, "%s: %s\n", GATEWAY_CONNECTION_REGISTRAR_IMPL, c.GatewayConnectionRegistrarImpl)
 	return b.String()
 }
 
@@ -134,6 +137,7 @@ func GetConfig() *Config {
 	options.SetDefault(JOB_RECEIVER_RECEPTOR_PROXY_SCHEME, "http")
 	options.SetDefault(JOB_RECEIVER_RECEPTOR_PROXY_PORT, 9090)
 	options.SetDefault(JOB_RECEIVER_RECEPTOR_PROXY_TIMEOUT, 10)
+	options.SetDefault(GATEWAY_CONNECTION_REGISTRAR_IMPL, "local")
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
 
@@ -170,6 +174,7 @@ func GetConfig() *Config {
 		JobReceiverReceptorProxyScheme:   options.GetString(JOB_RECEIVER_RECEPTOR_PROXY_SCHEME),
 		JobReceiverReceptorProxyPort:     options.GetInt(JOB_RECEIVER_RECEPTOR_PROXY_PORT),
 		JobReceiverReceptorProxyTimeout:  options.GetDuration(JOB_RECEIVER_RECEPTOR_PROXY_TIMEOUT) * time.Second,
+		GatewayConnectionRegistrarImpl:   options.GetString(GATEWAY_CONNECTION_REGISTRAR_IMPL),
 	}
 }
 
