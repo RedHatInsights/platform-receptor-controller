@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -40,6 +41,35 @@ func closeConnections(cm c.ConnectionLocator, wg *sync.WaitGroup, timeout time.D
 	time.Sleep(timeout)
 }
 
+func configureConnectionRegistrar(cfg *config.Config, localCM c.ConnectionRegistrar) c.ConnectionRegistrar {
+	switch strings.ToLower(cfg.GatewayConnectionRegistrarImpl) {
+	case "redis":
+		logger.Log.Info("Using GatewayConnectionRegistrar as the ConnectionRegistrar impl." +
+			"  Connections will be registered with Redis.")
+
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
+			Password: cfg.RedisPassword,
+			DB:       cfg.RedisDB,
+		})
+
+		ipAddr := utils.GetIPAddress()
+		if ipAddr == nil {
+			logger.Log.Fatal("Unable to determine IP address")
+		}
+
+		return c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
+	case "local":
+		logger.Log.Info("Using LocalConnectionManager as the ConnectionRegistrar impl." +
+			"  Connections will NOT be registered with Redis.")
+
+		return localCM
+	default:
+		logger.Log.Fatalf("Invalid configuration value for %s!", config.GATEWAY_CONNECTION_REGISTRAR_IMPL)
+		return nil
+	}
+}
+
 func main() {
 	var wsAddr = flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
 	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
@@ -69,23 +99,15 @@ func main() {
 		ConsumerOffset: cfg.KafkaConsumerOffset,
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     (cfg.RedisHost + ":" + cfg.RedisPort),
-		Password: cfg.RedisPassword,
-		DB:       cfg.RedisDB,
-	})
-
-	ipAddr := utils.GetIPAddress()
-	if ipAddr == nil {
-		logger.Log.Fatal("Unable to determine IP address")
-	}
+	var gatewayCR c.ConnectionRegistrar
 
 	localCM := c.NewLocalConnectionManager()
-	gatewayCM := c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
+	gatewayCR = configureConnectionRegistrar(cfg, localCM)
+
 	rd := c.NewResponseReactorFactory()
 	rs := c.NewReceptorServiceFactory(kw, cfg)
 	md := c.NewMessageDispatcherFactory(kc)
-	rc := ws.NewReceptorController(cfg, gatewayCM, wsMux, rd, md, rs)
+	rc := ws.NewReceptorController(cfg, gatewayCR, wsMux, rd, md, rs)
 	rc.Routes()
 
 	apiMux := mux.NewRouter()
