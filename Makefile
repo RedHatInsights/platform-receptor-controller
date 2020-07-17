@@ -12,6 +12,8 @@ build:
 	go build -o $(GATEWAY_BINARY) cmd/gateway/main.go
 	go build -o $(JOB_RECEIVER_BINARY) cmd/job_receiver/main.go
 	go build -o response_consumer cmd/response_consumer/main.go
+	go build -o connection_util cmd/connection_util/main.go
+	go build -o connection_cleaner cmd/connection_cleaner/main.go
 
 deps:
 	go get -u golang.org/x/lint/golint
