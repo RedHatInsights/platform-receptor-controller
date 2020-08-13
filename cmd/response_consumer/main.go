@@ -36,7 +36,7 @@ func main() {
 			fmt.Println("Got an error:", err)
 			break
 		}
-		fmt.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
+		fmt.Printf("message at offset %d, partition %d: %s = %s\n", m.Offset, m.Partition, string(m.Key), string(m.Value))
 	}
 
 	kafkaReader.Close()
