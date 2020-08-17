@@ -131,20 +131,21 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 		logger.Infof("Checking connection status for account:%s - node id:%s",
 			connID.Account, connID.NodeID)
 
-		var connectionStatus connectionStatusResponse
+		connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
 
 		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
 		if client != nil {
-			connectionStatus.Status = CONNECTED_STATUS
 			capabilities, err := client.GetCapabilities(req.Context())
-			if err != nil {
+			if err == nil {
+				// Only report the node as connected if we can get a connection
+				// from the connection registrar and if we can get the capabilities
+				connectionStatus.Status = CONNECTED_STATUS
+				connectionStatus.Capabilities = capabilities
+			} else {
 				logger.WithFields(
 					logrus.Fields{"error": err},
 				).Errorf("Unable to retrieve the capabilities of node %s", connID.NodeID)
 			}
-			connectionStatus.Capabilities = capabilities
-		} else {
-			connectionStatus.Status = DISCONNECTED_STATUS
 		}
 
 		logger.Infof("Connection status for account:%s - node id:%s => %s\n",
