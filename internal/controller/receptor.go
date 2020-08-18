@@ -11,7 +11,6 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
 	"github.com/google/uuid"
-	"github.com/prometheus/client_golang/prometheus"
 	kafka "github.com/segmentio/kafka-go"
 
 	"github.com/sirupsen/logrus"
@@ -144,17 +143,12 @@ func (r *ReceptorService) Ping(msgSenderCtx context.Context, account string, rec
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.ReceptorSyncPingTimeout)
 	defer cancel()
 
-	pingDurationRecorder := DurationRecorder{elapsed: metrics.pingElapsed,
-		labels: prometheus.Labels{"account": r.AccountNumber, "recipient": r.PeerNodeID}}
-	pingDurationRecorder.Start()
-
 	err = r.sendControlMessage(msgSenderCtx, payloadMessage)
 	if err != nil {
 		return nil, err
 	}
 
 	responseMsg, err := r.waitForResponse(msgSenderCtx, responseChannel)
-	pingDurationRecorder.Stop()
 	if err != nil {
 		return nil, err
 	}
