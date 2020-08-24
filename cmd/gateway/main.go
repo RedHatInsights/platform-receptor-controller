@@ -59,7 +59,9 @@ func configureConnectionRegistrar(cfg *config.Config, localCM c.ConnectionRegist
 			logger.Log.Fatal("Unable to determine IP address")
 		}
 
-		return c.NewGatewayConnectionRegistrar(redisClient, localCM, ipAddr.String())
+		activeConnectionRegistrarFactory := c.NewActiveConnectionRegistrarFactory(redisClient, ipAddr.String())
+
+		return c.NewGatewayConnectionRegistrar(redisClient, localCM, activeConnectionRegistrarFactory, ipAddr.String())
 	case "local":
 		logger.Log.Info("Using LocalConnectionManager as the ConnectionRegistrar impl." +
 			"  Connections will NOT be registered with Redis.")

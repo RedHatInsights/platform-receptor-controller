@@ -24,7 +24,8 @@ func TestRegisterWithGatewayConnectionManager(t *testing.T) {
 	c := newTestRedisClient(s.Addr())
 	lcm := NewLocalConnectionManager()
 
-	gcm := NewGatewayConnectionRegistrar(c, lcm, hostname)
+	acrf := NewActiveConnectionRegistrarFactory(c, hostname)
+	gcm := NewGatewayConnectionRegistrar(c, lcm, acrf, hostname)
 
 	tests := []struct {
 		account string
@@ -69,7 +70,8 @@ func TestRegisterDuplicateWithGatewayConnectionManager(t *testing.T) {
 	c := newTestRedisClient(s.Addr())
 	lcm := NewLocalConnectionManager()
 
-	gcm := NewGatewayConnectionRegistrar(c, lcm, hostname)
+	acrf := NewActiveConnectionRegistrarFactory(c, hostname)
+	gcm := NewGatewayConnectionRegistrar(c, lcm, acrf, hostname)
 
 	_ = RegisterWithRedis(c, "01", "node-c", hostname)
 	lcm.Register(context.TODO(), "01", "node-d", &MockReceptor{NodeID: "node-d"})
@@ -135,7 +137,8 @@ func TestUnregisterWithGatewayConnectionManager(t *testing.T) {
 	c := newTestRedisClient(s.Addr())
 	lcm := NewLocalConnectionManager()
 
-	gcm := NewGatewayConnectionRegistrar(c, lcm, hostname)
+	acrf := NewActiveConnectionRegistrarFactory(c, hostname)
+	gcm := NewGatewayConnectionRegistrar(c, lcm, acrf, hostname)
 
 	_ = gcm.Register(context.TODO(), "01", "node-a", &MockReceptor{NodeID: "node-a"})
 	_ = gcm.Register(context.TODO(), "01", "node-b", &MockReceptor{NodeID: "node-b"})
