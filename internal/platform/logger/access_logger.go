@@ -20,7 +20,7 @@ func AccessLoggerMiddleware(next http.Handler) http.Handler {
 // logging handler eventually.
 func logrusAccessLogAdapter(w io.Writer, params handlers.LogFormatterParams) {
 	request := fmt.Sprintf("%s %s %s", params.Request.Method, params.Request.URL, params.Request.Proto)
-	requestID := getRequestIdFromRequest(params.Request)
+	requestID := params.Request.Header.Get("X-Rh-Insights-Request-Id")
 	Log.WithFields(logrus.Fields{
 		"remote_addr": params.Request.RemoteAddr,
 		"request":     request,
@@ -28,13 +28,4 @@ func logrusAccessLogAdapter(w io.Writer, params handlers.LogFormatterParams) {
 		"status":      params.StatusCode,
 		"size":        params.Size},
 	).Info("access")
-}
-
-func getRequestIdFromRequest(request *http.Request) *string {
-	var requestID *string
-	requestIDHeader := request.Header["X-Rh-Insights-Request-Id"]
-	if len(requestIDHeader) > 0 {
-		requestID = &requestIDHeader[0]
-	}
-	return requestID
 }
