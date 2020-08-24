@@ -203,6 +203,8 @@ func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, response
 	select {
 
 	case responseMsg := <-responseChannel:
+		r.logger.WithFields(logrus.Fields{"in_response_to": responseMsg.InResponseTo,
+			"message_id": responseMsg.MessageID}).Info("Received response message from response channel")
 		return responseMsg, nil
 
 	case <-r.Transport.Ctx.Done():
@@ -244,11 +246,14 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 	responseChannel, _ := r.responseDispatcherRegistrar.GetDispatchChannel(inResponseTo)
 
 	if responseChannel != nil {
+		r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo,
+			"message_id": responseMessage.MessageID}).Info("Adding response message to response channel")
 		responseChannel <- responseMessage
 		return
 	}
 
-	r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo}).Info("Dispatching response message")
+	r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo,
+		"message_id": responseMessage.MessageID}).Info("Dispatching response message")
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
