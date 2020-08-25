@@ -70,7 +70,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		}
 
 		var client controller.Receptor
-		client = jr.connectionMgr.GetConnection(jobRequest.Account, jobRequest.Recipient)
+		client = jr.connectionMgr.GetConnection(req.Context(), jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
 			// The connection to the customer's receptor node was not available
 			errMsg := "No connection to the receptor node"

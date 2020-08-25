@@ -25,14 +25,14 @@ func (d DuplicateConnectionError) Error() string {
 }
 
 type ConnectionRegistrar interface {
-	Register(account string, node_id string, client Receptor) error
-	Unregister(account string, node_id string)
+	Register(ctx context.Context, account string, node_id string, client Receptor) error
+	Unregister(ctx context.Context, account string, node_id string)
 }
 
 type ConnectionLocator interface {
-	GetConnection(account string, node_id string) Receptor
-	GetConnectionsByAccount(account string) map[string]Receptor
-	GetAllConnections() map[string]map[string]Receptor
+	GetConnection(ctx context.Context, account string, node_id string) Receptor
+	GetConnectionsByAccount(ctx context.Context, account string) map[string]Receptor
+	GetAllConnections(ctx context.Context) map[string]map[string]Receptor
 }
 
 type LocalConnectionManager struct {
@@ -46,7 +46,7 @@ func NewLocalConnectionManager() *LocalConnectionManager {
 	}
 }
 
-func (cm *LocalConnectionManager) Register(account string, node_id string, client Receptor) error {
+func (cm *LocalConnectionManager) Register(ctx context.Context, account string, node_id string, client Receptor) error {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
@@ -68,7 +68,7 @@ func (cm *LocalConnectionManager) Register(account string, node_id string, clien
 	return nil
 }
 
-func (cm *LocalConnectionManager) Unregister(account string, node_id string) {
+func (cm *LocalConnectionManager) Unregister(ctx context.Context, account string, node_id string) {
 	cm.Lock()
 	defer cm.Unlock()
 	_, exists := cm.connections[account]
@@ -84,7 +84,7 @@ func (cm *LocalConnectionManager) Unregister(account string, node_id string) {
 	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
 }
 
-func (cm *LocalConnectionManager) GetConnection(account string, node_id string) Receptor {
+func (cm *LocalConnectionManager) GetConnection(ctx context.Context, account string, node_id string) Receptor {
 	var conn Receptor
 
 	cm.RLock()
@@ -102,7 +102,7 @@ func (cm *LocalConnectionManager) GetConnection(account string, node_id string) 
 	return conn
 }
 
-func (cm *LocalConnectionManager) GetConnectionsByAccount(account string) map[string]Receptor {
+func (cm *LocalConnectionManager) GetConnectionsByAccount(ctx context.Context, account string) map[string]Receptor {
 	cm.RLock()
 	defer cm.RUnlock()
 
@@ -120,7 +120,7 @@ func (cm *LocalConnectionManager) GetConnectionsByAccount(account string) map[st
 	return connectionsPerAccount
 }
 
-func (cm *LocalConnectionManager) GetAllConnections() map[string]map[string]Receptor {
+func (cm *LocalConnectionManager) GetAllConnections(ctx context.Context) map[string]map[string]Receptor {
 	cm.RLock()
 	defer cm.RUnlock()
 
