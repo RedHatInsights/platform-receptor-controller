@@ -66,7 +66,7 @@ func (hh HandshakeHandler) HandleMessage(ctx context.Context, m protocol.Message
 
 	receptor.RegisterConnection(hiMessage.ID, hiMessage.Metadata, hh.Transport)
 
-	err := hh.ConnectionMgr.Register(hh.AccountNumber, hiMessage.ID, receptor)
+	err := hh.ConnectionMgr.Register(hh.Transport.Ctx, hh.AccountNumber, hiMessage.ID, receptor)
 	if err != nil {
 		// Abort the connection if this account number and node id are already registered
 		hh.Logger.WithFields(logrus.Fields{"error": err}).Infof("Unable to register connection "+

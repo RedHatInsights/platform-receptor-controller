@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
@@ -14,7 +16,7 @@ type RedisConnectionLocator struct {
 	Cfg    *config.Config
 }
 
-func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string) controller.Receptor {
+func (rcl *RedisConnectionLocator) GetConnection(ctx context.Context, account string, node_id string) controller.Receptor {
 	var conn controller.Receptor
 	var podName string
 	var err error
@@ -41,7 +43,7 @@ func (rcl *RedisConnectionLocator) GetConnection(account string, node_id string)
 	return conn
 }
 
-func (rcl *RedisConnectionLocator) GetConnectionsByAccount(account string) map[string]controller.Receptor {
+func (rcl *RedisConnectionLocator) GetConnectionsByAccount(ctx context.Context, account string) map[string]controller.Receptor {
 
 	log := logger.Log.WithFields(logrus.Fields{"account": account})
 
@@ -54,14 +56,14 @@ func (rcl *RedisConnectionLocator) GetConnectionsByAccount(account string) map[s
 	}
 
 	for nodeID, _ := range accountConnections {
-		proxy := rcl.GetConnection(account, nodeID)
+		proxy := rcl.GetConnection(ctx, account, nodeID)
 		connectionsPerAccount[nodeID] = proxy
 	}
 
 	return connectionsPerAccount
 }
 
-func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]controller.Receptor {
+func (rcl *RedisConnectionLocator) GetAllConnections(ctx context.Context) map[string]map[string]controller.Receptor {
 
 	connectionMap := make(map[string]map[string]controller.Receptor)
 
@@ -76,7 +78,7 @@ func (rcl *RedisConnectionLocator) GetAllConnections() map[string]map[string]con
 			connectionMap[account] = make(map[string]controller.Receptor)
 		}
 		for node, _ := range conn {
-			proxy := rcl.GetConnection(account, node)
+			proxy := rcl.GetConnection(ctx, account, node)
 			connectionMap[account][node] = proxy
 		}
 	}

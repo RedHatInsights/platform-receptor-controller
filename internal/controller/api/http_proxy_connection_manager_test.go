@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
@@ -55,7 +56,7 @@ func TestGetConnection(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		conn := locator.GetConnection(tc.account, tc.nodeID)
+		conn := locator.GetConnection(context.TODO(), tc.account, tc.nodeID)
 		assert.Equal(t, conn, tc.expectedConn)
 	}
 }
@@ -114,7 +115,7 @@ func TestGetConnectionsByAccount(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		res := locator.GetConnectionsByAccount(tc.account)
+		res := locator.GetConnectionsByAccount(context.TODO(), tc.account)
 		assert.Equal(t, res, tc.expectedConns)
 	}
 }
@@ -134,7 +135,7 @@ func TestGetAllConnections(t *testing.T) {
 	_ = controller.RegisterWithRedis(c, "01", "node-b", "localhost")
 	_ = controller.RegisterWithRedis(c, "02", "node-c", "localhost")
 
-	res := locator.GetAllConnections()
+	res := locator.GetAllConnections(context.TODO())
 
 	assert.Equal(t, map[string]map[string]controller.Receptor{
 		"01": {
