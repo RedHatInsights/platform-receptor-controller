@@ -228,6 +228,14 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 	logger := r.logger.WithFields(logrus.Fields{"in_response_to": payloadMessage.Data.InResponseTo,
 		"message_id": payloadMessage.Data.MessageID})
 
+	// verify this message was meant for this receptor/peer
+	if payloadMessage.RoutingInfo.Recipient != r.NodeID {
+		logger.WithFields(
+			logrus.Fields{"recipient": payloadMessage.RoutingInfo.Recipient,
+				"sender": payloadMessage.RoutingInfo.Sender}).Info("Recieved message that was not intended for this node.  Discarding message.")
+		return
+	}
+
 	responseMessage := ResponseMessage{
 		AccountNumber: r.AccountNumber,
 		Sender:        payloadMessage.RoutingInfo.Sender,
