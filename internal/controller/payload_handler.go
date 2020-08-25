@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
@@ -16,10 +15,6 @@ type PayloadHandler struct {
 	Transport *Transport
 	Receptor  *ReceptorService
 	Logger    *logrus.Entry
-}
-
-func (ph *PayloadHandler) GetKey() string {
-	return fmt.Sprintf("%s:%s", ph.AccountNumber, ph.NodeID)
 }
 
 func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) {
