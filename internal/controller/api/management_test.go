@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -49,7 +50,7 @@ var _ = Describe("Management", func() {
 		apiMux := mux.NewRouter()
 		cm = controller.NewLocalConnectionManager()
 		mc := MockClient{}
-		cm.Register(CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
+		cm.Register(context.TODO(), CONNECTED_ACCOUNT_NUMBER, CONNECTED_NODE_ID, mc)
 		cfg := config.GetConfig()
 		ms = NewManagementServer(cm, apiMux, cfg)
 		ms.Routes()

@@ -16,7 +16,7 @@ type DisconnectHandler struct {
 }
 
 func (dh DisconnectHandler) HandleMessage(ctx context.Context, m protocol.Message) {
-	dh.ConnectionMgr.Unregister(dh.AccountNumber, dh.NodeID)
+	dh.ConnectionMgr.Unregister(ctx, dh.AccountNumber, dh.NodeID)
 	dh.Logger.Debugf("DisconnectHandler - account (%s) / node id (%s) unregistered from connection manager",
 		dh.AccountNumber,
 		dh.NodeID)

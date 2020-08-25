@@ -86,7 +86,7 @@ func (s *ManagementServer) handleDisconnect() http.HandlerFunc {
 			return
 		}
 
-		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
+		client := s.connectionMgr.GetConnection(req.Context(), connID.Account, connID.NodeID)
 		if client == nil {
 			errMsg := fmt.Sprintf("No connection found for node (%s:%s)", connID.Account, connID.NodeID)
 			logger.Info(errMsg)
@@ -133,7 +133,7 @@ func (s *ManagementServer) handleConnectionStatus() http.HandlerFunc {
 
 		connectionStatus := connectionStatusResponse{Status: DISCONNECTED_STATUS}
 
-		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
+		client := s.connectionMgr.GetConnection(req.Context(), connID.Account, connID.NodeID)
 		if client != nil {
 			capabilities, err := client.GetCapabilities(req.Context())
 			if err == nil {
@@ -181,7 +181,7 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 			connID.Account, connID.NodeID)
 
 		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
-		client := s.connectionMgr.GetConnection(connID.Account, connID.NodeID)
+		client := s.connectionMgr.GetConnection(req.Context(), connID.Account, connID.NodeID)
 		if client == nil {
 			writeJSONResponse(w, http.StatusOK, pingResponse)
 			return
@@ -223,7 +223,7 @@ func (s *ManagementServer) handleConnectionListing() http.HandlerFunc {
 
 		logger.Debugf("Getting connection list")
 
-		allReceptorConnections := s.connectionMgr.GetAllConnections()
+		allReceptorConnections := s.connectionMgr.GetAllConnections(req.Context())
 
 		connections := make([]ConnectionsPerAccount, len(allReceptorConnections))
 
@@ -263,7 +263,7 @@ func (s *ManagementServer) handleConnectionListingByAccount() http.HandlerFunc {
 
 		logger.Debug("Getting connections for ", accountId)
 
-		accountConnections := s.connectionMgr.GetConnectionsByAccount(accountId)
+		accountConnections := s.connectionMgr.GetConnectionsByAccount(req.Context(), accountId)
 		connections := make([]string, len(accountConnections))
 
 		connCount := 0

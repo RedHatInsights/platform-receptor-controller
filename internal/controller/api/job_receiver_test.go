@@ -69,9 +69,9 @@ var _ = Describe("JobReceiver", func() {
 		apiMux := mux.NewRouter()
 		cm := controller.NewLocalConnectionManager()
 		mc := MockClient{}
-		cm.Register("1234", "345", mc)
+		cm.Register(context.TODO(), "1234", "345", mc)
 		errorMC := MockClient{returnAnError: true}
-		cm.Register("1234", "error-client", errorMC)
+		cm.Register(context.TODO(), "1234", "error-client", errorMC)
 		cfg := config.GetConfig()
 		jr = NewJobReceiver(cm, apiMux, cfg)
 		jr.Routes()
