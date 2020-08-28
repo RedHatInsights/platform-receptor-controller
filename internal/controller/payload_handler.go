@@ -30,12 +30,6 @@ func (ph PayloadHandler) HandleMessage(ctx context.Context, m protocol.Message) 
 		return
 	}
 
-	// verify this message was meant for this receptor/peer (probably want a uuid here)
-	if payloadMessage.RoutingInfo.Recipient != ph.Receptor.NodeID {
-		ph.Logger.Info("Recieved message that was not intended for this node")
-		return
-	}
-
 	ph.Receptor.DispatchResponse(payloadMessage)
 
 	return
