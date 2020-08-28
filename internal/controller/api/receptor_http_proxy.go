@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
@@ -29,44 +30,42 @@ type ReceptorHttpProxy struct {
 
 func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 
-	probe := createProbe(ctx)
+	probe := createProbe(ctx, "send_message")
 
 	probe.sendingMessage(accountNumber, recipient)
 
-	postPayload := jobRequest{accountNumber, recipient, payload, directive}
-	jsonStr, err := json.Marshal(postPayload)
+	jsonBytes, err := marshalJobRequest(accountNumber, recipient, payload, directive, probe)
 	if err != nil {
-		probe.failedToSendMessage("Unable to send message.  Failed to marshal JSON payload.", err)
-		return nil, errUnableToSendMessage
+		return nil, err
 	}
 
 	resp, err := makeHttpRequest(
 		ctx,
+		probe,
 		http.MethodPost,
 		rhp.generateUrl("job"),
 		rhp.AccountNumber,
 		rhp.Config,
-		bytes.NewBuffer(jsonStr),
+		bytes.NewBuffer(jsonBytes),
 	)
 
 	if err != nil {
-		probe.failedToSendMessage("Unable to send message.  Failed to create HTTP Request.", err)
+		probe.failedToMakeHttpRequest(err)
 		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
 
-	jobResponse := jobResponse{}
+	probe.recordHttpStatusCode(resp.StatusCode)
 
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&jobResponse); err != nil {
-		probe.failedToProcessMessageResponse("Unable to parse response from receptor-gateway.", err)
-		return nil, errUnableToProcessResponse
+	jobResponse, err := unmarshalJobResponse(resp, probe)
+	if err != nil {
+		return nil, err
 	}
 
 	messageID, err := uuid.Parse(jobResponse.JobID)
 	if err != nil {
-		probe.failedToProcessMessageResponse("Unable to read message id from receptor-gateway", err)
+		probe.failedToUnmarshalResponse(err)
 		return nil, errUnableToProcessResponse
 	}
 
@@ -76,39 +75,38 @@ func (rhp *ReceptorHttpProxy) SendMessage(ctx context.Context, accountNumber str
 }
 
 func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, recipient string, route []string) (interface{}, error) {
-	probe := createProbe(ctx)
+	probe := createProbe(ctx, "ping")
 
 	probe.sendingPing(accountNumber, recipient)
 
-	postPayload := connectionID{accountNumber, recipient}
-	jsonStr, err := json.Marshal(postPayload)
+	jsonBytes, err := marshalConnectionKey(accountNumber, recipient, probe)
 	if err != nil {
-		probe.failedToSendPingMessage("Unable to send message.  Failed to marshal JSON payload.", err)
-		return nil, errUnableToSendMessage
+		probe.failedToMarshalPayload(err)
+		return nil, err
 	}
 
 	resp, err := makeHttpRequest(
 		ctx,
+		probe,
 		http.MethodPost,
 		rhp.generateUrl("connection/ping"),
 		rhp.AccountNumber,
 		rhp.Config,
-		bytes.NewBuffer(jsonStr),
+		bytes.NewBuffer(jsonBytes),
 	)
 
 	if err != nil {
-		probe.failedToSendPingMessage("Unable to send message.  Failed to create HTTP Request.", err)
+		probe.failedToMakeHttpRequest(err)
 		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
 
-	pingResponse := connectionPingResponse{}
+	probe.recordHttpStatusCode(resp.StatusCode)
 
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&pingResponse); err != nil {
-		probe.failedToProcessPingMessageResponse("Unable to read response from receptor-gateway", err)
-		return nil, errUnableToProcessResponse
+	pingResponse, err := unmarshalConnectionPingResponse(resp, probe)
+	if err != nil {
+		return nil, err
 	}
 
 	probe.pingMessageSent()
@@ -118,71 +116,81 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 
 func (rhp *ReceptorHttpProxy) Close(ctx context.Context) error {
 
-	probe := createProbe(ctx)
+	probe := createProbe(ctx, "close_connection")
 
 	probe.closingConnection(rhp.AccountNumber, rhp.NodeID)
 
-	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
-	jsonStr, err := json.Marshal(postPayload)
+	jsonBytes, err := marshalConnectionKey(rhp.AccountNumber, rhp.NodeID, probe)
 	if err != nil {
-		probe.failedToSendCloseConnectionMessage("Unable to close connection.  Failed to marshal JSON payload.", err)
-		return errUnableToSendMessage
+		probe.failedToMarshalPayload(err)
+		return err
 	}
 
 	resp, err := makeHttpRequest(
 		ctx,
+		probe,
 		http.MethodPost,
 		rhp.generateUrl("connection/disconnect"),
 		rhp.AccountNumber,
 		rhp.Config,
-		bytes.NewBuffer(jsonStr),
+		bytes.NewBuffer(jsonBytes),
 	)
 
 	if err != nil {
-		probe.failedToSendCloseConnectionMessage("Unable to close connection.  Failed to create HTTP Request.", err)
+		probe.failedToMakeHttpRequest(err)
 		return errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
+
+	probe.recordHttpStatusCode(resp.StatusCode)
+
+	if resp.StatusCode != http.StatusOK {
+		probe.invalidHttpStatusCode(resp.StatusCode)
+		return nil
+	}
+
+	probe.connectionClosed(rhp.AccountNumber, rhp.NodeID)
 
 	return nil
 }
 
 func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{}, error) {
-	probe := createProbe(ctx)
+	probe := createProbe(ctx, "get_capabilities")
 
 	probe.gettingCapabilities(rhp.AccountNumber, rhp.NodeID)
 
-	postPayload := connectionID{rhp.AccountNumber, rhp.NodeID}
-	jsonStr, err := json.Marshal(postPayload)
+	jsonBytes, err := marshalConnectionKey(rhp.AccountNumber, rhp.NodeID, probe)
 	if err != nil {
-		probe.failedToRetrieveCapabilities("Unable to retrieve capabilities.  Failed to marshal JSON payload.", err)
-		return nil, errUnableToSendMessage
+		probe.failedToMarshalPayload(err)
+		return nil, err
 	}
 
 	resp, err := makeHttpRequest(
 		ctx,
+		probe,
 		http.MethodPost,
 		rhp.generateUrl("connection/status"),
 		rhp.AccountNumber,
 		rhp.Config,
-		bytes.NewBuffer(jsonStr),
+		bytes.NewBuffer(jsonBytes),
 	)
 
 	if err != nil {
-		probe.failedToRetrieveCapabilities("Unable to retrieve capabilities.  Failed to create HTTP Request.", err)
+		probe.failedToMakeHttpRequest(err)
 		return nil, errUnableToSendMessage
 	}
 
 	defer resp.Body.Close()
 
-	statusResponse := connectionStatusResponse{}
+	probe.recordHttpStatusCode(resp.StatusCode)
 
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&statusResponse); err != nil {
-		probe.failedToRetrieveCapabilities("Unable to read response from receptor-gateway", err)
-		return nil, errUnableToProcessResponse
+	statusResponse, err := unmarshalConnectionStatusResponse(resp, probe)
+	if err != nil {
+		return nil, err
 	}
+
+	probe.retrievedCapabilities(rhp.AccountNumber, rhp.NodeID)
 
 	return statusResponse.Capabilities, nil
 }
@@ -195,7 +203,78 @@ func (rhp *ReceptorHttpProxy) generateUrl(path string) string {
 		path)
 }
 
-func makeHttpRequest(ctx context.Context, method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
+func marshalJobRequest(accountNumber, recipient string, payload interface{}, directive string, probe *receptorHttpProxyProbe) ([]byte, error) {
+	postPayload := jobRequest{accountNumber, recipient, payload, directive}
+	jsonBytes, err := json.Marshal(postPayload)
+	if err != nil {
+		probe.failedToMarshalPayload(err)
+		return nil, errUnableToSendMessage
+	}
+
+	return jsonBytes, nil
+}
+
+func unmarshalJobResponse(resp *http.Response, probe *receptorHttpProxyProbe) (*jobResponse, error) {
+
+	jobResponse := jobResponse{}
+	if resp.StatusCode != http.StatusCreated {
+		probe.invalidHttpStatusCode(resp.StatusCode)
+		return nil, errUnableToProcessResponse
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&jobResponse); err != nil {
+		probe.failedToUnmarshalResponse(err)
+		return nil, errUnableToProcessResponse
+	}
+
+	return &jobResponse, nil
+}
+
+func unmarshalConnectionPingResponse(resp *http.Response, probe *receptorHttpProxyProbe) (*connectionPingResponse, error) {
+	if resp.StatusCode != http.StatusOK {
+		probe.invalidHttpStatusCode(resp.StatusCode)
+		return nil, errUnableToProcessResponse
+	}
+
+	pingResponse := connectionPingResponse{}
+
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&pingResponse); err != nil {
+		probe.failedToUnmarshalResponse(err)
+		return nil, errUnableToProcessResponse
+	}
+
+	return &pingResponse, nil
+}
+
+func unmarshalConnectionStatusResponse(resp *http.Response, probe *receptorHttpProxyProbe) (*connectionStatusResponse, error) {
+	if resp.StatusCode != http.StatusOK {
+		probe.invalidHttpStatusCode(resp.StatusCode)
+		return nil, errUnableToProcessResponse
+	}
+
+	statusResponse := connectionStatusResponse{}
+
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&statusResponse); err != nil {
+		probe.failedToUnmarshalResponse(err)
+		return nil, errUnableToProcessResponse
+	}
+
+	return &statusResponse, nil
+}
+
+func marshalConnectionKey(accountNumber, recipient string, probe *receptorHttpProxyProbe) ([]byte, error) {
+	postPayload := connectionID{accountNumber, recipient}
+	jsonBytes, err := json.Marshal(postPayload)
+	if err != nil {
+		return nil, err
+	}
+	return jsonBytes, nil
+}
+
+func makeHttpRequest(ctx context.Context, probe *receptorHttpProxyProbe, method, url, accountNumber string, config *config.Config, body io.Reader) (*http.Response, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, config.JobReceiverReceptorProxyTimeout)
 	defer cancel()
@@ -211,7 +290,12 @@ func makeHttpRequest(ctx context.Context, method, url, accountNumber string, con
 
 	addRequestIdHeader(req.Header, ctx)
 
-	return http.DefaultClient.Do(req.WithContext(ctx))
+	startTime := time.Now()
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	elapsedTime := time.Since(startTime)
+	probe.recordRemoteCallDuration(elapsedTime)
+
+	return resp, err
 }
 
 func addPreSharedKeyHeaders(headers http.Header, config *config.Config, accountNumber string) {
