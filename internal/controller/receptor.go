@@ -225,6 +225,9 @@ func (r *ReceptorService) waitForResponse(msgSenderCtx context.Context, response
 
 func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessage) {
 
+	logger := r.logger.WithFields(logrus.Fields{"in_response_to": payloadMessage.Data.InResponseTo,
+		"message_id": payloadMessage.Data.MessageID})
+
 	responseMessage := ResponseMessage{
 		AccountNumber: r.AccountNumber,
 		Sender:        payloadMessage.RoutingInfo.Sender,
@@ -238,30 +241,27 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	inResponseTo, err := uuid.Parse(payloadMessage.Data.InResponseTo)
 	if err != nil {
-		r.logger.Infof("Unable to convert InResponseTo field into a UUID while dispatching the response.  "+
-			"  Error: %s, Message: %+v", err, payloadMessage.Data.InResponseTo)
+		logger.WithFields(logrus.Fields{"error": err}).Error("Unable to convert " +
+			" InResponseTo field into a UUID while dispatching the response")
 		return
 	}
 
 	responseChannel, _ := r.responseDispatcherRegistrar.GetDispatchChannel(inResponseTo)
 
 	if responseChannel != nil {
-		r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo,
-			"message_id": responseMessage.MessageID}).Info("Adding response message to response channel")
+		logger.Info("Adding response message to response channel")
 		responseChannel <- responseMessage
 		return
 	}
 
-	r.logger.WithFields(logrus.Fields{"in_response_to": inResponseTo,
-		"message_id": responseMessage.MessageID}).Info("Dispatching response message")
+	logger.Info("Dispatching response message")
 
 	jsonResponseMessage, err := json.Marshal(responseMessage)
 	if err != nil {
-		r.logger.Info("JSON marshal of ResponseMessage failed, err:", err)
+		logger.WithFields(logrus.Fields{"error": err}).Error("JSON marshal of ResponseMessage failed")
 		return
 	}
 
-	// FIXME:  spawn a go routine here?  Make sure to honor the ctx
 	go func() {
 		metrics.responseKafkaWriterGoRoutineGauge.Inc()
 		err = r.kafkaWriter.WriteMessages(r.Transport.Ctx,
@@ -271,7 +271,7 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 			})
 
 		if err != nil {
-			r.logger.WithFields(logrus.Fields{"error": err}).Warn("Error writing response message to kafka")
+			logger.WithFields(logrus.Fields{"error": err}).Error("Error writing response message to kafka")
 			metrics.responseKafkaWriterFailureCounter.Inc()
 		}
 
