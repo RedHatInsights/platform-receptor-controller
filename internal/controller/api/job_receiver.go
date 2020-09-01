@@ -72,13 +72,7 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 		var client controller.Receptor
 		client = jr.connectionMgr.GetConnection(req.Context(), jobRequest.Account, jobRequest.Recipient)
 		if client == nil {
-			// The connection to the customer's receptor node was not available
-			errMsg := "No connection to the receptor node"
-			logger.Info(errMsg)
-			errorResponse := errorResponse{Title: errMsg,
-				Status: http.StatusNotFound,
-				Detail: errMsg}
-			writeJSONResponse(w, errorResponse.Status, errorResponse)
+			writeConnectionFailureResponse(logger, w)
 			return
 		}
 
@@ -90,6 +84,11 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 			[]string{jobRequest.Recipient},
 			jobRequest.Payload,
 			jobRequest.Directive)
+
+		if err == errDisconnectedNode {
+			writeConnectionFailureResponse(logger, w)
+			return
+		}
 
 		if err != nil {
 			logger.WithFields(logrus.Fields{"error": err}).Info("Error passing message to receptor")
@@ -106,4 +105,14 @@ func (jr *JobReceiver) handleJob() http.HandlerFunc {
 
 		writeJSONResponse(w, http.StatusCreated, jobResponse)
 	}
+}
+
+func writeConnectionFailureResponse(logger *logrus.Entry, w http.ResponseWriter) {
+	// The connection to the customer's receptor node was not available
+	errMsg := "No connection to the receptor node"
+	logger.Info(errMsg)
+	errorResponse := errorResponse{Title: errMsg,
+		Status: http.StatusNotFound,
+		Detail: errMsg}
+	writeJSONResponse(w, errorResponse.Status, errorResponse)
 }

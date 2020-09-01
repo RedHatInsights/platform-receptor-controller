@@ -190,6 +190,13 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		pingResponse.Status = CONNECTED_STATUS
 		var err error
 		pingResponse.Payload, err = client.Ping(req.Context(), connID.Account, connID.NodeID, []string{connID.NodeID})
+
+		if pingResponse.Payload == nil {
+			pingResponse.Status = DISCONNECTED_STATUS
+			writeJSONResponse(w, http.StatusOK, pingResponse)
+			return
+		}
+
 		if err != nil {
 			errorResponse := errorResponse{Title: "Ping failed",
 				Status: http.StatusBadRequest,
