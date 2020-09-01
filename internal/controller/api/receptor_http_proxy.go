@@ -19,6 +19,7 @@ import (
 var (
 	errUnableToSendMessage     = errors.New("unable to send message")
 	errUnableToProcessResponse = errors.New("unable to process response")
+	errDisconnectedNode        = errors.New("disconnected node")
 )
 
 type ReceptorHttpProxy struct {
@@ -111,6 +112,10 @@ func (rhp *ReceptorHttpProxy) Ping(ctx context.Context, accountNumber string, re
 
 	probe.pingMessageSent()
 
+	if pingResponse.Status == DISCONNECTED_STATUS {
+		return nil, errDisconnectedNode
+	}
+
 	return pingResponse.Payload, nil
 }
 
@@ -192,6 +197,10 @@ func (rhp *ReceptorHttpProxy) GetCapabilities(ctx context.Context) (interface{},
 
 	probe.retrievedCapabilities(rhp.AccountNumber, rhp.NodeID)
 
+	if statusResponse.Status == DISCONNECTED_STATUS {
+		return nil, errDisconnectedNode
+	}
+
 	return statusResponse.Capabilities, nil
 }
 
@@ -219,6 +228,9 @@ func unmarshalJobResponse(resp *http.Response, probe *receptorHttpProxyProbe) (*
 	jobResponse := jobResponse{}
 	if resp.StatusCode != http.StatusCreated {
 		probe.invalidHttpStatusCode(resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, errDisconnectedNode
+		}
 		return nil, errUnableToProcessResponse
 	}
 
