@@ -110,7 +110,8 @@ func InitLogger() {
 			logLevel = logrus.FatalLevel
 		}
 
-		formatter := NewCloudwatchFormatter()
+		//formatter := NewCloudwatchFormatter()
+		formatter := &logrus.TextFormatter{}
 
 		Log = &logrus.Logger{
 			Out:          os.Stdout,

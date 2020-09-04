@@ -183,12 +183,14 @@ func (s *ManagementServer) handleConnectionPing() http.HandlerFunc {
 		pingResponse := connectionPingResponse{Status: DISCONNECTED_STATUS}
 		client := s.connectionMgr.GetConnection(req.Context(), connID.Account, connID.NodeID)
 		if client == nil {
+			fmt.Println("COULD NOT FIND CONNECTION")
 			writeJSONResponse(w, http.StatusOK, pingResponse)
 			return
 		}
 
 		pingResponse.Status = CONNECTED_STATUS
 		var err error
+		fmt.Println("Calling Ping")
 		pingResponse.Payload, err = client.Ping(req.Context(), connID.Account, connID.NodeID, []string{connID.NodeID})
 
 		if pingResponse.Payload == nil {

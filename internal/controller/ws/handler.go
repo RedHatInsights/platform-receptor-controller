@@ -1,15 +1,19 @@
 package ws
 
 import (
-	"context"
+	//"context"
+	"fmt"
+	//"io"
 	"net/http"
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
+
+	netcLogger "github.com/project-receptor/receptor/pkg/logger"
+	"github.com/project-receptor/receptor/pkg/netceptor"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -46,6 +50,9 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
+		netcLogger.SetLogLevel(netcLogger.DebugLevel)
+		//netcLogger.SetShowTrace(true)
+
 		upgrader := &websocket.Upgrader{ReadBufferSize: rc.config.SocketBufferSize, WriteBufferSize: rc.config.SocketBufferSize}
 
 		requestId := request_id.GetReqID(req.Context())
@@ -68,56 +75,41 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		logger.Info("Accepted websocket connection")
 
-		client := &rcClient{
-			account:        rhIdentity.Identity.AccountNumber,
-			config:         rc.config,
-			socket:         socket,
-			send:           make(chan controller.ReceptorMessage, rc.config.BufferedChannelSize),
-			controlChannel: make(chan controller.ReceptorMessage, rc.config.BufferedChannelSize),
-			errorChannel:   make(chan controller.ReceptorErrorMessage),
-			recv:           make(chan protocol.Message, rc.config.BufferedChannelSize),
-			logger:         logger,
-		}
-
 		ctx := req.Context()
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		client.cancel = cancel
 
-		transport := &controller.Transport{
-			Send:           client.send,
-			Recv:           client.recv,
-			ControlChannel: client.controlChannel,
-			ErrorChannel:   client.errorChannel,
-			Cancel:         client.cancel,
-			Ctx:            ctx,
+		closeChan := make(chan struct{})
+
+		backend := &NetceptorRCBackend{
+			conn:      socket,
+			closeChan: closeChan,
 		}
 
-		responseReactor := rc.responseReactorFactory.NewResponseReactor(logger, transport.Recv)
-
-		handshakeHandler := controller.HandshakeHandler{
-			Transport:                transport,
-			ReceptorServiceFactory:   rc.receptorServiceFactory,
-			ResponseReactor:          responseReactor,
-			AccountNumber:            rhIdentity.Identity.AccountNumber,
-			NodeID:                   rc.config.ReceptorControllerNodeId,
-			ConnectionMgr:            rc.connectionMgr,
-			MessageDispatcherFactory: rc.messageDispatcherFactory,
-			Logger:                   logger,
+		controllerNode := netceptor.New(ctx, rc.config.ReceptorControllerNodeId, nil)
+		fmt.Println("calling AddBackend")
+		err = controllerNode.AddBackend(backend, 1.0, nil)
+		fmt.Println("called AddBackend")
+		if err != nil {
+			fmt.Printf("Error adding backend to netceptor: %s\n", err)
+			panic("AH!")
 		}
-		responseReactor.RegisterHandler(protocol.HiMessageType, handshakeHandler)
 
-		go responseReactor.Run(ctx)
+		fmt.Println("NEW - controllerNode.Status(): ", controllerNode.Status())
 
-		socket.SetReadLimit(rc.config.MaxMessageSize)
+		receptorObj := NetceptorClient{controllerNode}
 
-		defer socket.Close()
+		// FIXME:
+		peerNodeID := "node-b"
 
-		// Should the client have a 'handler' function that manages the connection?
-		// ex. setting up ping pong, timeouts, cleanup, and calling the goroutines
-		// go messageDispatcher.StartDispatchingMessages(ctx, client.send)
-		go client.write(ctx)
-		client.read(ctx)
+		err = rc.connectionMgr.Register(ctx, rhIdentity.Identity.AccountNumber, peerNodeID, receptorObj)
+		if err != nil {
+			fmt.Println("Error registering receptor connection with connection manager")
+		}
+
+		fmt.Println("Blocking main HTTP go routine here")
+		controllerNode.BackendWait()
+		fmt.Println("main HTTP go routine unblocked...leaving")
+
+		rc.connectionMgr.Unregister(ctx, rhIdentity.Identity.AccountNumber, peerNodeID)
 
 		logger.Info("Closing websocket connection")
 	}
