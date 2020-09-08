@@ -33,6 +33,8 @@ mkdir -p $INSTALL_DIR
 cp gateway $INSTALL_DIR
 cp job-receiver $INSTALL_DIR
 cp response_consumer $INSTALL_DIR
+cp connection_util $INSTALL_DIR
+cp connection_cleaner $INSTALL_DIR
 
 echo "---> Copying openapi spec into place..."
 mkdir -p $API_SPEC_DIR
