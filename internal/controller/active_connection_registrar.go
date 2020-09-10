@@ -127,12 +127,11 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 
 				if isPodRunning(cfg.GatewayClusterServiceName, hostNameFromRedis) == true {
 					// the connection metadata exists and the pod is still running
-					logger.Warn("Another connection exists...closing this connection")
-					// FIXME:  I don't really like this...it seems dirty but I'm not sure how
-					// to cleanly start closing things down from here
-					receptor.Close(ctx)
+					closeConnectionDueToDuplication(ctx, logger, receptor)
 					return
 				} else {
+					metrics.unregisterStaleConnectionFromRedis.Inc()
+
 					// the connection metadata exists but pod no longer exists
 					UnregisterWithRedis(redisClient, account, nodeID, hostNameFromRedis)
 
@@ -149,16 +148,23 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 func registerAndCloseConnectionOnDuplicate(ctx context.Context, logger *logrus.Entry, redisClient *redis.Client, account string, nodeID string, hostname string, receptor Receptor) error {
 	err := RegisterWithRedis(redisClient, account, nodeID, hostname)
 
+	metrics.reRegisterConnectionWithRedis.Inc()
+
 	if _, ok := err.(*DuplicateConnectionError); ok {
-		// Another connection beat us to the punch...We've gotta close the connection
-		logger.Warn("Another connection was created before this one...closing connection")
-		// FIXME:  I don't really like this...it seems dirty but I'm not sure how
-		// to cleanly start closing things down from here
-		receptor.Close(ctx)
+		closeConnectionDueToDuplication(ctx, logger, receptor)
 		return err
 	}
 
 	return err
+}
+
+func closeConnectionDueToDuplication(ctx context.Context, logger *logrus.Entry, receptor Receptor) {
+	// Another connection beat us to the punch...We've gotta close the connection
+	logger.Warn("Another connection was created before this one...closing connection")
+	metrics.autoConnectionClosureDueToDuplicateConnection.Inc()
+	// FIXME:  I don't really like this...it seems dirty but I'm not sure how
+	// to cleanly start closing things down from here
+	receptor.Close(ctx)
 }
 
 type RunningPods map[string]bool
@@ -166,12 +172,10 @@ type RunningPods map[string]bool
 func getRunningPods(dnsName string) (RunningPods, error) {
 	runningPodMap := make(RunningPods)
 
-	//hostnames := []string{"192.168.1.34", "192.168.2.43", "10.188.249.243"}
-
-	fmt.Println("Looking up IP addresses for pod ", dnsName)
 	hostnames, err := net.LookupHost(dnsName)
 	if err != nil {
-		fmt.Println("Unable to locate running pods")
+		logger.Log.WithFields(logrus.Fields{"error": err}).Warnf("Unable to locate running pods.  DNS entry for %s was not found", dnsName)
+		metrics.podRunningStatusLookupFailure.Inc()
 		return nil, err
 	}
 

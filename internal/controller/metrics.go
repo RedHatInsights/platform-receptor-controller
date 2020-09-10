@@ -11,6 +11,11 @@ type Metrics struct {
 	responseKafkaWriterFailureCounter    prometheus.Counter
 	responseMessageWithoutHandlerCounter prometheus.Counter
 	responseMessageHandledCounter        prometheus.Counter
+
+	podRunningStatusLookupFailure                 prometheus.Counter
+	autoConnectionClosureDueToDuplicateConnection prometheus.Counter
+	reRegisterConnectionWithRedis                 prometheus.Counter
+	unregisterStaleConnectionFromRedis            prometheus.Counter
 }
 
 func NewMetrics() *Metrics {
@@ -39,6 +44,26 @@ func NewMetrics() *Metrics {
 	metrics.responseMessageHandledCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_response_message_handled_count",
 		Help: "The number of response messages handled",
+	})
+
+	metrics.podRunningStatusLookupFailure = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_pod_running_status_lookup_failure_count",
+		Help: "The number of times a pod running status lookup has failed",
+	})
+
+	metrics.autoConnectionClosureDueToDuplicateConnection = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_auto_connection_closure_due_to_duplicate_connection",
+		Help: "The number of times a connection has been closed due to locating a duplication connection",
+	})
+
+	metrics.reRegisterConnectionWithRedis = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_reregister_connection_with_redis",
+		Help: "The number of times a connection has been re-registered with redis",
+	})
+
+	metrics.unregisterStaleConnectionFromRedis = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_unregister_stale_connection_from_redis",
+		Help: "The number of times a stale connection has been unregistered from redis",
 	})
 
 	return metrics
