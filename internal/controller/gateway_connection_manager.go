@@ -25,11 +25,6 @@ func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar, ac
 	}
 }
 
-// entry does not exist
-// entry exists with right hostname
-// entry exists with wrong hostname
-// - does hostname exist??
-
 func (rcm *GatewayConnectionRegistrar) Register(ctx context.Context, account string, nodeID string, client Receptor) error {
 	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
 
