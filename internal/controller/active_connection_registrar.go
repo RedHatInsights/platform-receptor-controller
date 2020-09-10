@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	//	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/go-redis/redis"
 
@@ -21,6 +21,7 @@ type ActiveConnectionRegistrarFactory interface {
 }
 
 type RedisActiveConnectionRegistrarFactory struct {
+	config          *config.Config
 	redisClient     *redis.Client
 	hostname        string
 	cancellationMap cancellationMap
@@ -35,12 +36,13 @@ func buildCancelMapKey(account, nodeID string) string {
 	return fmt.Sprintf("%s:%s", account, nodeID)
 }
 
-func NewActiveConnectionRegistrarFactory(rdc *redis.Client, hostname string) ActiveConnectionRegistrarFactory {
+func NewActiveConnectionRegistrarFactory(cfg *config.Config, rdc *redis.Client, hostname string) ActiveConnectionRegistrarFactory {
 	cancelFuncsMap := cancellationMap{
 		cancelFuncs: make(map[string]context.CancelFunc),
 	}
 
 	factory := RedisActiveConnectionRegistrarFactory{
+		config:          cfg,
 		redisClient:     rdc,
 		hostname:        hostname,
 		cancellationMap: cancelFuncsMap,
@@ -57,7 +59,7 @@ func (f *RedisActiveConnectionRegistrarFactory) StartActiveRegistrar(ctx context
 
 	logger.Debug("Starting ActiveConnectionRegistrar")
 
-	go startActiveRegistrar(ctx, logger, f.redisClient, account, nodeID, f.hostname, client)
+	go startActiveRegistrar(ctx, logger, f.config, f.redisClient, account, nodeID, f.hostname, client)
 
 	f.cancellationMap.Lock()
 	f.cancellationMap.cancelFuncs[buildCancelMapKey(account, nodeID)] = cancel
@@ -90,9 +92,9 @@ func (f *RedisActiveConnectionRegistrarFactory) StopActiveRegistrar(ctx context.
 	return nil
 }
 
-func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, redisClient *redis.Client, account string, nodeID string, hostname string, receptor Receptor) {
+func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config.Config, redisClient *redis.Client, account string, nodeID string, hostname string, receptor Receptor) {
 
-	ticker := time.NewTicker(5 * time.Second) // FIXME:  Make this configurable
+	ticker := time.NewTicker(cfg.GatewayActiveConnectionRegistrarPollDelay)
 
 	for {
 		logger.Info("**** Active Connection entering select")
@@ -123,7 +125,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, redisClient
 			} else if hostNameFromRedis != hostname {
 				logger.Debug("Host name from redis doesn't match our host name")
 
-				if isPodRunning("FIXME", hostNameFromRedis) == true {
+				if isPodRunning(cfg.GatewayClusterServiceName, hostNameFromRedis) == true {
 					// the connection metadata exists and the pod is still running
 					logger.Warn("Another connection exists...closing this connection")
 					// FIXME:  I don't really like this...it seems dirty but I'm not sure how
