@@ -63,7 +63,13 @@ func (c *rcClient) read(ctx context.Context) {
 
 		c.logger.Tracef("Received message: %+v", message)
 
-		c.recv <- message
+		select {
+		case <-ctx.Done():
+			c.logger.Info("Reader received Done signal: ", ctx.Err())
+			return
+		case c.recv <- message:
+			break
+		}
 	}
 }
 
