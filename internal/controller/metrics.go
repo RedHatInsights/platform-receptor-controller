@@ -53,17 +53,17 @@ func NewMetrics() *Metrics {
 	})
 
 	metrics.autoConnectionClosureDueToDuplicateConnection = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_auto_connection_closure_due_to_duplicate_connection",
+		Name: "receptor_controller_auto_connection_closure_due_to_duplicate_connection_count",
 		Help: "The number of times a connection has been closed due to locating a duplication connection",
 	})
 
 	metrics.reRegisterConnectionWithRedis = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_reregister_connection_with_redis",
+		Name: "receptor_controller_reregister_connection_with_redis_count",
 		Help: "The number of times a connection has been re-registered with redis",
 	})
 
 	metrics.unregisterStaleConnectionFromRedis = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "receptor_controller_unregister_stale_connection_from_redis",
+		Name: "receptor_controller_unregister_stale_connection_from_redis_count",
 		Help: "The number of times a stale connection has been unregistered from redis",
 	})
 
