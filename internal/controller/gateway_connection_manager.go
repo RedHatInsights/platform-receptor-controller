@@ -10,44 +10,52 @@ import (
 )
 
 type GatewayConnectionRegistrar struct {
-	redisClient              *redis.Client
-	localConnectionRegistrar ConnectionRegistrar
-	hostname                 string
+	redisClient                      *redis.Client
+	localConnectionRegistrar         ConnectionRegistrar
+	hostname                         string
+	activeConnectionRegistrarFactory ActiveConnectionRegistrarFactory
 }
 
-func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar, host string) ConnectionRegistrar {
+func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar, acrf ActiveConnectionRegistrarFactory, host string) ConnectionRegistrar {
 	return &GatewayConnectionRegistrar{
-		redisClient:              rdc,
-		localConnectionRegistrar: cm,
-		hostname:                 host,
+		redisClient:                      rdc,
+		localConnectionRegistrar:         cm,
+		hostname:                         host,
+		activeConnectionRegistrarFactory: acrf,
 	}
 }
 
-func (rcm *GatewayConnectionRegistrar) Register(ctx context.Context, account string, node_id string, client Receptor) error {
-	if ExistsInRedis(rcm.redisClient, account, node_id) { // checking connection globally
-		logger := logger.Log.WithFields(logrus.Fields{"account": account, "node_id": node_id})
+func (rcm *GatewayConnectionRegistrar) Register(ctx context.Context, account string, nodeID string, client Receptor) error {
+	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
+
+	if ExistsInRedis(rcm.redisClient, account, nodeID) { // checking connection globally
 		logger.Warn("Attempting to register duplicate connection")
 		metrics.duplicateConnectionCounter.Inc()
 		return DuplicateConnectionError{}
 	}
 
-	err := RegisterWithRedis(rcm.redisClient, account, node_id, rcm.hostname)
+	err := RegisterWithRedis(rcm.redisClient, account, nodeID, rcm.hostname)
 	if err != nil {
 		return err
 	}
 
-	err = rcm.localConnectionRegistrar.Register(ctx, account, node_id, client)
+	err = rcm.localConnectionRegistrar.Register(ctx, account, nodeID, client)
 	if err != nil {
-		rcm.Unregister(ctx, account, node_id)
+		rcm.Unregister(ctx, account, nodeID)
 		return err
 	}
 
-	logger.Log.Printf("Registered a connection (%s, %s)", account, node_id)
+	rcm.activeConnectionRegistrarFactory.StartActiveRegistrar(ctx, account, nodeID, rcm.hostname, client)
+
+	logger.Printf("Registered a connection (%s, %s)", account, nodeID)
 	return nil
 }
 
-func (rcm *GatewayConnectionRegistrar) Unregister(ctx context.Context, account string, node_id string) {
-	UnregisterWithRedis(rcm.redisClient, account, node_id, rcm.hostname)
-	rcm.localConnectionRegistrar.Unregister(ctx, account, node_id)
-	logger.Log.Printf("Unregistered a connection (%s, %s)", account, node_id)
+func (rcm *GatewayConnectionRegistrar) Unregister(ctx context.Context, account string, nodeID string) {
+	UnregisterWithRedis(rcm.redisClient, account, nodeID, rcm.hostname)
+	rcm.localConnectionRegistrar.Unregister(ctx, account, nodeID)
+
+	rcm.activeConnectionRegistrarFactory.StopActiveRegistrar(ctx, account, nodeID)
+
+	logger.Log.Printf("Unregistered a connection (%s, %s)", account, nodeID)
 }
