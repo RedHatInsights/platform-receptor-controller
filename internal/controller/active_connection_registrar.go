@@ -107,8 +107,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 			hostNameFromRedis, err := GetRedisConnection(redisClient, account, nodeID)
 			if err != nil && err != redis.Nil {
 				// possible transient error
-				// FIXME: increment a redis connection error metric
-				// FIXME: log it
+				metrics.redisConnectionError.Inc()
 				logger.Warn("Error getting connection from redis:", err)
 				continue
 			}

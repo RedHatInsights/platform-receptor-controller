@@ -16,6 +16,7 @@ type Metrics struct {
 	autoConnectionClosureDueToDuplicateConnection prometheus.Counter
 	reRegisterConnectionWithRedis                 prometheus.Counter
 	unregisterStaleConnectionFromRedis            prometheus.Counter
+	redisConnectionError                          prometheus.Counter
 }
 
 func NewMetrics() *Metrics {
@@ -64,6 +65,11 @@ func NewMetrics() *Metrics {
 	metrics.unregisterStaleConnectionFromRedis = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "receptor_controller_unregister_stale_connection_from_redis",
 		Help: "The number of times a stale connection has been unregistered from redis",
+	})
+
+	metrics.redisConnectionError = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_redis_connection_error_count",
+		Help: "The number of times a redis connection error has occurred",
 	})
 
 	return metrics
