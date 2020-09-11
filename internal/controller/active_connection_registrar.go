@@ -97,13 +97,12 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 	ticker := time.NewTicker(cfg.GatewayActiveConnectionRegistrarPollDelay)
 
 	for {
-		logger.Info("**** Active Connection entering select")
 		select {
 		case <-ctx.Done():
-			logger.Info("**** Active Connection Registrar cancelled: ", ctx.Err())
+			logger.Debug("Active Connection Registrar cancelled: ", ctx.Err())
 			return
 		case <-ticker.C:
-			logger.Info("**** Active Connection Registrar running")
+			logger.Debug("Active Connection Registrar running")
 
 			hostNameFromRedis, err := GetRedisConnection(redisClient, account, nodeID)
 			if err != nil && err != redis.Nil {
@@ -114,7 +113,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 				continue
 			}
 
-			logger.Info("hostNameFromRedis:", hostNameFromRedis)
+			logger.Debug("hostNameFromRedis:", hostNameFromRedis)
 
 			if hostNameFromRedis == "" { // Connection is not registered
 				err := registerAndCloseConnectionOnDuplicate(ctx, logger, redisClient, account, nodeID, hostname, receptor)
