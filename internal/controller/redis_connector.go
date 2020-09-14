@@ -5,6 +5,7 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
 )
 
 var allConnectionsKey = "connections"
@@ -38,12 +39,14 @@ func removeIndexes(client *redis.Client, account, nodeID, hostname string) {
 }
 
 func ExistsInRedis(client *redis.Client, account, nodeID string) bool {
-	return client.Exists(account+":"+nodeID).Val() != 0
+	return client.Exists(getPodIndexVal(account, nodeID)).Val() != 0
 }
 
 func RegisterWithRedis(client *redis.Client, account, nodeID, hostname string) error {
 	var res bool
 	var regErr error
+
+	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
 
 	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
 		res, regErr = client.SetNX(getConnectionKey(account, nodeID), hostname, 0).Result()
@@ -54,19 +57,21 @@ func RegisterWithRedis(client *redis.Client, account, nodeID, hostname string) e
 	})
 
 	if err != nil {
-		logger.Log.Print("Error attempting to register connection to Redis")
+		logRedisError(logger, err)
 		return err
 	}
 	if !res {
-		logger.Log.Printf("Connection (%s, %s) already found. Not registering.", account, nodeID)
+		logger.Infof("Connection (%s, %s) already found. Not registering.", account, nodeID)
 		return DuplicateConnectionError{}
 	}
 
-	logger.Log.Printf("Registered a connection (%s, %s) to Redis", account, nodeID)
+	logger.Printf("Registered a connection (%s, %s) to Redis", account, nodeID)
 	return nil
 }
 
 func UnregisterWithRedis(client *redis.Client, account, nodeID, hostname string) {
+	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
+
 	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
 		client.Del(getConnectionKey(account, nodeID))
 		removeIndexes(client, account, nodeID, hostname)
@@ -74,18 +79,29 @@ func UnregisterWithRedis(client *redis.Client, account, nodeID, hostname string)
 	})
 
 	if err != nil {
-		logger.Log.Print("Error attempting to unregister connection from Redis")
+		logRedisError(logger, err)
+		logger.Warn("Error attempting to unregister connection from Redis")
 	}
 }
 
 func GetRedisConnection(client *redis.Client, account, nodeID string) (string, error) {
-	return client.Get(getConnectionKey(account, nodeID)).Result()
+	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
+
+	val, err := client.Get(getConnectionKey(account, nodeID)).Result()
+	if err != nil && err != redis.Nil {
+		logRedisError(logger, err)
+	}
+
+	return val, err
 }
 
 func GetRedisConnectionsByAccount(client *redis.Client, account string) (map[string]string, error) {
+	logger := logger.Log.WithFields(logrus.Fields{"account": account})
+
 	connectionsMap := make(map[string]string)
 	accountConnections, err := client.SMembers(account).Result()
 	if err != nil {
+		logRedisError(logger, err)
 		return connectionsMap, err
 	}
 	for _, conn := range accountConnections {
@@ -99,6 +115,7 @@ func GetRedisConnectionsByHost(client *redis.Client, hostname string) (map[strin
 	connectionsMap := make(map[string][]string)
 	podConnections, err := client.SMembers(hostname).Result()
 	if err != nil {
+		logRedisError(logrus.NewEntry(logger.Log), err)
 		return connectionsMap, err
 	}
 	for _, conn := range podConnections {
@@ -116,6 +133,7 @@ func GetAllRedisConnections(client *redis.Client) (map[string]map[string]string,
 	connectionsMap := make(map[string]map[string]string)
 	allConnections, err := client.SMembers(allConnectionsKey).Result()
 	if err != nil {
+		logRedisError(logrus.NewEntry(logger.Log), err)
 		return connectionsMap, err
 	}
 	for _, conn := range allConnections {
@@ -127,4 +145,11 @@ func GetAllRedisConnections(client *redis.Client) (map[string]map[string]string,
 		connectionsMap[account][nodeID] = hostname
 	}
 	return connectionsMap, err
+}
+
+func logRedisError(logger *logrus.Entry, err error) {
+	if err != nil && err != redis.Nil {
+		metrics.redisConnectionError.Inc()
+		logger.WithFields(logrus.Fields{"error": err}).Warn("An error occurred while communicating with redis")
+	}
 }
