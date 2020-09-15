@@ -1997,7 +1997,7 @@ data:
     }
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-insights-receptor-general
+  name: grafana-dashboard-clouddot-insights-receptor-general
   labels:
     grafana_dashboard: "true"
   annotations:
