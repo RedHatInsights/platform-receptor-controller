@@ -7,6 +7,7 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
+	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -129,10 +130,10 @@ func (c *rcClient) write(ctx context.Context) {
 			return
 
 		case errMsg := <-c.errorChannel:
-			c.logger.WithFields(logrus.Fields{"error": errMsg.Error}).Error("Received an error from the sync layer")
+			logger.BuildErrorLogger(c.logger, errMsg.Error).Error("Received an error from the sync layer")
 
 			if err := c.verifyAccountNumber(errMsg.AccountNumber); err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Error("Account mismatch while processing error from the sync layer")
+				logger.BuildErrorLogger(c.logger, err).Error("Account mismatch while processing error from the sync layer")
 				break
 			}
 
@@ -145,7 +146,7 @@ func (c *rcClient) write(ctx context.Context) {
 			c.logger.Tracef("Sending message received from control channel: %+v", msg)
 			err := c.writeMessage(msg)
 			if err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a control message")
+				logger.BuildErrorLogger(c.logger, err).Error("Error while sending a control message")
 				return
 			}
 
@@ -153,7 +154,7 @@ func (c *rcClient) write(ctx context.Context) {
 			c.logger.Tracef("Sending message received from send channel: %+v", msg)
 			err := c.writeMessage(msg)
 			if err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a message")
+				logger.BuildErrorLogger(c.logger, err).Error("Error while sending a message")
 				return
 			}
 
@@ -161,7 +162,7 @@ func (c *rcClient) write(ctx context.Context) {
 			// c.logger.Debug("Sending a ping message")
 			c.socket.SetWriteDeadline(time.Now().Add(c.config.WriteWait))
 			if err := c.socket.WriteMessage(websocket.PingMessage, nil); err != nil {
-				c.logger.WithFields(logrus.Fields{"error": err}).Error("Error while sending a ping message")
+				logger.BuildErrorLogger(c.logger, err).Error("Error while sending a ping message")
 				return
 			}
 		}

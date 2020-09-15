@@ -6,14 +6,13 @@ import (
 
 	"github.com/RedHatInsights/platform-receptor-controller/internal/config"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller"
-	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
+	logging "github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 )
 
 type ReceptorController struct {
@@ -38,7 +37,7 @@ func NewReceptorController(cfg *config.Config, cm controller.ConnectionRegistrar
 
 func (rc *ReceptorController) Routes() {
 	router := rc.router.PathPrefix("/wss/receptor-controller").Subrouter()
-	router.Use(logger.AccessLoggerMiddleware, identity.EnforceIdentity)
+	router.Use(logging.AccessLoggerMiddleware, identity.EnforceIdentity)
 	router.HandleFunc("/gateway", rc.handleWebSocket()).Methods(http.MethodGet)
 }
 
@@ -51,10 +50,10 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		requestId := request_id.GetReqID(req.Context())
 		rhIdentity := identity.Get(req.Context())
 
-		logger := logger.Log.WithFields(logrus.Fields{
-			"account":    rhIdentity.Identity.AccountNumber,
-			"request_id": requestId,
-		})
+		logger := logging.NewLoggerWithFields(
+			logging.AccountField(rhIdentity.Identity.AccountNumber),
+			logging.RequestIDField(requestId),
+		)
 
 		metrics.TotalConnectionCounter.Inc()
 		metrics.ActiveConnectionCounter.Inc()
@@ -62,7 +61,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 
 		socket, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			logger.WithFields(logrus.Fields{"error": err}).Error("Upgrading to a websocket connection failed")
+			logging.AddFieldsToLogger(logger, logging.ErrorField(err)).Error("Upgrading to a websocket connection failed")
 			return
 		}
 

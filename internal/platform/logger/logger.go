@@ -133,3 +133,55 @@ func InitLogger() {
 		}
 	})
 }
+
+type FieldOption func(logrus.Fields)
+
+func AccountField(account string) FieldOption {
+	return func(fields logrus.Fields) {
+		fields["account"] = account
+	}
+}
+
+func RequestIDField(requestID string) FieldOption {
+	return func(fields logrus.Fields) {
+		fields["request_id"] = requestID
+	}
+}
+
+func PeerNodeIDField(peerID string) FieldOption {
+	return func(fields logrus.Fields) {
+		fields["peer_node_id"] = peerID
+	}
+}
+
+func NodeIDField(nodeID string) FieldOption {
+	return func(fields logrus.Fields) {
+		fields["node_id"] = nodeID
+	}
+}
+
+func ErrorField(err error) FieldOption {
+	return func(fields logrus.Fields) {
+		fields["error"] = err
+	}
+}
+
+func NewLoggerWithFields(fieldConfigFuncs ...FieldOption) *logrus.Entry {
+	fields := make(logrus.Fields)
+	for _, fieldConfigFuncs := range fieldConfigFuncs {
+		fieldConfigFuncs(fields)
+	}
+	return Log.WithFields(fields)
+}
+
+func BuildErrorLogger(logger *logrus.Entry, err error) *logrus.Entry {
+	return AddFieldsToLogger(logger, ErrorField(err))
+}
+
+func AddFieldsToLogger(logger *logrus.Entry, fieldConfigFuncs ...FieldOption) *logrus.Entry {
+	fields := make(logrus.Fields)
+	for _, fieldConfigFuncs := range fieldConfigFuncs {
+		fieldConfigFuncs(fields)
+	}
+	return logger.WithFields(fields)
+}
