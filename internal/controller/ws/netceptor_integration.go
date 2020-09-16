@@ -22,27 +22,31 @@ type recvResult struct {
 type NetceptorRCBackend struct {
 	conn      *websocket.Conn
 	closeChan chan struct{}
+	ctx       context.Context
+	cancel    context.CancelFunc
 }
 
 func (nrcbs *NetceptorRCBackend) Start(ctx context.Context) (chan netceptor.BackendSession, error) {
 	fmt.Println("*** Starting backend!!")
-	sessChan := make(chan netceptor.BackendSession)
+	sessChan := make(chan netceptor.BackendSession, 1)
 
 	wsSession := &WebsocketSession{
 		conn:            nrcbs.conn,
 		recvChan:        make(chan *recvResult),
 		closeChan:       nrcbs.closeChan,
 		closeChanCloser: sync.Once{},
-		sessChan:        sessChan, // HACK??
+		//sessChan:        sessChan, // HACK??
+		ctx:    nrcbs.ctx,
+		cancel: nrcbs.cancel,
 	}
 
 	go recvChannelizer(nrcbs.conn, wsSession.recvChan)
 
-	go func() {
-		fmt.Println("Sending session to netceptor")
-		sessChan <- wsSession
-		fmt.Println("Sent session to netceptor")
-	}()
+	//go func() {
+	fmt.Println("Sending session to netceptor")
+	sessChan <- wsSession
+	fmt.Println("Sent session to netceptor")
+	//}()
 
 	return sessChan, nil
 }
@@ -59,7 +63,7 @@ func recvChannelizer(conn *websocket.Conn, recvChan chan *recvResult) {
 		fmt.Println("Sent data to netceptor")
 
 		if err != nil {
-			fmt.Println("Error from conn.ReadMessage(): %s", err)
+			fmt.Printf("Error from conn.ReadMessage(): %s\n", err)
 			fmt.Println("This avoids the leak")
 			return
 		}
@@ -71,7 +75,9 @@ type WebsocketSession struct {
 	recvChan        chan *recvResult
 	closeChan       chan struct{}
 	closeChanCloser sync.Once
-	sessChan        chan netceptor.BackendSession
+	//sessChan        chan netceptor.BackendSession
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // Send sends data over the session
@@ -105,7 +111,10 @@ func (ns *WebsocketSession) Close() error {
 			close(ns.closeChan)
 			ns.closeChan = nil
 
-			close(ns.sessChan) // This seems like a hack...but i gotta do this to get out of the outter loop
+			//close(ns.sessChan) // This seems like a hack...but i gotta do this to get out of the outter loop
+
+			fmt.Println("Calling cancel()")
+			ns.cancel()
 		})
 	}
 	return ns.conn.Close()
@@ -117,7 +126,7 @@ type NetceptorClient struct {
 
 func (nc NetceptorClient) SendMessage(ctx context.Context, account string, recipient string, route []string, payload interface{}, directive string) (*uuid.UUID, error) {
 
-	recipient = "node-b"
+	recipient = "node-a"
 	fmt.Println("***** SEND_MESSAGE: node: ", recipient)
 	conn, err := nc.ncObj.DialContext(ctx, recipient, "echo", nil)
 	if err != nil {
