@@ -1,7 +1,7 @@
 package ws
 
 import (
-	//"context"
+	"context"
 	"fmt"
 	//"io"
 	"net/http"
@@ -76,12 +76,16 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		logger.Info("Accepted websocket connection")
 
 		ctx := req.Context()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
 		closeChan := make(chan struct{})
 
 		backend := &NetceptorRCBackend{
 			conn:      socket,
 			closeChan: closeChan,
+			ctx:       ctx,
+			cancel:    cancel,
 		}
 
 		controllerNode := netceptor.New(ctx, rc.config.ReceptorControllerNodeId, nil)
