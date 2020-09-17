@@ -19,7 +19,7 @@ data:
       "gnetId": null,
       "graphTooltip": 0,
       "id": 72,
-      "iteration": 1600309669714,
+      "iteration": 1600311811248,
       "links": [],
       "panels": [
         {
@@ -1327,10 +1327,182 @@ data:
           "fill": 1,
           "fillGradient": 0,
           "gridPos": {
-            "h": 9,
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 25
+          },
+          "hiddenSeries": false,
+          "id": 55,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-switch-.*\"}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Go Routines",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
             "w": 12,
             "x": 0,
             "y": 33
+          },
+          "hiddenSeries": false,
+          "id": 54,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-gateway-.*\"}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Go Routines",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "$datasource",
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 41
           },
           "hiddenSeries": false,
           "id": 18,
@@ -1419,7 +1591,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 42
+            "y": 50
           },
           "hiddenSeries": false,
           "id": 8,
@@ -1508,7 +1680,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 51
+            "y": 59
           },
           "hiddenSeries": false,
           "id": 31,
@@ -1603,7 +1775,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 60
+            "y": 68
           },
           "heatmap": {},
           "hideZeroBuckets": false,
@@ -1661,7 +1833,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 69
+            "y": 77
           },
           "hiddenSeries": false,
           "id": 10,
@@ -1758,7 +1930,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 78
+            "y": 86
           },
           "hiddenSeries": false,
           "id": 16,
@@ -1847,7 +2019,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 87
+            "y": 95
           },
           "hiddenSeries": false,
           "id": 6,
@@ -1936,7 +2108,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 96
+            "y": 104
           },
           "hiddenSeries": false,
           "id": 7,
@@ -2025,7 +2197,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 105
+            "y": 113
           },
           "hiddenSeries": false,
           "id": 11,
@@ -2114,7 +2286,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 114
+            "y": 122
           },
           "hiddenSeries": false,
           "id": 4,
@@ -2203,7 +2375,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 123
+            "y": 131
           },
           "hiddenSeries": false,
           "id": 2,
@@ -2288,7 +2460,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 132
+            "y": 140
           },
           "id": 37,
           "panels": [],
@@ -2307,7 +2479,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 133
+            "y": 141
           },
           "hiddenSeries": false,
           "id": 39,
@@ -2397,7 +2569,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 133
+            "y": 141
           },
           "hiddenSeries": false,
           "id": 41,
@@ -2486,7 +2658,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 142
+            "y": 150
           },
           "hiddenSeries": false,
           "id": 43,
@@ -2576,7 +2748,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 142
+            "y": 150
           },
           "hiddenSeries": false,
           "id": 45,
@@ -2662,7 +2834,6 @@ data:
         "list": [
           {
             "current": {
-              "selected": true,
               "text": "crc-stg-01-prometheus",
               "value": "crc-stg-01-prometheus"
             },
@@ -2712,7 +2883,7 @@ data:
       "timezone": "",
       "title": "Receptor-Controller",
       "uid": "FRmd1NeWk1",
-      "version": 4553
+      "version": 4554
     }
 kind: ConfigMap
 metadata:
