@@ -18,12 +18,13 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 62,
-      "iteration": 1600285996797,
+      "id": 72,
+      "iteration": 1600309669714,
       "links": [],
       "panels": [
         {
           "content": "<center><h1>Receptor Gateway</h1></center>",
+          "datasource": null,
           "gridPos": {
             "h": 3,
             "w": 12,
@@ -33,11 +34,13 @@ data:
           "id": 47,
           "links": [],
           "mode": "html",
+          "options": {},
           "title": "",
           "type": "text"
         },
         {
           "content": "<center><h1>Receptor Switch</h1></center>",
+          "datasource": null,
           "gridPos": {
             "h": 3,
             "w": 12,
@@ -47,6 +50,7 @@ data:
           "id": 48,
           "links": [],
           "mode": "html",
+          "options": {},
           "title": "",
           "type": "text"
         },
@@ -112,7 +116,7 @@ data:
           "tableColumn": "",
           "targets": [
             {
-              "expr": "sum(up{app=\"receptor-gateway\", name=\"receptor-gateway\", kubernetes_namespace=~\"receptor-.*\"})",
+              "expr": "sum(up{app=\"receptor-gateway\", name=\"receptor-gateway\", namespace=~\"receptor-.*\"})",
               "format": "time_series",
               "groupBy": [
                 {
@@ -2279,6 +2283,7 @@ data:
         },
         {
           "collapsed": false,
+          "datasource": null,
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -2297,12 +2302,14 @@ data:
           "dashes": false,
           "datasource": "$datasource",
           "fill": 1,
+          "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 0,
             "y": 133
           },
+          "hiddenSeries": false,
           "id": 39,
           "legend": {
             "avg": false,
@@ -2317,6 +2324,9 @@ data:
           "linewidth": 1,
           "links": [],
           "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
           "percentage": false,
           "pointradius": 5,
           "points": false,
@@ -2327,7 +2337,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(container_cpu_usage_seconds_total{container_name=\"redis\", namespace=~\"receptor-.*\"}[5m])",
+              "expr": "rate(container_cpu_usage_seconds_total{container=\"redis\", namespace=~\"receptor-.*\"}[5m])",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod_name}}:{{container_name}}",
@@ -2382,12 +2392,14 @@ data:
           "dashes": false,
           "datasource": "$datasource",
           "fill": 1,
+          "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 12,
             "y": 133
           },
+          "hiddenSeries": false,
           "id": 41,
           "legend": {
             "avg": false,
@@ -2402,6 +2414,9 @@ data:
           "linewidth": 1,
           "links": [],
           "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
           "percentage": false,
           "pointradius": 5,
           "points": false,
@@ -2412,7 +2427,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"receptor-.*\",container_name=\"redis\"}[5m])) / sum(kube_pod_container_resource_limits_cpu_cores{namespace=~\"receptor-.*\", container=\"redis\"})",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"receptor-.*\",container=\"redis\"}[5m])) / sum(kube_pod_container_resource_limits_cpu_cores{namespace=~\"receptor-.*\", container=\"redis\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "refId": "A"
@@ -2466,12 +2481,14 @@ data:
           "dashes": false,
           "datasource": "$datasource",
           "fill": 1,
+          "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 0,
             "y": 142
           },
+          "hiddenSeries": false,
           "id": 43,
           "legend": {
             "avg": false,
@@ -2486,6 +2503,9 @@ data:
           "linewidth": 1,
           "links": [],
           "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
           "percentage": false,
           "pointradius": 5,
           "points": false,
@@ -2496,7 +2516,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "container_memory_usage_bytes{namespace=~\"receptor-.*\",container_name=\"redis\"}",
+              "expr": "container_memory_usage_bytes{namespace=~\"receptor-.*\",container=\"redis\"}",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{pod_name}}",
@@ -2551,12 +2571,14 @@ data:
           "dashes": false,
           "datasource": "$datasource",
           "fill": 1,
+          "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 12,
             "x": 12,
             "y": 142
           },
+          "hiddenSeries": false,
           "id": 45,
           "legend": {
             "avg": false,
@@ -2571,6 +2593,9 @@ data:
           "linewidth": 1,
           "links": [],
           "nullPointMode": "null",
+          "options": {
+            "dataLinks": []
+          },
           "percentage": false,
           "pointradius": 5,
           "points": false,
@@ -2581,7 +2606,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"receptor-.*\",container_name=\"redis\"}) / sum(kube_pod_container_resource_limits_memory_bytes{namespace=~\"receptor-.*\",container=\"redis\"})",
+              "expr": "sum(container_memory_usage_bytes{namespace=~\"receptor-.*\",container=\"redis\"}) / sum(kube_pod_container_resource_limits_memory_bytes{namespace=~\"receptor-.*\",container=\"redis\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "refId": "A"
@@ -2630,7 +2655,7 @@ data:
         }
       ],
       "refresh": false,
-      "schemaVersion": 16,
+      "schemaVersion": 22,
       "style": "dark",
       "tags": [],
       "templating": {
@@ -2638,8 +2663,8 @@ data:
           {
             "current": {
               "selected": true,
-              "text": "crcp01ue1-prometheus",
-              "value": "crcp01ue1-prometheus"
+              "text": "crc-stg-01-prometheus",
+              "value": "crc-stg-01-prometheus"
             },
             "hide": 0,
             "includeAll": false,
@@ -2687,7 +2712,7 @@ data:
       "timezone": "",
       "title": "Receptor-Controller",
       "uid": "FRmd1NeWk1",
-      "version": 2
+      "version": 4553
     }
 kind: ConfigMap
 metadata:
