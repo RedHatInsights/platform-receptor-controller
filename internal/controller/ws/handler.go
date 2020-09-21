@@ -79,14 +79,7 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		closeChan := make(chan struct{})
-
-		backend := &NetceptorRCBackend{
-			conn:      socket,
-			closeChan: closeChan,
-			ctx:       ctx,
-			cancel:    cancel,
-		}
+		backend, _ := netceptor.NewExternalBackend()
 
 		controllerNode := netceptor.New(ctx, rc.config.ReceptorControllerNodeId, nil)
 		fmt.Println("calling AddBackend")
@@ -97,23 +90,28 @@ func (rc *ReceptorController) handleWebSocket() http.HandlerFunc {
 			panic("AH!")
 		}
 
+		backend.NewConnection(netceptor.MessageConnFromWebsocketConn(socket), true)
+
 		fmt.Println("NEW - controllerNode.Status(): ", controllerNode.Status())
 
-		receptorObj := NetceptorClient{controllerNode}
+		/*
+			receptorObj := NetceptorClient{controllerNode}
 
-		// FIXME:
-		peerNodeID := "node-b"
+			// FIXME:
+			peerNodeID := "node-b"
 
-		err = rc.connectionMgr.Register(ctx, rhIdentity.Identity.AccountNumber, peerNodeID, receptorObj)
-		if err != nil {
-			fmt.Println("Error registering receptor connection with connection manager")
-		}
+			err = rc.connectionMgr.Register(ctx, rhIdentity.Identity.AccountNumber, peerNodeID, receptorObj)
+			if err != nil {
+			    fmt.Println("Error registering receptor connection with connection manager")
+			}
+		*/
 
 		fmt.Println("Blocking main HTTP go routine here")
-		controllerNode.BackendWait()
+		<-ctx.Done()
+		//controllerNode.BackendWait()
 		fmt.Println("main HTTP go routine unblocked...leaving")
 
-		rc.connectionMgr.Unregister(ctx, rhIdentity.Identity.AccountNumber, peerNodeID)
+		// rc.connectionMgr.Unregister(ctx, rhIdentity.Identity.AccountNumber, peerNodeID)
 
 		logger.Info("Closing websocket connection")
 	}
