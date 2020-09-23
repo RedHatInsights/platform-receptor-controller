@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -30,6 +31,14 @@ type RedisActiveConnectionRegistrarFactory struct {
 type cancellationMap struct {
 	cancelFuncs map[string]context.CancelFunc
 	sync.RWMutex
+}
+
+func getTickerInterval(cfg *config.Config) (duration time.Duration) {
+	rand.Seed(time.Now().UnixNano())
+	min := cfg.GatewayActiveConnectionRegistrarPollMinDelay
+	max := cfg.GatewayActiveConnectionRegistrarPollMaxDelay
+	value := rand.Intn(max-min+1) + min
+	return time.Duration(value) * time.Millisecond
 }
 
 func buildCancelMapKey(account, nodeID string) string {
@@ -94,7 +103,8 @@ func (f *RedisActiveConnectionRegistrarFactory) StopActiveRegistrar(ctx context.
 
 func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config.Config, redisClient *redis.Client, account string, nodeID string, hostname string, receptor Receptor) {
 
-	ticker := time.NewTicker(cfg.GatewayActiveConnectionRegistrarPollDelay)
+	tickDuration := getTickerInterval(cfg)
+	ticker := time.NewTicker(tickDuration)
 
 	for {
 		select {
