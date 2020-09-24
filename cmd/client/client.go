@@ -13,47 +13,9 @@ import (
 	//"time"
 	//"encoding/base64"
 
-	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
-	"github.com/gorilla/websocket"
 	"github.com/project-receptor/receptor/pkg/backends"
 	"github.com/project-receptor/receptor/pkg/netceptor"
 )
-
-func readSocket(c *websocket.Conn, mt protocol.NetworkMessageType) protocol.Message {
-	var m protocol.Message
-	for {
-		mtype, r, err := c.NextReader()
-		if err != nil {
-			fmt.Print("err:", err)
-			return nil
-		}
-		fmt.Println("mtype:", mtype)
-		//Expect(mtype).Should(Equal(websocket.BinaryMessage))
-
-		fmt.Println("TestClient reading response from receptor-controller")
-		m, err = protocol.ReadMessage(r)
-		if err != nil {
-			fmt.Print("err:", err)
-			return nil
-		}
-		fmt.Println("m:", m)
-		//Expect(m.Type()).Should(Equal(mt))
-	}
-
-	return m
-}
-
-func writeSocket(c *websocket.Conn, message protocol.Message) {
-	w, err := c.NextWriter(websocket.BinaryMessage)
-	fmt.Println("err:", err)
-	//Expect(err).NotTo(HaveOccurred())
-
-	fmt.Println("TestClient writing to receptor-controller")
-	err = protocol.WriteMessage(w, message)
-	fmt.Println("err:", err)
-	//Expect(err).NotTo(HaveOccurred())
-	w.Close()
-}
 
 var targetUrl = flag.String("url", "ws://localhost:8080/wss/receptor-controller/gateway", "http service address")
 
