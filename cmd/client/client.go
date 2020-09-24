@@ -80,6 +80,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	flag.Var(&headerFlags, "header", "header name:value")
+	connectionCount := flag.Int("connection_count", 1, "number of connections to create")
 	flag.Parse()
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -92,11 +93,11 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < *connectionCount; i++ {
 		go func(i int) {
 
-			//backendSession, err := backends.NewWebsocketDialer(u.String(), nil, headerFlags[0], false)
-			backendSession, err := backends.NewTCPDialer(u.String(), false, nil)
+			//backendSession, err := backends.NewTCPDialer(u.String(), false, nil)
+			backendSession, err := backends.NewWebsocketDialer(u.String(), nil, headerFlags[0], false)
 			if err != nil {
 				log.Fatal("New Dialer error:", err)
 				return
@@ -109,6 +110,7 @@ func main() {
 			err = netceptorObj.AddBackend(backendSession, 1, nil)
 			if err != nil {
 				log.Fatal("AddBackend error:", err)
+				return
 			}
 
 			log.Println("connected ", i)
