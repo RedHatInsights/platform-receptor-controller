@@ -11,6 +11,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/receptor/protocol"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	kafka "github.com/segmentio/kafka-go"
 
 	"github.com/sirupsen/logrus"
@@ -104,6 +105,8 @@ func (r *ReceptorService) SendMessage(msgSenderCtx context.Context, account stri
 
 	msgSenderCtx, cancel := context.WithTimeout(msgSenderCtx, r.config.ReceptorSyncPingTimeout)
 	defer cancel()
+
+	metrics.messageDirectiveCounter.With(prometheus.Labels{"directive": directive}).Inc()
 
 	err = r.sendMessage(msgSenderCtx, payloadMessage)
 	if err != nil {
