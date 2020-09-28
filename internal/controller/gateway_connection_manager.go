@@ -28,13 +28,37 @@ func NewGatewayConnectionRegistrar(rdc *redis.Client, cm ConnectionRegistrar, ac
 func (rcm *GatewayConnectionRegistrar) Register(ctx context.Context, account string, nodeID string, client Receptor) error {
 	logger := logger.Log.WithFields(logrus.Fields{"account": account, "nodeID": nodeID})
 
-	if ExistsInRedis(rcm.redisClient, account, nodeID) { // checking connection globally
-		logger.Warn("Attempting to register duplicate connection")
-		metrics.duplicateConnectionCounter.Inc()
-		return DuplicateConnectionError{}
+	hostNameFromRedis, err := GetRedisConnection(rcm.redisClient, account, nodeID)
+	if err != nil && err != redis.Nil {
+		// possible transient error
+		metrics.redisConnectionError.Inc()
+		logger.Warn("Error getting connection from redis:", err)
+		return err
 	}
 
-	err := RegisterWithRedis(rcm.redisClient, account, nodeID, rcm.hostname)
+	if hostNameFromRedis == rcm.hostname {
+		// there is already a connection for this account / node id running on this pod
+		logger.Warn("Attempting to register duplicate connection on the same pod")
+		metrics.duplicateConnectionCounter.Inc()
+		return DuplicateConnectionError{}
+	} else if hostNameFromRedis != rcm.hostname {
+		logger.Debug("Host name from redis doesn't match our host name")
+
+		if isPodRunning("cfg.GatewayClusterServiceName", hostNameFromRedis) == true {
+			// the connection metadata exists and the pod is still running
+			logger.Warn("Attempting to register duplicate connection on a different pod")
+			metrics.duplicateConnectionCounter.Inc()
+			return DuplicateConnectionError{}
+		} else {
+			// the connection metadata exists in redis but the pod does not exist
+			metrics.unregisterStaleConnectionFromRedis.Inc()
+
+			// the connection metadata exists but pod no longer exists
+			UnregisterWithRedis(rcm.redisClient, account, nodeID, hostNameFromRedis)
+		}
+	}
+
+	err = RegisterWithRedis(rcm.redisClient, account, nodeID, rcm.hostname)
 	if err != nil {
 		return err
 	}
