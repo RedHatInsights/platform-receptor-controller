@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -30,6 +31,14 @@ type RedisActiveConnectionRegistrarFactory struct {
 type cancellationMap struct {
 	cancelFuncs map[string]context.CancelFunc
 	sync.RWMutex
+}
+
+func getTickerInterval(cfg *config.Config) (duration time.Duration) {
+	rand.Seed(time.Now().UnixNano())
+	min := cfg.GatewayActiveConnectionRegistrarPollMinDelay
+	max := cfg.GatewayActiveConnectionRegistrarPollMaxDelay
+	value := rand.Intn(max-min+1) + min
+	return time.Duration(value) * time.Millisecond
 }
 
 func buildCancelMapKey(account, nodeID string) string {
@@ -94,15 +103,16 @@ func (f *RedisActiveConnectionRegistrarFactory) StopActiveRegistrar(ctx context.
 
 func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config.Config, redisClient *redis.Client, account string, nodeID string, hostname string, receptor Receptor) {
 
-	ticker := time.NewTicker(cfg.GatewayActiveConnectionRegistrarPollDelay)
+	tickDuration := getTickerInterval(cfg)
+	ticker := time.NewTicker(tickDuration)
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("Active Connection Registrar cancelled: ", ctx.Err())
+			logger.Trace("Active Connection Registrar cancelled: ", ctx.Err())
 			return
 		case <-ticker.C:
-			logger.Debug("Active Connection Registrar running")
+			logger.Trace("Active Connection Registrar running")
 
 			hostNameFromRedis, err := GetRedisConnection(redisClient, account, nodeID)
 			if err != nil && err != redis.Nil {
@@ -112,7 +122,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 				continue
 			}
 
-			logger.Debug("hostNameFromRedis:", hostNameFromRedis)
+			logger.Trace("host name from redis:", hostNameFromRedis)
 
 			if hostNameFromRedis == "" { // Connection is not registered
 				err := registerAndCloseConnectionOnDuplicate(ctx, logger, redisClient, account, nodeID, hostname, receptor)
@@ -121,7 +131,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 					logger.Warn("Unable to register connection in global connection registry")
 				}
 			} else if hostNameFromRedis != hostname {
-				logger.Debug("Host name from redis doesn't match our host name")
+				logger.Info("Host name from redis doesn't match our host name")
 
 				if isPodRunning(cfg.GatewayClusterServiceName, hostNameFromRedis) == true {
 					// the connection metadata exists and the pod is still running
@@ -137,7 +147,7 @@ func startActiveRegistrar(ctx context.Context, logger *logrus.Entry, cfg *config
 				}
 
 			} else if hostNameFromRedis == hostname {
-				logger.Debug("Redis connection registry entry looks correct")
+				logger.Trace("Redis connection registry entry looks correct")
 			}
 		}
 	}

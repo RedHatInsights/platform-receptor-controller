@@ -11,6 +11,7 @@ type Metrics struct {
 	responseKafkaWriterFailureCounter    prometheus.Counter
 	responseMessageWithoutHandlerCounter prometheus.Counter
 	responseMessageHandledCounter        prometheus.Counter
+	messageDirectiveCounter              *prometheus.CounterVec
 
 	podRunningStatusLookupFailure                 prometheus.Counter
 	autoConnectionClosureDueToDuplicateConnection prometheus.Counter
@@ -71,6 +72,11 @@ func NewMetrics() *Metrics {
 		Name: "receptor_controller_redis_connection_error_count",
 		Help: "The number of times a redis connection error has occurred",
 	})
+
+	metrics.messageDirectiveCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "receptor_controller_message_directive_count",
+		Help: "The number of messages recieved by the receptor controller per directive",
+	}, []string{"directive"})
 
 	return metrics
 }

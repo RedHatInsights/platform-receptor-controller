@@ -1,0 +1,51 @@
+@startuml "platform receptor controller"
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Person(cl_1, "receptor client 01")
+Person(cl_2, "receptor client 02")
+Person(cl_3, "receptor client 03")
+Person(cl_4, "receptor client 04")
+
+System_Boundary(crc, "cloud.redhat.com") {
+    System(app_1, "Internal Application")
+
+    System_Boundary(prc_proj, "Platform Receptor Controller Project") {
+
+        System_Boundary(rd, "Redis Deployment") {
+            Container(redis, "Redis", "redis", "shared storage for connection and message state")
+        }
+
+        System_Boundary(gw, "gateway deployment") {
+            Container(gwp_1, "gateway pod 01", "golang", "manages client websocket connections")
+            Container(gwp_2, "gateway pod 02", "golang", "manages client websocket connections")
+        }
+        System_Boundary(api, "message api") {
+            Container(api_1, "message switch pod", "golang", "accepts requests to send messages to clients")
+            Container(api_2, "message switch pod", "golang", "accepts requests to send messages to clients")
+        }
+
+    }
+}
+
+Rel(cl_1, gwp_1, "Uses", "websockets")
+Rel(cl_2, gwp_2, "Uses", "websockets")
+Rel(cl_3, gwp_1, "Uses", "websockets")
+Rel(cl_4, gwp_2, "Uses", "websockets")
+
+Rel(gwp_1, redis, "Registers", "connections")
+Rel(gwp_2, redis, "Registers", "connections")
+
+Rel(api_1, redis, "lookup", "connections")
+Rel(api_1, gwp_1, "posts messages", "HTTP")
+
+Rel(app_1, api, "Uses", "HTTP")
+
+Lay_L(cl_1, crc)
+Lay_L(cl_2, crc)
+Lay_L(cl_3, crc)
+Lay_L(cl_4, crc)
+
+Lay_L(rd, gw)
+Lay_L(api, rd)
+
+@enduml
