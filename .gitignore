@@ -1,0 +1,6 @@
+# ignore binary files
+connection_cleaner
+connection_util
+gateway
+job-receiver
+response_consumer
