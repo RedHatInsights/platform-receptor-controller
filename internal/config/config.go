@@ -44,6 +44,7 @@ const (
 	GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MAX_DELAY = "Gateway_Active_Connection_Registrar_Poll_Max_Delay"
 	GATEWAY_CLUSTER_SERVICE_NAME                       = "Gateway_Cluster_Service_Name"
 	NODE_ID                                            = "ReceptorControllerNodeId"
+	PROM_PUSH_GW                                       = "PromPushGW"
 )
 
 type Config struct {
@@ -79,6 +80,7 @@ type Config struct {
 	GatewayActiveConnectionRegistrarPollMinDelay int
 	GatewayActiveConnectionRegistrarPollMaxDelay int
 	GatewayClusterServiceName                    string
+	PromPushGW                                   string
 }
 
 func (c Config) String() string {
@@ -112,6 +114,7 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %d\n", GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MIN_DELAY, c.GatewayActiveConnectionRegistrarPollMinDelay)
 	fmt.Fprintf(&b, "%s: %d\n", GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MAX_DELAY, c.GatewayActiveConnectionRegistrarPollMaxDelay)
 	fmt.Fprintf(&b, "%s: %s\n", GATEWAY_CLUSTER_SERVICE_NAME, c.GatewayClusterServiceName)
+	fmt.Fprintf(&b, "%s: %s\n", PROM_PUSH_GW, c.PromPushGW)
 	return b.String()
 }
 
@@ -149,6 +152,7 @@ func GetConfig() *Config {
 	options.SetDefault(GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MIN_DELAY, 5*1000)
 	options.SetDefault(GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MAX_DELAY, 10*1000)
 	options.SetDefault(GATEWAY_CLUSTER_SERVICE_NAME, "receptor-gateway-internal")
+	options.SetDefault(PROM_PUSH_GW, "prometheus-push.insights-push-prod.svc.cluster.local:9091")
 	options.SetEnvPrefix(ENV_PREFIX)
 	options.AutomaticEnv()
 
@@ -189,6 +193,7 @@ func GetConfig() *Config {
 		GatewayActiveConnectionRegistrarPollMinDelay: options.GetInt(GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MIN_DELAY),
 		GatewayActiveConnectionRegistrarPollMaxDelay: options.GetInt(GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MAX_DELAY),
 		GatewayClusterServiceName:                    options.GetString(GATEWAY_CLUSTER_SERVICE_NAME),
+		PromPushGW:                                   options.GetString(PROM_PUSH_GW),
 	}
 }
 

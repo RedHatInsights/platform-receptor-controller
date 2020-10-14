@@ -75,7 +75,6 @@ func UnregisterWithRedis(client *redis.Client, account, nodeID, hostname string)
 	_, err := client.TxPipelined(func(pipe redis.Pipeliner) error {
 		client.Del(getConnectionKey(account, nodeID))
 		removeIndexes(client, account, nodeID, hostname)
-		metrics.unregisterStaleConnectionFromRedis.Inc()
 		return nil
 	})
 
