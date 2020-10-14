@@ -23,7 +23,6 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -53,6 +52,11 @@ func configureConnectionRegistrar(cfg *config.Config, localCM c.ConnectionRegist
 			Password: cfg.RedisPassword,
 			DB:       cfg.RedisDB,
 		})
+
+		_, err := redisClient.Ping().Result()
+		if err != nil {
+			logger.Log.Fatal("Unable to connect to redis: ", err)
+		}
 
 		ipAddr := utils.GetIPAddress()
 		if ipAddr == nil {
@@ -125,7 +129,8 @@ func main() {
 	jr := api.NewJobReceiver(localCM, apiMux, cfg)
 	jr.Routes()
 
-	apiMux.Handle("/metrics", promhttp.Handler())
+	monitoringServer := api.NewMonitoringServer(apiMux, cfg)
+	monitoringServer.Routes()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
