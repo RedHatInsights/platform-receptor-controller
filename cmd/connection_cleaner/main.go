@@ -50,8 +50,8 @@ func processConnection(dryRun bool, runningPods RunningPods, redisClient *redis.
 	}
 }
 
-func pushValues(cfg *config.Config, connCount *Metrics) {
-	if err := push.New(cfg.PromPushGW, "receptor_controller_stale_job").
+func pushValuesToPrometheus(cfg *config.Config, connCount *Metrics) {
+	if err := push.New(cfg.PrometheusPushGateway, "receptor_controller_stale_job").
 		Collector(connCount.unregisterStaleConnectionFromRedis).
 		Push(); err != nil {
 		fmt.Println("Unable to push metrics to prometheus gateway")
@@ -65,7 +65,7 @@ func main() {
 
 	connCount := &Metrics{
 		unregisterStaleConnectionFromRedis: promauto.NewCounter(prometheus.CounterOpts{
-			Name: "receptor_controller_unregister_stale_connection_from_redis_count",
+			Name: "receptor_controller_connection_cleaner_unregister_stale_connection_from_redis_count",
 			Help: "The number of times a stale connection has been unregistered from redis",
 		}),
 	}
@@ -109,5 +109,5 @@ func main() {
 			processConnection(*dryRun, runningPods, redisClient, account, nodeID, podName, connCount)
 		}
 	}
-	pushValues(cfg, connCount)
+	pushValuesToPrometheus(cfg, connCount)
 }
