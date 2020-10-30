@@ -44,7 +44,7 @@ const (
 	GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_MAX_DELAY = "Gateway_Active_Connection_Registrar_Poll_Max_Delay"
 	GATEWAY_CLUSTER_SERVICE_NAME                       = "Gateway_Cluster_Service_Name"
 	NODE_ID                                            = "ReceptorControllerNodeId"
-	PROMETHEUS_PUSH_GATEWAY                            = "PrometheusPushGateway"
+	PROMETHEUS_PUSH_GATEWAY                            = "Prometheus_Push_Gateway"
 )
 
 type Config struct {
