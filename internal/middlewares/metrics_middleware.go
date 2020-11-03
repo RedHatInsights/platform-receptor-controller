@@ -21,7 +21,7 @@ type MetricsMiddleware struct {
 func (mw *MetricsMiddleware) RecordHTTPMetrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 
-		resp := &wrappedWriter{w, 200}
+		resp := &wrappedResponseWriter{w, 200}
 
 		next.ServeHTTP(resp, req)
 
@@ -30,12 +30,12 @@ func (mw *MetricsMiddleware) RecordHTTPMetrics(next http.Handler) http.Handler {
 	})
 }
 
-type wrappedWriter struct {
+type wrappedResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-func (ww *wrappedWriter) WriteHeader(status int) {
+func (ww *wrappedResponseWriter) WriteHeader(status int) {
 	ww.statusCode = status
 	ww.ResponseWriter.WriteHeader(status)
 }
