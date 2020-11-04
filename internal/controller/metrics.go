@@ -8,6 +8,7 @@ import (
 type Metrics struct {
 	duplicateConnectionCounter           prometheus.Counter
 	responseKafkaWriterGoRoutineGauge    prometheus.Gauge
+	responseKafkaWriterSuccessCounter    prometheus.Counter
 	responseKafkaWriterFailureCounter    prometheus.Counter
 	responseMessageWithoutHandlerCounter prometheus.Counter
 	responseMessageHandledCounter        prometheus.Counter
@@ -31,6 +32,11 @@ func NewMetrics() *Metrics {
 	metrics.responseKafkaWriterGoRoutineGauge = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "receptor_controller_kafka_response_writer_go_routine_count",
 		Help: "The total number of active kakfa response writer go routines",
+	})
+
+	metrics.responseKafkaWriterSuccessCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "receptor_controller_kafka_response_writer_success_count",
+		Help: "The number of responses were sent to the kafka topic",
 	})
 
 	metrics.responseKafkaWriterFailureCounter = promauto.NewCounter(prometheus.CounterOpts{
