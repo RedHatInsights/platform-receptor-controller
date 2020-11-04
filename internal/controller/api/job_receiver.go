@@ -28,9 +28,14 @@ func NewJobReceiver(cm controller.ConnectionLocator, r *mux.Router, cfg *config.
 }
 
 func (jr *JobReceiver) Routes() {
-	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
+	mmw := &middlewares.MetricsMiddleware{}
 	amw := &middlewares.AuthMiddleware{Secrets: jr.config.ServiceToServiceCredentials}
-	securedSubRouter.Use(logger.AccessLoggerMiddleware, amw.Authenticate)
+
+	securedSubRouter := jr.router.PathPrefix("/").Subrouter()
+	securedSubRouter.Use(logger.AccessLoggerMiddleware,
+		mmw.RecordHTTPMetrics,
+		amw.Authenticate)
+
 	securedSubRouter.HandleFunc("/job", jr.handleJob()).Methods(http.MethodPost)
 }
 
