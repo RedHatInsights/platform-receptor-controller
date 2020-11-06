@@ -283,7 +283,12 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 		if err != nil {
 			logger.WithFields(logrus.Fields{"error": err}).Error("Error writing response message to kafka")
-			metrics.responseKafkaWriterFailureCounter.Inc()
+
+			if errors.Is(err, context.Canceled) != true {
+				metrics.responseKafkaWriterFailureCounter.Inc()
+			}
+		} else {
+			metrics.responseKafkaWriterSuccessCounter.Inc()
 		}
 
 		metrics.responseKafkaWriterGoRoutineGauge.Dec()

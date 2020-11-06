@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func initRedis(cfg *config.Config) (*redis.Client, error) {
@@ -28,8 +26,7 @@ func initRedis(cfg *config.Config) (*redis.Client, error) {
 		DB:       cfg.RedisDB,
 	})
 
-	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
+	_, err := client.Ping().Result()
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +73,8 @@ func main() {
 	apiMux := mux.NewRouter()
 	apiMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
-	apiMux.Handle("/metrics", promhttp.Handler())
+	monitoringServer := api.NewMonitoringServer(apiMux, cfg)
+	monitoringServer.Routes()
 
 	mgmtServer := api.NewManagementServer(connectionLocator, apiMux, cfg)
 	mgmtServer.Routes()
