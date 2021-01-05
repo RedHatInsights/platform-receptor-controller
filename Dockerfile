@@ -1,0 +1,25 @@
+FROM registry.redhat.io/ubi8/go-toolset
+
+WORKDIR /go/src/app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+USER root
+
+RUN go build -o ws-gateway ./cmd/gateway/main.go
+
+RUN go build -o connection-cleaner ./cmd/connection_cleaner/main.go
+
+RUN go build -o job-receiver ./cmd/job_receiver/main.go
+
+RUN go build -o connection-util ./cmd/connection_util/main.go
+
+RUN go build -o response-consumer ./cmd/response_consumer/main.go
+
+USER 1001
+
+EXPOSE 8000 9000 8081

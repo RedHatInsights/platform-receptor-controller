@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/queue"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/gorilla/mux"
@@ -78,8 +80,13 @@ func configureConnectionRegistrar(cfg *config.Config, localCM c.ConnectionRegist
 }
 
 func main() {
-	var wsAddr = flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
-	var mgmtAddr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
+	var wsAddr = *flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
+	var mgmtAddr = *flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
+
+	if clowder.IsClowderEnabled() {
+		wsAddr = fmt.Sprintf(":%d", clowder.LoadedConfig.WebPort)
+		mgmtAddr = ":9000"
+	}
 	flag.Parse()
 
 	logger.InitLogger()
@@ -135,8 +142,8 @@ func main() {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	apiSrv := utils.StartHTTPServer(*mgmtAddr, "management", apiMux)
-	wsSrv := utils.StartHTTPServer(*wsAddr, "websocket", wsMux)
+	apiSrv := utils.StartHTTPServer(mgmtAddr, "management", apiMux)
+	wsSrv := utils.StartHTTPServer(wsAddr, "websocket", wsMux)
 	wsSrv.RegisterOnShutdown(func() { closeConnections(localCM, wg, cfg.HttpShutdownTimeout) })
 
 	signalChan := make(chan os.Signal, 1)

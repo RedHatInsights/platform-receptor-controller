@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 	"github.com/spf13/viper"
 )
 
@@ -160,7 +162,7 @@ func GetConfig() *Config {
 	pongWait := options.GetDuration(PONG_WAIT) * time.Second
 	pingPeriod := calculatePingPeriod(pongWait)
 
-	return &Config{
+	config := &Config{
 		HandshakeReadWait:                options.GetDuration(HANDSHAKE_READ_WAIT) * time.Second,
 		WriteWait:                        writeWait,
 		PongWait:                         pongWait,
@@ -195,6 +197,14 @@ func GetConfig() *Config {
 		GatewayClusterServiceName:                    options.GetString(GATEWAY_CLUSTER_SERVICE_NAME),
 		PrometheusPushGateway:                        options.GetString(PROMETHEUS_PUSH_GATEWAY),
 	}
+
+	if clowder.IsClowderEnabled() {
+		cfg := clowder.LoadedConfig
+		config.RedisHost = cfg.InMemoryDb.Hostname
+		config.RedisPort = strconv.Itoa(cfg.InMemoryDb.Port)
+		config.KafkaBrokers = clowder.KafkaServers
+	}
+	return config
 }
 
 func calculatePingPeriod(pongWait time.Duration) time.Duration {
