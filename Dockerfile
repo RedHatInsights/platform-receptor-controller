@@ -20,6 +20,10 @@ RUN go build -o connection-util ./cmd/connection_util/main.go
 
 RUN go build -o response-consumer ./cmd/response_consumer/main.go
 
+RUN REMOVE_PKGS="binutils kernel-headers" && \
+    yum remove -y $REMOVE_PKGS && \
+    yum clean all 
+
 USER 1001
 
 EXPOSE 8000 9000 8081
