@@ -19,6 +19,7 @@ require (
 	github.com/onsi/gomega v1.8.1
 	github.com/posener/wstest v1.2.0
 	github.com/prometheus/client_golang v0.9.3
+	github.com/redhatinsights/app-common-go v1.0.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2

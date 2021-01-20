@@ -1,0 +1,217 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: receptor
+objects:
+- apiVersion: cloud.redhat.com/v1alpha1
+  kind: ClowdApp
+  metadata:
+    name: receptor
+  spec:
+    web: true
+    envName: ${ENV_NAME}
+    inMemoryDb: true
+    kafkaTopics:
+      - replicas: 3
+        partitions: 3
+        topicName: platform.receptor-controller.jobs
+      - replicas: 3
+        partitions: 3
+        topicName: platform.receptor-controller.responses
+    deployments:
+    - name: gateway
+      minReplicas: ${{GATEWAY_REPLICAS}}
+      podSpec:
+        minReadySeconds: 15
+        progressDeadlineSeconds: 600
+        image: ${IMAGE}:${IMAGE_TAG}
+        command: 
+          - ./ws-gateway
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /liveness
+            port: 9000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readiness
+            port: 9000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
+          requests:
+            cpu: ${CPU_REQUEST}
+            memory: ${MEMORY_REQUEST}
+        env:
+          - name: RECEPTOR_CONTROLLER_LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: RECEPTOR_CONTROLLER_SERVICE_TO_SERVICE_CREDENTIALS
+            valueFrom:
+              secretKeyRef:
+                key: gateway-psk-map
+                name: receptor-psks
+          - name: RECEPTOR_CONTROLLER_GATEWAY_CONNECTION_REGISTRAR_IMPL
+            value: ${GATEWAY_CONNECTION_REGISTRAR_IMPL}
+          - name: RECEPTOR_CONTROLLER_GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY
+            value: ${GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY}
+          - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
+            value: ${GATEWAY_CLUSTER_SERVICE_NAME}
+          - name: CLOWDER_ENABLED
+            value: ${CLOWDER_ENABLED}
+    - name: switch
+      minReplicas: ${{SWITCH_REPLICAS}}
+      podSpec:
+        minReadySeconds: 15
+        progressDeadlineSeconds: 600
+        image: ${IMAGE}:${IMAGE_TAG}
+        command: 
+            - ./job-receiver
+            - -mgmtAddr
+            - ":9000"
+        env:
+        - name: RECEPTOR_CONTROLLER_LOG_LEVEL
+          value: ${LOG_LEVEL}
+        - name: RECEPTOR_CONTROLLER_JOB_RECEIVER_RECEPTOR_PROXY_CLIENTID
+          valueFrom:
+            secretKeyRef:
+              key: receptor-proxy-client-id
+              name: receptor-psks
+        - name: RECEPTOR_CONTROLLER_JOB_RECEIVER_RECEPTOR_PROXY_PSK
+          valueFrom:
+            secretKeyRef:
+              key: receptor-proxy-client-psk
+              name: receptor-psks
+        - name: RECEPTOR_CONTROLLER_SERVICE_TO_SERVICE_CREDENTIALS
+          valueFrom:
+            secretKeyRef:
+              key: switch-psk-map
+              name: receptor-psks
+        - name: CLOWDER_ENABLED
+          value: ${CLOWDER_ENABLED}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /liveness
+            port: 9000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readiness
+            port: 9000
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
+          requests:
+            cpu: ${CPU_REQUEST}
+            memory: ${MEMORY_REQUEST}
+    jobs:
+    - name: connection-cleaner
+      schedule: "*/10 * * * *"
+      podSpec:
+        name: receptor-connection-cleaner
+        restartPolicy: Never
+        image: ${IMAGE}:${IMAGE_TAG}
+        command:
+          - ./connection-cleaner
+        env:
+          - name: RECEPTOR_CONTROLLER_LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
+            value: ${GATEWAY_CLUSTER_SERVICE_NAME}
+          - name: RECEPTOR_CONTROLLER_PROMETHEUS_PUSH_GATEWAY
+            value: ${PROMETHEUS_PUSH_GATEWAY}
+parameters:
+- description: The name assigned to all frontend objects defined in this template.
+  displayName: Name
+  name: NAME
+  required: true
+  value: receptor-gateway
+- description: Initial amount of memory the receptor container will request.
+  displayName: Memory Request
+  name: MEMORY_REQUEST
+  required: true
+  value: 256Mi
+- description: Maximum amount of memory the receport.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+- description: Initial amount of cpu the receptor container will request.
+  displayName: CPU Request
+  name: CPU_REQUEST
+  required: true
+  value: 200m
+- description: Maximum amount of cpu the receptor container can use.
+  displayName: CPU Limit
+  name: CPU_LIMIT
+  required: true
+  value: 500m
+- description: Kafka Bootstrap Address.
+  displayName: Kafka Boostrap Address
+  name: KAFKA_BOOTSTRAP_HOST
+  required: true
+  value: platform-mq-ci-kafka-bootstrap.platform-mq-ci.svc
+- description: Kafka Bootstrap Port.
+  displayName: Kafka Boostrap Port
+  name: KAFKA_BOOTSTRAP_PORT
+  required: true
+  value: '9092'
+- description: The log level to use for logging
+  displayName: The log level to use for logging
+  name: LOG_LEVEL
+  required: true
+  value: DEBUG
+- description: The number of replicas to use for the prometheus deployment
+  name: GATEWAY_REPLICAS
+  value: '1'
+- description: The number of replicas to use for the receptor switch
+  name: SWITCH_REPLICAS
+  value: '1'
+- description: The name of the ConnectionRegistrar implementation to use
+  name: GATEWAY_CONNECTION_REGISTRAR_IMPL
+  value: redis
+- description: The name of the gateway's headless service.  The active connection
+    registrar uses this to determine if the pod that owns the websocket connection
+    is still alive.
+  name: GATEWAY_CLUSTER_SERVICE_NAME
+  value: receptor-gateway-internal
+- description: The number of milliseconds the active connection registrar waits before
+    checking its connection in redis
+  name: GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY
+  value: '10000'
+- description: Should the connection cleanup job be disabled
+  name: SUSPEND_STALE_CONN_JOB
+  value: 'false'
+- description: Hostname and port of the prometheus push gateway
+  name: PROMETHEUS_PUSH_GATEWAY
+  value: prometheus-push.insights-push-stage.svc.cluster.local:9091
+- description: Image
+  name: IMAGE
+  required: true
+- description: Image tag
+  name: IMAGE_TAG
+  required: true
+- name: CLOWDER_ENABLED
+  value: "true"
+- name: ENV_NAME
+  value: ${ENV_NAME}
