@@ -26,4 +26,4 @@ RUN REMOVE_PKGS="binutils kernel-headers" && \
 
 USER 1001
 
-EXPOSE 8000 9000 8081
+EXPOSE 8000 10000 
