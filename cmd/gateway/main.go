@@ -80,16 +80,24 @@ func configureConnectionRegistrar(cfg *config.Config, localCM c.ConnectionRegist
 }
 
 func main() {
-	var wsAddr = *flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
-	var mgmtAddr = *flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
+	logger.InitLogger()
+
+	var defaultMgmtAddr = ":9090"
+	var defaultWsAddr = ":8080"
 
 	if clowder.IsClowderEnabled() {
-		wsAddr = fmt.Sprintf(":%d", clowder.LoadedConfig.WebPort)
-		mgmtAddr = ":9000"
+		logger.Log.Info("CLOWDER IS ENABLED")
+		defaultWsAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PublicPort)
+		defaultMgmtAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PrivatePort)
 	}
+
+	var wsAddr = *flag.String("wsAddr", defaultWsAddr, "Hostname:port of the websocket server")
+	var mgmtAddr = *flag.String("mgmtAddr", defaultMgmtAddr, "Hostname:port of the management server")
 	flag.Parse()
 
-	logger.InitLogger()
+	logger.Log.Info(fmt.Sprintf("Webport listening on %v", *clowder.LoadedConfig.WebPort))
+	logger.Log.Info(fmt.Sprintf("Public port listening on %d", *clowder.LoadedConfig.PublicPort))
+	logger.Log.Info(fmt.Sprintf("Management port listening on %d", *clowder.LoadedConfig.PrivatePort))
 
 	logger.Log.Info("Starting Receptor-Controller service")
 

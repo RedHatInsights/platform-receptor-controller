@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +14,7 @@ import (
 	"github.com/RedHatInsights/platform-receptor-controller/internal/controller/api"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/logger"
 	"github.com/RedHatInsights/platform-receptor-controller/internal/platform/utils"
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/go-redis/redis"
@@ -47,7 +49,13 @@ func verifyConfiguration(cfg *config.Config) error {
 }
 
 func main() {
-	var mgmtAddr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
+	defaultMgmtAddr := ":8081"
+
+	if clowder.IsClowderEnabled() {
+		defaultMgmtAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PrivatePort)
+	}
+
+	var mgmtAddr = flag.String("mgmtAddr", defaultMgmtAddr, "Hostname:port of the management server")
 	flag.Parse()
 
 	logger.InitLogger()
