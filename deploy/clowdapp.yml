@@ -16,15 +16,15 @@ objects:
         enabled: True
     envName: ${ENV_NAME}
     inMemoryDb: true
-    kafkaTopics:
-      - replicas: 3
-        partitions: 3
-        topicName: platform.receptor-controller.jobs
-      - replicas: 3
-        partitions: 3
-        topicName: platform.receptor-controller.responses
+    # kafkaTopics:
+    #   - replicas: 3
+    #     partitions: 3
+    #     topicName: platform.receptor-controller.jobs
+    #   - replicas: 3
+    #     partitions: 3
+    #     topicName: platform.receptor-controller.responses
     deployments:
-    - name: gateway
+    - name: gateway-clowder
       minReplicas: ${{GATEWAY_REPLICAS}}
       podSpec:
         minReadySeconds: 15
@@ -71,7 +71,7 @@ objects:
             value: ${GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY}
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
-    - name: switch
+    - name: switch-clowder
       minReplicas: ${{SWITCH_REPLICAS}}
       podSpec:
         minReadySeconds: 15
@@ -123,7 +123,7 @@ objects:
             cpu: ${CPU_REQUEST}
             memory: ${MEMORY_REQUEST}
     jobs:
-    - name: connection-cleaner
+    - name: connection-cleaner-clowder
       schedule: "*/10 * * * *"
       podSpec:
         name: receptor-connection-cleaner
