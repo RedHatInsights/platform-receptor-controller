@@ -95,10 +95,6 @@ func main() {
 	var mgmtAddr = *flag.String("mgmtAddr", defaultMgmtAddr, "Hostname:port of the management server")
 	flag.Parse()
 
-	logger.Log.Info(fmt.Sprintf("Webport listening on %v", *clowder.LoadedConfig.WebPort))
-	logger.Log.Info(fmt.Sprintf("Public port listening on %d", *clowder.LoadedConfig.PublicPort))
-	logger.Log.Info(fmt.Sprintf("Management port listening on %d", *clowder.LoadedConfig.PrivatePort))
-
 	logger.Log.Info("Starting Receptor-Controller service")
 
 	cfg := config.GetConfig()
