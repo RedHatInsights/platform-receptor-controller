@@ -16,13 +16,10 @@ objects:
         enabled: True
     envName: ${ENV_NAME}
     inMemoryDb: true
-    # kafkaTopics:
-    #   - replicas: 3
-    #     partitions: 3
-    #     topicName: platform.receptor-controller.jobs
-    #   - replicas: 3
-    #     partitions: 3
-    #     topicName: platform.receptor-controller.responses
+    kafkaTopics:
+      - replicas: 3
+        partitions: 3
+        topicName: platform.receptor-controller.responses
     deployments:
     - name: gateway-clowder
       minReplicas: ${{GATEWAY_REPLICAS}}
