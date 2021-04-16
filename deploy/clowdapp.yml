@@ -135,6 +135,14 @@ objects:
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
           - name: RECEPTOR_CONTROLLER_PROMETHEUS_PUSH_GATEWAY
             value: ${PROMETHEUS_PUSH_GATEWAY}
+        concurrencyPolicy: Forbid
+        resources:
+          limits:
+            cpu: 300m
+            memory: 1Gi
+          requests:
+            cpu: 50m
+            memory: 512Mi
 parameters:
 - description: The name assigned to all frontend objects defined in this template.
   displayName: Name
