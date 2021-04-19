@@ -10,7 +10,7 @@ COPY . .
 
 USER root
 
-RUN go build -o ws-gateway ./cmd/gateway/main.go
+RUN go build -o gateway ./cmd/gateway/main.go
 
 RUN go build -o connection-cleaner ./cmd/connection_cleaner/main.go
 

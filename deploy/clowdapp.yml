@@ -28,7 +28,7 @@ objects:
         progressDeadlineSeconds: 600
         image: ${IMAGE}:${IMAGE_TAG}
         command: 
-          - ./ws-gateway
+          - ./gateway
         livenessProbe:
           failureThreshold: 3
           httpGet:
