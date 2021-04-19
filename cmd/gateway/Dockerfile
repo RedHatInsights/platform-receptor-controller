@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o ws-gateway ./cmd/gateway/main.go
+RUN go build -o gateway ./cmd/gateway/main.go
 
 EXPOSE 8080 9090
 
-CMD ["./ws-gateway"]
+CMD ["./gateway"]
