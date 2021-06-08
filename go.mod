@@ -3,7 +3,7 @@ module github.com/RedHatInsights/platform-receptor-controller
 require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
-	github.com/aws/aws-sdk-go v1.38.24
+	github.com/aws/aws-sdk-go v1.38.51
 	github.com/elliotchance/redismock v1.5.3 // indirect
 	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-playground/validator/v10 v10.2.0
@@ -21,9 +21,9 @@ require (
 	github.com/posener/wstest v1.2.0
 	github.com/prometheus/client_golang v0.9.3
 	github.com/redhatinsights/app-common-go v1.1.0
-	github.com/redhatinsights/platform-go-middlewares v0.8.0
+	github.com/redhatinsights/platform-go-middlewares v0.8.1
 	github.com/segmentio/kafka-go v0.3.4
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20200603152657-dc2b0ca8b37e // indirect
