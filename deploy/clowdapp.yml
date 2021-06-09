@@ -231,6 +231,7 @@ parameters:
 - description: Image
   name: IMAGE
   required: true
+  value: quay.io/cloudservices/receptor-gateway
 - description: Image tag
   name: IMAGE_TAG
   required: true
