@@ -174,7 +174,7 @@ parameters:
   name: MEMORY_REQUEST
   required: true
   value: 256Mi
-- description: Maximum amount of memory the receport.
+- description: Maximum amount of memory the receptor.
   displayName: Memory Limit
   name: MEMORY_LIMIT
   required: true
@@ -204,7 +204,7 @@ parameters:
   name: LOG_LEVEL
   required: true
   value: DEBUG
-- description: The number of replicas to use for the prometheus deployment
+- description: The number of replicas to use for the receptor gateway
   name: GATEWAY_REPLICAS
   value: '1'
 - description: The number of replicas to use for the receptor switch
@@ -237,3 +237,4 @@ parameters:
   required: true
 - name: ENV_NAME
   value: ${ENV_NAME}
+  required: true
