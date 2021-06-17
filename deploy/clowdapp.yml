@@ -143,6 +143,7 @@ objects:
           requests:
             cpu: 50m
             memory: 512Mi
+
 - apiVersion: v1
   kind: Service
   metadata:
@@ -163,6 +164,19 @@ objects:
       deploymentconfig: ${NAME}
     sessionAffinity: None
     type: ClusterIP
+
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: receptor-psks
+  data:
+    gateway-psk-map: eyJqb2JfcmVjZWl2ZXIiOiAiMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEifQ==
+    receptor-proxy-client-id: am9iX3JlY2VpdmVy
+    receptor-proxy-client-psk: MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE=
+    switch-psk-map: >-
+      eyJ0b3BvbG9naWNhbC1pbnZlbnRvcnkiOiAiMjIyMjIyMjIyMjIyMjIyMjIyIiwgInNvdXJjZXMiOiAiMzMzMzMzMzMzMzMzMzMzMzMzIn0=
+  type: Opaque
+
 parameters:
 - description: The name assigned to all frontend objects defined in this template.
   displayName: Name
