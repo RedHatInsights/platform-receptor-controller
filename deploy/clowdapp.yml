@@ -148,6 +148,9 @@ objects:
   kind: Service
   metadata:
     name: ${GATEWAY_CLUSTER_SERVICE_NAME}
+    labels:
+      app: receptor
+      pod: receptor-gateway-clowder
     annotations:
       prometheus.io/path: /metrics
       prometheus.io/port: "9090"
@@ -160,8 +163,8 @@ objects:
       protocol: TCP
       targetPort: 9090
     selector:
-      app: ${NAME}
-      deploymentconfig: ${NAME}
+      app: receptor
+      deployment: receptor-gateway-clowder
     sessionAffinity: None
     type: ClusterIP
 
@@ -169,6 +172,8 @@ objects:
   kind: Secret
   metadata:
     name: receptor-psks
+    labels:
+      app: receptor
   data:
     gateway-psk-map: eyJqb2JfcmVjZWl2ZXIiOiAiMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEifQ==
     receptor-proxy-client-id: am9iX3JlY2VpdmVy
@@ -178,11 +183,6 @@ objects:
   type: Opaque
 
 parameters:
-- description: The name assigned to all frontend objects defined in this template.
-  displayName: Name
-  name: NAME
-  required: true
-  value: receptor-gateway
 - description: Initial amount of memory the receptor container will request.
   displayName: Memory Request
   name: MEMORY_REQUEST
