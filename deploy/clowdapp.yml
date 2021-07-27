@@ -22,6 +22,7 @@ objects:
         topicName: platform.receptor-controller.responses
     deployments:
     - name: receptor-gateway-clowder
+      web: true
       minReplicas: ${{GATEWAY_REPLICAS}}
       podSpec:
         minReadySeconds: 15
@@ -69,6 +70,7 @@ objects:
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
     - name: receptor-switch-clowder
+      web: true
       minReplicas: ${{SWITCH_REPLICAS}}
       podSpec:
         minReadySeconds: 15
