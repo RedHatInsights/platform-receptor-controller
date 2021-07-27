@@ -29,10 +29,10 @@ coverage:
 	@echo "file://$(PWD)/$(COVERAGE_HTML)"
 
 start-test-env:
-	docker-compose -f $(DOCKER_COMPOSE_CFG) up
+	podman-compose -f $(DOCKER_COMPOSE_CFG) up
 
 stop-test-env:
-	docker-compose -f $(DOCKER_COMPOSE_CFG) down
+	podman-compose -f $(DOCKER_COMPOSE_CFG) down
 
 fmt:
 	go fmt ./...
