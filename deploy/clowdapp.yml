@@ -33,7 +33,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /liveness
-            port: 10000
+            port: 9000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -42,7 +42,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /readiness
-            port: 10000
+            port: 9000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -98,7 +98,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /liveness
-            port: 10000
+            port: 9000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -107,7 +107,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /readiness
-            port: 10000
+            port: 9000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -153,15 +153,15 @@ objects:
       pod: receptor-gateway-clowder
     annotations:
       prometheus.io/path: /metrics
-      prometheus.io/port: "9090"
+      prometheus.io/port: "9000"
       prometheus.io/scrape: "true"
   spec:
     clusterIP: None
     ports:
-    - name: port-9090
-      port: 9090
+    - name: port-10000
+      port: 10000
       protocol: TCP
-      targetPort: 9090
+      targetPort: 10000
     selector:
       app: receptor
       deployment: receptor-gateway-clowder
