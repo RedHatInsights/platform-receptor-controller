@@ -9,11 +9,6 @@ objects:
   metadata:
     name: receptor
   spec:
-    webServices:
-      private:
-        enabled: True
-      public:
-        enabled: True
     envName: ${ENV_NAME}
     inMemoryDb: true
     kafkaTopics:
@@ -22,7 +17,13 @@ objects:
         topicName: platform.receptor-controller.responses
     deployments:
     - name: receptor-gateway-clowder
-      web: true
+      webServices:
+        private:
+          enabled: True
+        public:
+          enabled: True
+        metrics:
+          enabled: True
       minReplicas: ${{GATEWAY_REPLICAS}}
       podSpec:
         minReadySeconds: 15
@@ -70,7 +71,13 @@ objects:
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
     - name: receptor-switch-clowder
-      web: true
+      webServices:
+        private:
+          enabled: True
+        public:
+          enabled: False
+        metrics:
+          enabled: True
       minReplicas: ${{SWITCH_REPLICAS}}
       podSpec:
         minReadySeconds: 15
