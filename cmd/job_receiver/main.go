@@ -49,16 +49,20 @@ func verifyConfiguration(cfg *config.Config) error {
 }
 
 func main() {
-	defaultMgmtAddr := ":8081"
+	logger.InitLogger()
 
-	if clowder.IsClowderEnabled() {
-		defaultMgmtAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PrivatePort)
-	}
-
-	var mgmtAddr = flag.String("mgmtAddr", defaultMgmtAddr, "Hostname:port of the management server")
+	var mgmtAddrPtr = flag.String("mgmtAddr", ":8081", "Hostname:port of the management server")
+	var monitoringAddrPtr = flag.String("monitoringAddr", ":10000", "Hostname:port of the monitoring server")
 	flag.Parse()
 
-	logger.InitLogger()
+	var mgmtAddr = *mgmtAddrPtr
+	var monitoringAddr = *monitoringAddrPtr
+
+	if clowder.IsClowderEnabled() {
+		logger.Log.Info("Receptor-Controller is running in a Clowderized environment...overriding port configuration!!")
+		mgmtAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PrivatePort)
+		monitoringAddr = fmt.Sprintf(":%d", clowder.LoadedConfig.MetricsPort)
+	}
 
 	logger.Log.Info("Starting Receptor-Controller Job-Receiver service")
 
@@ -81,7 +85,10 @@ func main() {
 	apiMux := mux.NewRouter()
 	apiMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
-	monitoringServer := api.NewMonitoringServer(apiMux, cfg)
+	monitoringMux := mux.NewRouter()
+	monitoringMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
+
+	monitoringServer := api.NewMonitoringServer(monitoringMux, cfg)
 	monitoringServer.Routes()
 
 	mgmtServer := api.NewManagementServer(connectionLocator, apiMux, cfg)
@@ -90,7 +97,8 @@ func main() {
 	jr := api.NewJobReceiver(connectionLocator, apiMux, cfg)
 	jr.Routes()
 
-	apiSrv := utils.StartHTTPServer(*mgmtAddr, "management", apiMux)
+	apiSrv := utils.StartHTTPServer(mgmtAddr, "management", apiMux)
+	monitoringSrv := utils.StartHTTPServer(monitoringAddr, "monitoring", monitoringMux)
 
 	signalChan := make(chan os.Signal, 1)
 
@@ -103,6 +111,8 @@ func main() {
 	defer cancel()
 
 	utils.ShutdownHTTPServer(ctx, "management", apiSrv)
+
+	utils.ShutdownHTTPServer(ctx, "monitoring", monitoringSrv)
 
 	logger.Log.Info("Receptor-Controller shutting down")
 }
