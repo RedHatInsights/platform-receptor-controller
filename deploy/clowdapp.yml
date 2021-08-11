@@ -35,7 +35,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /liveness
-            port: 9000
+            port: 10000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -44,7 +44,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /readiness
-            port: 9000
+            port: 10000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -107,7 +107,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /liveness
-            port: 9000
+            port: 10000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -116,7 +116,7 @@ objects:
           failureThreshold: 3
           httpGet:
             path: /readiness
-            port: 9000
+            port: 10000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1

@@ -84,18 +84,15 @@ func main() {
 
 	var wsAddrPtr = flag.String("wsAddr", ":8080", "Hostname:port of the websocket server")
 	var mgmtAddrPtr = flag.String("mgmtAddr", ":9090", "Hostname:port of the management server")
-	var monitoringAddrPtr = flag.String("monitoringAddr", ":10000", "Hostname:port of the monitoring server")
 	flag.Parse()
 
 	var wsAddr = *wsAddrPtr
 	var mgmtAddr = *mgmtAddrPtr
-	var monitoringAddr = *monitoringAddrPtr
 
 	if clowder.IsClowderEnabled() {
 		logger.Log.Info("Receptor-Controller is running in a Clowderized environment...overriding port configuration!!")
 		wsAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PublicPort)
 		mgmtAddr = fmt.Sprintf(":%d", *clowder.LoadedConfig.PrivatePort)
-		monitoringAddr = fmt.Sprintf(":%d", clowder.LoadedConfig.MetricsPort)
 	}
 
 	logger.Log.Info("Starting Receptor-Controller service")
@@ -143,16 +140,12 @@ func main() {
 	jr := api.NewJobReceiver(localCM, apiMux, cfg)
 	jr.Routes()
 
-	monitoringMux := mux.NewRouter()
-	monitoringMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
-
-	monitoringServer := api.NewMonitoringServer(monitoringMux, cfg)
+	monitoringServer := api.NewMonitoringServer(apiMux, cfg)
 	monitoringServer.Routes()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	monitoringSrv := utils.StartHTTPServer(monitoringAddr, "monitoring", monitoringMux)
 	apiSrv := utils.StartHTTPServer(mgmtAddr, "management", apiMux)
 	wsSrv := utils.StartHTTPServer(wsAddr, "websocket", wsMux)
 	wsSrv.RegisterOnShutdown(func() { closeConnections(localCM, wg, cfg.HttpShutdownTimeout) })
@@ -167,7 +160,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.HttpShutdownTimeout)
 	defer cancel()
 
-	utils.ShutdownHTTPServer(ctx, "monitoring", monitoringSrv)
 	utils.ShutdownHTTPServer(ctx, "management", apiSrv)
 	utils.ShutdownHTTPServer(ctx, "websocket", wsSrv)
 
