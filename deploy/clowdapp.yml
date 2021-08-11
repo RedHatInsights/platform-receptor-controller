@@ -103,6 +103,8 @@ objects:
             secretKeyRef:
               key: switch-psk-map
               name: receptor-psks
+        - name: RECEPTOR_CONTROLLER_JOB_RECEIVER_RECEPTOR_PROXY_PORT
+          value: ${JOB_RECEIVER_RECEPTOR_PROXY_PORT}
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -245,6 +247,9 @@ parameters:
     checking its connection in redis
   name: GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY
   value: '10000'
+- description: The port number the job receiver's proxy object will use when connecting to the gateway
+  name: JOB_RECEIVER_RECEPTOR_PROXY_PORT
+  value: 10000
 - description: Should the connection cleanup job be disabled
   name: SUSPEND_STALE_CONN_JOB
   value: 'false'
