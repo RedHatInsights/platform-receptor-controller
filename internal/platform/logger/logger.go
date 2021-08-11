@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	lc "github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch"
@@ -100,12 +102,21 @@ func InitLogger() {
 		logconfig.SetDefault("LOG_FORMAT", "json")
 		logconfig.SetEnvPrefix("RECEPTOR_CONTROLLER")
 		logconfig.AutomaticEnv()
+
 		key := logconfig.GetString("CW_AWS_ACCESS_KEY_ID")
 		secret := logconfig.GetString("CW_AWS_SECRET_ACCESS_KEY")
 		region := logconfig.GetString("AWS_REGION")
 		group := logconfig.GetString("LOG_GROUP")
 		stream := logconfig.GetString("LOG_STREAM")
 		format := logconfig.GetString("LOG_FORMAT")
+
+		if clowder.IsClowderEnabled() {
+			cfg := clowder.LoadedConfig
+			key = cfg.Logging.Cloudwatch.AccessKeyId
+			secret = cfg.Logging.Cloudwatch.SecretAccessKey
+			region = cfg.Logging.Cloudwatch.Region
+			group = cfg.Logging.Cloudwatch.LogGroup
+		}
 
 		switch strings.ToUpper(logconfig.GetString("LOG_LEVEL")) {
 		case "TRACE":
