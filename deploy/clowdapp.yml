@@ -249,7 +249,7 @@ parameters:
   value: '10000'
 - description: The port number the job receiver's proxy object will use when connecting to the gateway
   name: JOB_RECEIVER_RECEPTOR_PROXY_PORT
-  value: 10000
+  value: '10000'
 - description: Should the connection cleanup job be disabled
   name: SUSPEND_STALE_CONN_JOB
   value: 'false'
