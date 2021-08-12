@@ -91,7 +91,7 @@ objects:
         - name: RECEPTOR_CONTROLLER_LOG_LEVEL
           value: ${LOG_LEVEL}
         - name: RECEPTOR_CONTROLLER_LOG_FORMAT
-            value: ${LOG_FORMAT}
+          value: ${LOG_FORMAT}
         - name: RECEPTOR_CONTROLLER_JOB_RECEIVER_RECEPTOR_PROXY_CLIENTID
           valueFrom:
             secretKeyRef:
