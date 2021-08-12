@@ -59,6 +59,8 @@ objects:
         env:
           - name: RECEPTOR_CONTROLLER_LOG_LEVEL
             value: ${LOG_LEVEL}
+          - name: RECEPTOR_CONTROLLER_LOG_FORMAT
+            value: ${LOG_FORMAT}
           - name: RECEPTOR_CONTROLLER_SERVICE_TO_SERVICE_CREDENTIALS
             valueFrom:
               secretKeyRef:
@@ -88,6 +90,8 @@ objects:
         env:
         - name: RECEPTOR_CONTROLLER_LOG_LEVEL
           value: ${LOG_LEVEL}
+        - name: RECEPTOR_CONTROLLER_LOG_FORMAT
+            value: ${LOG_FORMAT}
         - name: RECEPTOR_CONTROLLER_JOB_RECEIVER_RECEPTOR_PROXY_CLIENTID
           valueFrom:
             secretKeyRef:
@@ -142,6 +146,8 @@ objects:
         env:
           - name: RECEPTOR_CONTROLLER_LOG_LEVEL
             value: ${LOG_LEVEL}
+          - name: RECEPTOR_CONTROLLER_LOG_FORMAT
+            value: ${LOG_FORMAT}
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
           - name: RECEPTOR_CONTROLLER_PROMETHEUS_PUSH_GATEWAY
@@ -229,6 +235,11 @@ parameters:
   name: LOG_LEVEL
   required: true
   value: DEBUG
+- description: The format to use for logging
+  displayName: The format to use for logging
+  name: LOG_FORMAT
+  required: true
+  value: "logstash"
 - description: The number of replicas to use for the receptor gateway
   name: GATEWAY_REPLICAS
   value: '1'
