@@ -11,7 +11,6 @@ objects:
   spec:
     testing:
       iqePlugin: controller-interface
-  spec:
     envName: ${ENV_NAME}
     inMemoryDb: true
     kafkaTopics:
@@ -280,6 +279,3 @@ parameters:
 - name: ENV_NAME
   value: ${ENV_NAME}
   required: true
-  spec:
-  testing:
-    iqePlugin: controller-interface
