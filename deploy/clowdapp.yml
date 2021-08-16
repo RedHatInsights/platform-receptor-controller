@@ -9,9 +9,9 @@ objects:
   metadata:
     name: receptor
   spec:
+    envName: ${ENV_NAME}
     testing:
       iqePlugin: controller-interface
-    envName: ${ENV_NAME}
     inMemoryDb: true
     kafkaTopics:
       - replicas: 3
