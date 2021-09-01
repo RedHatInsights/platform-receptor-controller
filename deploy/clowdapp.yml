@@ -170,10 +170,6 @@ objects:
     labels:
       app: receptor
       pod: receptor-gateway-clowder
-    annotations:
-      prometheus.io/path: /metrics
-      prometheus.io/port: "9000"
-      prometheus.io/scrape: "true"
   spec:
     clusterIP: None
     ports:
@@ -183,7 +179,7 @@ objects:
       targetPort: 10000
     selector:
       app: receptor
-      deployment: receptor-gateway-clowder
+      pod: receptor-gateway-clowder
     sessionAffinity: None
     type: ClusterIP
 
