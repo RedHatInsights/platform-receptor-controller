@@ -163,6 +163,8 @@ objects:
             cpu: 50m
             memory: 512Mi
 
+
+# Headless service...used internally
 - apiVersion: v1
   kind: Service
   metadata:
@@ -183,6 +185,26 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: receptor-controller
+    labels:
+      app: receptor
+  spec:
+    ports:
+    - name: port-10000
+      port: 10000
+      protocol: TCP
+      targetPort: 10000
+    selector:
+      app: receptor
+      pod: receptor-switch-clowder
+    sessionAffinity: None
+    type: ClusterIP
+
+
 - apiVersion: v1
   kind: Secret
   metadata:
@@ -196,6 +218,7 @@ objects:
     switch-psk-map: >-
       eyJ0b3BvbG9naWNhbC1pbnZlbnRvcnkiOiAiMjIyMjIyMjIyMjIyMjIyMjIyIiwgInNvdXJjZXMiOiAiMzMzMzMzMzMzMzMzMzMzMzMzIn0=
   type: Opaque
+
 
 parameters:
 - description: Initial amount of memory the receptor container will request.
