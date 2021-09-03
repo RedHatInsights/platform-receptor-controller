@@ -194,8 +194,8 @@ objects:
       app: receptor
   spec:
     ports:
-    - name: port-10000
-      port: 10000
+    - name: legacy-receptor-controller-port
+      port: 9090
       protocol: TCP
       targetPort: 10000
     selector:
