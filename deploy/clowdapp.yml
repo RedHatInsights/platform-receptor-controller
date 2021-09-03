@@ -18,7 +18,7 @@ objects:
         partitions: 3
         topicName: platform.receptor-controller.responses
     deployments:
-    - name: gateway-clowder
+    - name: gateway
       webServices:
         private:
           enabled: True
@@ -74,7 +74,7 @@ objects:
             value: ${GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY}
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
-    - name: switch-clowder
+    - name: switch
       webServices:
         private:
           enabled: True
@@ -137,7 +137,7 @@ objects:
             cpu: ${CPU_REQUEST}
             memory: ${MEMORY_REQUEST}
     jobs:
-    - name: connection-cleaner-clowder
+    - name: connection-cleaner
       schedule: "*/10 * * * *"
       podSpec:
         name: connection-cleaner
@@ -171,7 +171,7 @@ objects:
     name: ${GATEWAY_CLUSTER_SERVICE_NAME}
     labels:
       app: receptor
-      pod: receptor-gateway-clowder
+      pod: receptor-gateway
   spec:
     clusterIP: None
     ports:
@@ -181,7 +181,7 @@ objects:
       targetPort: 10000
     selector:
       app: receptor
-      pod: receptor-gateway-clowder
+      pod: receptor-gateway
     sessionAffinity: None
     type: ClusterIP
 
@@ -200,7 +200,7 @@ objects:
       targetPort: 10000
     selector:
       app: receptor
-      pod: receptor-switch-clowder
+      pod: receptor-switch
     sessionAffinity: None
     type: ClusterIP
 
