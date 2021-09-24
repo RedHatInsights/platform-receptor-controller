@@ -275,7 +275,12 @@ func (r *ReceptorService) DispatchResponse(payloadMessage *protocol.PayloadMessa
 
 	go func() {
 		metrics.responseKafkaWriterGoRoutineGauge.Inc()
-		err = r.kafkaWriter.WriteMessages(r.Transport.Ctx,
+
+		// Purposefully do not use the context from the "transport" object here.
+		// If we pass the context from the transport to the kafka writer, then
+		// closing the websocket would cause the context to be canceled which
+		// could cause these messages to be lost.
+		err = r.kafkaWriter.WriteMessages(context.Background(),
 			kafka.Message{
 				Key:   []byte(payloadMessage.Data.InResponseTo),
 				Value: jsonResponseMessage,
