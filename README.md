@@ -4,6 +4,34 @@ The Cloud Receptor Controller is designed to receive work requests from internal
 clients and route the work requests to the target receptor node which runs in
 the customer's environment.
 
+## Architecture
+
+Receptor-Controller is composed of 3 parts:
+
+- Websocket gateway pod
+- Message switch pod
+- Redis
+
+<img alt="Architecture diagram" src="docs/receptor-controller-arch-split-service.svg"/>
+
+The Websocket gateway pod sits behind the 3scale gateway.  The 3scale gateway is responsible for
+handling the certificate based authentication.  Once a connection is received by the Websocket gateway,
+the Websocket gateway performs a receptor handshake and then registers the connection in a Redis instance.
+The connection registration process records the account number, node id and gateway
+pod name where the websocket connection lives.
+
+Redis is responsible for maintaining a mapping of where the websocket connections live within the
+Websocket gateway pods.  
+
+The Message switch pod allows internal applications to send messages down to the clients that are connected
+over the websocket connection.  When the switch pod receives a message to send to a connected client, the 
+switch pod looks up the account number and destination node id in Redis.
+The result of this account number / destination node id lookup is the name of the pod where the
+websocket connection lives.  The switch pod can now send the message to the correct gateway pod as the switch
+pod now knows on which gateway pod that the correct websocket connection lives.
+
+Responses from the receptor workers are read from the websocket and written to kafka.
+
 ### Submitting A Work Request
 
 A work request can be submitted by sending a work request message to the _/job_ endpoint.
