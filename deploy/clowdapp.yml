@@ -74,6 +74,8 @@ objects:
             value: ${GATEWAY_ACTIVE_CONNECTION_REGISTRAR_POLL_DELAY}
           - name: RECEPTOR_CONTROLLER_GATEWAY_CLUSTER_SERVICE_NAME
             value: ${GATEWAY_CLUSTER_SERVICE_NAME}
+          - name: RECEPTOR_CONTROLLER_KAFKA_RESPONSES_BATCH_SIZE
+            value: ${KAFKA_RESPONSES_WRITER_BATCH_SIZE}
     - name: switch
       webServices:
         private:
@@ -252,6 +254,10 @@ parameters:
   name: KAFKA_BOOTSTRAP_PORT
   required: true
   value: '9092'
+- description: Batch size used when writing the response messages to kafka
+  displayName: Kafka Writer Batch Size
+  name: KAFKA_RESPONSES_WRITER_BATCH_SIZE
+  value: '100'
 - description: The log level to use for logging
   displayName: The log level to use for logging
   name: LOG_LEVEL
