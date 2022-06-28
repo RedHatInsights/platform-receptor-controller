@@ -32,11 +32,11 @@ const (
 	RESPONSES_BATCH_SIZE                               = "Kafka_Responses_Batch_Size"
 	RESPONSES_BATCH_BYTES                              = "Kafka_Responses_Batch_Bytes"
 	DEFAULT_BROKER_ADDRESS                             = "kafka:29092"
-	KAFKA_SASL_USERNAME								= "Kafka_SASL_Username"
-	KAFKA_SASL_PASSWORD								= "Kafka_SASL_Password"
-	KAFKA_SASL_MECHANISM								= "Kafka_SASL_Mechanism"
-	KAFKA_SASL_PROTOCOL								= "Kafka_SASL_Protocol"
-	KAFKA_CA_PATH										= "Kafka_CA_Path"
+	KAFKA_SASL_USERNAME                                = "Kafka_SASL_Username"
+	KAFKA_SASL_PASSWORD                                = "Kafka_SASL_Password"
+	KAFKA_SASL_MECHANISM                               = "Kafka_SASL_Mechanism"
+	KAFKA_SASL_PROTOCOL                                = "Kafka_SASL_Protocol"
+	KAFKA_CA_PATH                                      = "Kafka_CA_Path"
 	REDIS_HOST                                         = "Redis_Host"
 	REDIS_PORT                                         = "Redis_Port"
 	REDIS_PASSWORD                                     = "Redis_Password"
@@ -74,11 +74,11 @@ type Config struct {
 	KafkaResponsesBatchBytes                     int
 	KafkaGroupID                                 string
 	KafkaConsumerOffset                          int64
-	KafkaSaslUsername						string
-	KafkaSaslPassword						string
-	KafkaSaslMechanism						string
-	KafkaSaslProtocol						string
-	KafkaCAPath								string
+	KafkaSaslUsername                            string
+	KafkaSaslPassword                            string
+	KafkaSaslMechanism                           string
+	KafkaSaslProtocol                            string
+	KafkaCAPath                                  string
 	RedisHost                                    string
 	RedisPort                                    string
 	RedisPassword                                string
@@ -195,11 +195,11 @@ func GetConfig() *Config {
 		KafkaResponsesBatchBytes:         options.GetInt(RESPONSES_BATCH_BYTES),
 		KafkaGroupID:                     options.GetString(JOBS_GROUP_ID),
 		KafkaConsumerOffset:              options.GetInt64(JOBS_CONSUMER_OFFSET),
-		KafkaSaslUsername: 			  options.GetString(KAFKA_SASL_USERNAME),
-		KafkaSaslPassword: 			  options.GetString(KAFKA_SASL_PASSWORD),
-		KafkaSaslMechanism: 			  options.GetString(KAFKA_SASL_MECHANISM),
-        KafkaSaslProtocol: 			  options.GetString(KAFKA_SASL_PROTOCOL),
-		KafkaCAPath: 					  options.GetString(KAFKA_CA_PATH),
+		KafkaSaslUsername:                options.GetString(KAFKA_SASL_USERNAME),
+		KafkaSaslPassword:                options.GetString(KAFKA_SASL_PASSWORD),
+		KafkaSaslMechanism:               options.GetString(KAFKA_SASL_MECHANISM),
+		KafkaSaslProtocol:                options.GetString(KAFKA_SASL_PROTOCOL),
+		KafkaCAPath:                      options.GetString(KAFKA_CA_PATH),
 		RedisHost:                        options.GetString(REDIS_HOST),
 		RedisPort:                        options.GetString(REDIS_PORT),
 		RedisPassword:                    options.GetString(REDIS_PASSWORD),
