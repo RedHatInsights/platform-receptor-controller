@@ -32,6 +32,11 @@ const (
 	RESPONSES_BATCH_SIZE                               = "Kafka_Responses_Batch_Size"
 	RESPONSES_BATCH_BYTES                              = "Kafka_Responses_Batch_Bytes"
 	DEFAULT_BROKER_ADDRESS                             = "kafka:29092"
+	KAFKA_SASL_USERNAME								= "Kafka_SASL_Username"
+	KAFKA_SASL_PASSWORD								= "Kafka_SASL_Password"
+	KAFKA_SASL_MECHANISM								= "Kafka_SASL_Mechanism"
+	KAFKA_SASL_PROTOCOL								= "Kafka_SASL_Protocol"
+	KAFKA_CA_PATH										= "Kafka_CA_Path"
 	REDIS_HOST                                         = "Redis_Host"
 	REDIS_PORT                                         = "Redis_Port"
 	REDIS_PASSWORD                                     = "Redis_Password"
@@ -69,6 +74,11 @@ type Config struct {
 	KafkaResponsesBatchBytes                     int
 	KafkaGroupID                                 string
 	KafkaConsumerOffset                          int64
+	KafkaSaslUsername						string
+	KafkaSaslPassword						string
+	KafkaSaslMechanism						string
+	KafkaSaslProtocol						string
+	KafkaCAPath								string
 	RedisHost                                    string
 	RedisPort                                    string
 	RedisPassword                                string
@@ -105,6 +115,9 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %d\n", RESPONSES_BATCH_BYTES, c.KafkaResponsesBatchBytes)
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, c.KafkaGroupID)
 	fmt.Fprintf(&b, "%s: %d\n", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
+	fmt.Fprintf(&b, "%s: %s\n", KAFKA_SASL_MECHANISM, c.KafkaSaslMechanism)
+	fmt.Fprintf(&b, "%s: %s\n", KAFKA_SASL_PROTOCOL, c.KafkaSaslProtocol)
+	fmt.Fprintf(&b, "%s: %s\n", KAFKA_CA_PATH, c.KafkaCAPath)
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_HOST, c.RedisHost)
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_PORT, c.RedisPort)
 	fmt.Fprintf(&b, "%s: %d\n", REDIS_DB, c.RedisDB)
@@ -182,6 +195,11 @@ func GetConfig() *Config {
 		KafkaResponsesBatchBytes:         options.GetInt(RESPONSES_BATCH_BYTES),
 		KafkaGroupID:                     options.GetString(JOBS_GROUP_ID),
 		KafkaConsumerOffset:              options.GetInt64(JOBS_CONSUMER_OFFSET),
+		KafkaSaslUsername: 			  options.GetString(KAFKA_SASL_USERNAME),
+		KafkaSaslPassword: 			  options.GetString(KAFKA_SASL_PASSWORD),
+		KafkaSaslMechanism: 			  options.GetString(KAFKA_SASL_MECHANISM),
+        KafkaSaslProtocol: 			  options.GetString(KAFKA_SASL_PROTOCOL),
+		KafkaCAPath: 					  options.GetString(KAFKA_CA_PATH),
 		RedisHost:                        options.GetString(REDIS_HOST),
 		RedisPort:                        options.GetString(REDIS_PORT),
 		RedisPassword:                    options.GetString(REDIS_PASSWORD),
@@ -200,9 +218,26 @@ func GetConfig() *Config {
 
 	if clowder.IsClowderEnabled() {
 		cfg := clowder.LoadedConfig
+		broker := cfg.Kafka.Brokers[0]
 		config.RedisHost = cfg.InMemoryDb.Hostname
 		config.RedisPort = strconv.Itoa(cfg.InMemoryDb.Port)
+
 		config.KafkaBrokers = clowder.KafkaServers
+		config.KafkaResponsesTopic = clowder.KafkaTopics["platform.receptor-controller.responses"].Name
+
+		if broker.Authtype != nil {
+
+			caPath, err := cfg.KafkaCa(broker)
+			if err != nil {
+				panic("Kafka CA cert failed to write")
+			}
+
+			config.KafkaSaslUsername = *broker.Sasl.Username
+			config.KafkaSaslPassword = *broker.Sasl.Password
+			config.KafkaSaslMechanism = *broker.Sasl.SaslMechanism
+			config.KafkaSaslProtocol = *broker.Sasl.SecurityProtocol
+			config.KafkaCAPath = caPath
+		}
 	}
 	return config
 }
