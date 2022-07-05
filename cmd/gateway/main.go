@@ -103,18 +103,26 @@ func main() {
 	wsMux := mux.NewRouter()
 	wsMux.Use(request_id.ConfiguredRequestID("x-rh-insights-request-id"))
 
-	kw := queue.StartProducer(&queue.ProducerConfig{
+	kw, err := queue.StartProducer(&queue.ProducerConfig{
 		Brokers:    cfg.KafkaBrokers,
+		SaslConfig: buildKafkaSaslConfig(cfg),
 		Topic:      cfg.KafkaResponsesTopic,
 		BatchSize:  cfg.KafkaResponsesBatchSize,
 		BatchBytes: cfg.KafkaResponsesBatchBytes,
 	})
+	if err != nil {
+		logger.Log.Fatalf("Unable to start kafka producer: %s\n", err)
+	}
 
 	kc := &queue.ConsumerConfig{
 		Brokers:        cfg.KafkaBrokers,
+		SaslConfig:     buildKafkaSaslConfig(cfg),
 		Topic:          cfg.KafkaJobsTopic,
 		GroupID:        cfg.KafkaGroupID,
 		ConsumerOffset: cfg.KafkaConsumerOffset,
+	}
+	if err != nil {
+		logger.Log.Fatalf("Unable to start kafka consumer: %s\n", err)
 	}
 
 	var gatewayCR c.ConnectionRegistrar
@@ -165,4 +173,18 @@ func main() {
 
 	wg.Wait()
 	logger.Log.Info("Receptor-Controller shutting down")
+}
+
+func buildKafkaSaslConfig(cfg *config.Config) *queue.SaslConfig {
+
+	if cfg.KafkaSaslMechanism == "" {
+		return nil
+	}
+
+	return &queue.SaslConfig{
+		SaslMechanism: cfg.KafkaSaslMechanism,
+		SaslUsername:  cfg.KafkaSaslUsername,
+		SaslPassword:  cfg.KafkaSaslPassword,
+		KafkaCA:       cfg.KafkaCAPath,
+	}
 }
