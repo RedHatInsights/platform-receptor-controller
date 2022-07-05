@@ -70,10 +70,11 @@ var _ = Describe("WsController", func() {
 			ConsumerOffset: cfg.KafkaConsumerOffset,
 		}
 		md := controller.NewMessageDispatcherFactory(kc)
-		kw = queue.StartProducer(&queue.ProducerConfig{
+		kw, err := queue.StartProducer(&queue.ProducerConfig{
 			Brokers: cfg.KafkaBrokers,
 			Topic:   cfg.KafkaResponsesTopic,
 		})
+		Expect(err).NotTo(HaveOccurred())
 		rd := controller.NewResponseReactorFactory()
 		rs := controller.NewReceptorServiceFactory(kw, cfg)
 		rc = NewReceptorController(cfg, cr, wsMux, rd, md, rs)
@@ -87,7 +88,9 @@ var _ = Describe("WsController", func() {
 	})
 
 	AfterEach(func() {
-		kw.Close()
+		if kw != nil {
+			kw.Close()
+		}
 		log.Println("Checking for leaky goroutines...")
 		Eventually(leaks).ShouldNot(HaveOccurred())
 	})
