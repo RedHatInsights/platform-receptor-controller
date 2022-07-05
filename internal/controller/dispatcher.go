@@ -21,14 +21,18 @@ func NewMessageDispatcherFactory(cfg *queue.ConsumerConfig) *MessageDispatcherFa
 	}
 }
 
-func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) *MessageDispatcher {
+func (fact *MessageDispatcherFactory) NewDispatcher(account, nodeID string) (*MessageDispatcher, error) {
 	log.Println("Creating a new work dispatcher")
-	r := queue.StartConsumer(fact.readerConfig)
+	r, err := queue.StartConsumer(fact.readerConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MessageDispatcher{
 		account: account,
 		nodeID:  nodeID,
 		reader:  r,
-	}
+	}, nil
 }
 
 type MessageDispatcher struct {
