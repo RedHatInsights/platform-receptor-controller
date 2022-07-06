@@ -35,7 +35,6 @@ const (
 	KAFKA_SASL_USERNAME                                = "Kafka_SASL_Username"
 	KAFKA_SASL_PASSWORD                                = "Kafka_SASL_Password"
 	KAFKA_SASL_MECHANISM                               = "Kafka_SASL_Mechanism"
-	KAFKA_SASL_PROTOCOL                                = "Kafka_SASL_Protocol"
 	KAFKA_CA_PATH                                      = "Kafka_CA_Path"
 	REDIS_HOST                                         = "Redis_Host"
 	REDIS_PORT                                         = "Redis_Port"
@@ -77,7 +76,6 @@ type Config struct {
 	KafkaSaslUsername                            string
 	KafkaSaslPassword                            string
 	KafkaSaslMechanism                           string
-	KafkaSaslProtocol                            string
 	KafkaCAPath                                  string
 	RedisHost                                    string
 	RedisPort                                    string
@@ -116,7 +114,6 @@ func (c Config) String() string {
 	fmt.Fprintf(&b, "%s: %s\n", JOBS_GROUP_ID, c.KafkaGroupID)
 	fmt.Fprintf(&b, "%s: %d\n", JOBS_CONSUMER_OFFSET, c.KafkaConsumerOffset)
 	fmt.Fprintf(&b, "%s: %s\n", KAFKA_SASL_MECHANISM, c.KafkaSaslMechanism)
-	fmt.Fprintf(&b, "%s: %s\n", KAFKA_SASL_PROTOCOL, c.KafkaSaslProtocol)
 	fmt.Fprintf(&b, "%s: %s\n", KAFKA_CA_PATH, c.KafkaCAPath)
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_HOST, c.RedisHost)
 	fmt.Fprintf(&b, "%s: %s\n", REDIS_PORT, c.RedisPort)
@@ -198,7 +195,6 @@ func GetConfig() *Config {
 		KafkaSaslUsername:                options.GetString(KAFKA_SASL_USERNAME),
 		KafkaSaslPassword:                options.GetString(KAFKA_SASL_PASSWORD),
 		KafkaSaslMechanism:               options.GetString(KAFKA_SASL_MECHANISM),
-		KafkaSaslProtocol:                options.GetString(KAFKA_SASL_PROTOCOL),
 		KafkaCAPath:                      options.GetString(KAFKA_CA_PATH),
 		RedisHost:                        options.GetString(REDIS_HOST),
 		RedisPort:                        options.GetString(REDIS_PORT),
@@ -227,16 +223,18 @@ func GetConfig() *Config {
 
 		if broker.Authtype != nil {
 
-			caPath, err := cfg.KafkaCa(broker)
-			if err != nil {
-				panic("Kafka CA cert failed to write")
-			}
-
 			config.KafkaSaslUsername = *broker.Sasl.Username
 			config.KafkaSaslPassword = *broker.Sasl.Password
 			config.KafkaSaslMechanism = *broker.Sasl.SaslMechanism
-			config.KafkaSaslProtocol = *broker.Sasl.SecurityProtocol
-			config.KafkaCAPath = caPath
+
+			if broker.Cacert != nil {
+				caPath, err := cfg.KafkaCa(broker)
+				if err != nil {
+					panic("Kafka CA cert failed to write")
+				}
+
+				config.KafkaCAPath = caPath
+			}
 		}
 	}
 	return config

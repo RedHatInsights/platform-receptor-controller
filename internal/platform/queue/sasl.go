@@ -44,6 +44,11 @@ func createDialer(cfg *SaslConfig) (*kafka.Dialer, error) {
 }
 
 func createTLSConfig(pathToCert string) (*tls.Config, error) {
+
+	if pathToCert == "" {
+		return nil, nil
+	}
+
 	caCert, err := ioutil.ReadFile(pathToCert)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open cert file (%s): %w", pathToCert, err)
