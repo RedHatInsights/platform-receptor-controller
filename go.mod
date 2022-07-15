@@ -7,9 +7,8 @@ require (
 	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/go-redis/redis v6.15.8+incompatible
-	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
-	github.com/google/go-cmp v0.2.0
+	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
@@ -19,7 +18,7 @@ require (
 	github.com/onsi/gomega v1.8.1
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/posener/wstest v1.2.0
-	github.com/prometheus/client_golang v0.9.3
+	github.com/prometheus/client_golang v1.12.2
 	github.com/redhatinsights/app-common-go v1.6.2
 	github.com/redhatinsights/platform-go-middlewares v0.8.1
 	github.com/segmentio/kafka-go v0.4.32
@@ -27,9 +26,8 @@ require (
 	github.com/spf13/viper v1.6.1
 	github.com/yuin/gopher-lua v0.0.0-20200603152657-dc2b0ca8b37e // indirect
 	go.uber.org/goleak v1.0.0
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/tools v0.0.0-20200924182824-0f1c53950d78 // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	golang.org/x/tools v0.1.11 // indirect
 )
 
 go 1.13
