@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -289,6 +290,72 @@ func TestWriteCommandMessageHi(t *testing.T) {
 	}
 }
 
+func TestWriteCommandMessageVerifyAmpersandDoesNotGetEncoded(t *testing.T) {
+
+	hiMessage := HiMessage{Command: "HI",
+		ID:       "123456",
+		Metadata: "{\"blah\": \"blah && blah\"}",
+	}
+
+	var w bytes.Buffer
+
+	err := WriteMessage(&w, &hiMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	marshalled := string(w.Bytes())
+
+	if strings.Contains(marshalled, "&") == false {
+		t.Fatalf("& encoded into \\u0026 incorrectly: %s", marshalled)
+	}
+}
+
+func TestWriteRoutingMessageVerifyAmpersandDoesNotGetEncoded(t *testing.T) {
+
+	routingMessage := RoutingMessage{
+		Sender:    "ima_sender",
+		Recipient: "ima_recipient &",
+		RouteList: []string{"fred", "wilma", "pebbles"},
+	}
+
+	var w bytes.Buffer
+
+	err := WriteMessage(&w, &routingMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	marshalled := string(w.Bytes())
+
+	if strings.Contains(marshalled, "&") == false {
+		t.Fatalf("& encoded into \\u0026 incorrectly: %s", marshalled)
+	}
+
+}
+
+func TestWriteRouteTableMessageVerifyAmpersandDoesNotGetEncoded(t *testing.T) {
+
+	routeTableMessage := RouteTableMessage{
+		Command: "ima_command",
+		ID:      "ima_id",
+		Seen:    []string{"fred", "wilma", "pebbles", "& testing here"},
+	}
+
+	var w bytes.Buffer
+
+	err := WriteMessage(&w, &routeTableMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	marshalled := string(w.Bytes())
+
+	if strings.Contains(marshalled, "&") == false {
+		t.Fatalf("& encoded into \\u0026 incorrectly: %s", marshalled)
+	}
+}
+
 func TestWritingToClosedWriter(t *testing.T) {
 }
 
@@ -375,6 +442,40 @@ func TestWritePayloadMessage(t *testing.T) {
 	//routingMessage.RouteList = []string{}
 	//routingMessage.RouteList = []string{"node-c"}
 	verifyRoutingMessage(t, &routingMessage, readPayloadMessage.RoutingInfo)
+}
+
+func TestWritePayloadMessageVerifyAmpersandDoesNotGetEncoded(t *testing.T) {
+
+	routingMessage := RoutingMessage{
+		Sender:    "ima_sender",
+		Recipient: "ima_recipient",
+		RouteList: []string{"fred", "wilma", "pebbles"},
+	}
+
+	innerMessage := InnerEnvelope{
+		MessageID:   "1234-123-1234",
+		Sender:      "me",
+		Recipient:   "node-b",
+		MessageType: "directive",
+		RawPayload:  "ima payload! i include an ampersand &",
+		Directive:   "demo:do_uptime",
+		Timestamp:   Time{time.Now().UTC()},
+	}
+
+	payloadMessage := PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
+
+	var w bytes.Buffer
+
+	err := WriteMessage(&w, &payloadMessage)
+	if err != nil {
+		t.Fatalf("unexpected error writing message")
+	}
+
+	marshalled := string(w.Bytes())
+
+	if strings.Contains(marshalled, "&") == false {
+		t.Fatalf("& encoded into \\u0026 incorrectly: %s", marshalled)
+	}
 }
 
 func verifyRoutingMessage(t *testing.T, expected *RoutingMessage, actual *RoutingMessage) {

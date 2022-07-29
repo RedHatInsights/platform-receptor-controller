@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -167,7 +168,7 @@ func (m *HiMessage) unmarshal(b []byte) error {
 
 func (m *HiMessage) marshal() ([]byte, error) {
 
-	b, err := json.Marshal(m)
+	b, err := jsonMarshal(m)
 
 	if err != nil {
 		log.Println("marshal of HiMessage failed, err:", err)
@@ -201,7 +202,7 @@ func (m *RoutingMessage) unmarshal(b []byte) error {
 
 func (m *RoutingMessage) marshal() ([]byte, error) {
 
-	b, err := json.Marshal(m)
+	b, err := jsonMarshal(m)
 
 	if err != nil {
 		log.Println("marshal of RoutingMessage failed, err:", err)
@@ -251,7 +252,7 @@ func (m *RouteTableMessage) unmarshal(b []byte) error {
 
 func (m *RouteTableMessage) marshal() ([]byte, error) {
 
-	b, err := json.Marshal(m)
+	b, err := jsonMarshal(m)
 
 	if err != nil {
 		log.Println("marshal of RouteTableMessage failed, err:", err)
@@ -283,7 +284,7 @@ func (pm *PayloadMessage) unmarshal(buf []byte) error {
 
 func (m *PayloadMessage) marshal() ([]byte, error) {
 
-	b, err := json.Marshal(m.Data)
+	b, err := jsonMarshal(m.Data)
 
 	if err != nil {
 		log.Println("marshal of PayloadMessage failed, err:", err)
@@ -354,4 +355,16 @@ func BuildPayloadMessage(messageId uuid.UUID, sender string, recipient string, r
 	payloadMessage := &PayloadMessage{RoutingInfo: &routingMessage, Data: innerMessage}
 
 	return payloadMessage, nil
+}
+
+func jsonMarshal(data interface{}) ([]byte, error) {
+	b := new(bytes.Buffer)
+	encoder := json.NewEncoder(b)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
