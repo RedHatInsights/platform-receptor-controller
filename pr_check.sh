@@ -11,6 +11,7 @@ IQE_PLUGINS="controller_interface"
 IQE_MARKER_EXPRESSION="smoke"
 IQE_FILTER_EXPRESSION=""
 IQE_CJI_TIMEOUT="30m"
+IQE_IMAGE_TAG="controller-interface-349b7c70"
 
 
 # Install bonfire repo/initialize
