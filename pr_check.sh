@@ -11,7 +11,6 @@ IQE_PLUGINS="controller_interface"
 IQE_MARKER_EXPRESSION="smoke"
 IQE_FILTER_EXPRESSION=""
 IQE_CJI_TIMEOUT="30m"
-IQE_IMAGE_TAG="controller-interface-61e8e778"
 
 # Install bonfire repo/initialize
 CICD_URL=https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd
