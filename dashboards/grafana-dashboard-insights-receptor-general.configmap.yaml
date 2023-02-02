@@ -1,3457 +1,2762 @@
 apiVersion: v1
 data:
   general.json: |-
-    {
-      "annotations": {
-        "list": [
-          {
-            "builtIn": 1,
-            "datasource": "-- Grafana --",
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations & Alerts",
-            "type": "dashboard"
-          }
-        ]
-      },
-      "editable": true,
-      "gnetId": null,
-      "graphTooltip": 0,
-      "id": 66,
-      "iteration": 1604437402465,
-      "links": [],
-      "panels": [
-        {
-          "content": "<center><h1>Receptor Gateway</h1></center>",
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "id": 47,
-          "links": [],
-          "mode": "html",
-          "options": {
-            "content": "<center><h1>Receptor Gateway</h1></center>",
-            "mode": "html"
-          },
-          "pluginVersion": "7.1.0",
-          "title": "",
-          "type": "text"
-        },
-        {
-          "content": "<center><h1>Receptor Switch</h1></center>",
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
-          "id": 48,
-          "links": [],
-          "mode": "html",
-          "options": {
-            "content": "<center><h1>Receptor Switch</h1></center>",
-            "mode": "html"
-          },
-          "pluginVersion": "7.1.0",
-          "title": "",
-          "type": "text"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 0,
-            "y": 3
-          },
-          "id": 29,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(up{app=\"receptor-gateway\", name=\"receptor-gateway\", namespace=~\"receptor-.*\"})",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Pod Count",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 3,
-            "y": 3
-          },
-          "id": 30,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total{container=\"receptor-gateway\"}[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Pod Restarts",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 6,
-            "y": 3
-          },
-          "id": 56,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(api_3scale_gateway_api_status{exported_service=\"receptor-controller\", status=\"5xx\"}[$__range])) / sum(increase(api_3scale_gateway_api_status{exported_service=\"receptor-controller\"}[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "WebSocket Errors (5xx) %",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 9,
-            "y": 3
-          },
-          "id": 57,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_kafka_response_writer_failure_count[$__range])) / sum(increase(receptor_controller_payload_message_sizes_count[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Response Delivery Errors %",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 12,
-            "y": 3
-          },
-          "id": 51,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(up{app=\"receptor-switch\", name=\"receptor-switch\", kubernetes_namespace=~\"receptor-.*\"})",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Pod Count",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 15,
-            "y": 3
-          },
-          "id": 52,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(kube_pod_container_status_restarts_total{container=\"receptor-switch\"}[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Pod Restarts",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 18,
-            "y": 3
-          },
-          "id": 58,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_http_status_code_counter{status_code=~\"5[0-9]{2}\"})) / sum(increase(receptor_controller_http_status_code_counter))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "API Errors (5xx) %",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 0,
-            "y": 7
-          },
-          "id": 24,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_websocket_total_messages_sent_count[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "5m",
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Websocket Messages Sent",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 3,
-            "x": 3,
-            "y": 7
-          },
-          "id": 25,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_websocket_total_messages_received_count[$__range]))",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "5m",
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Websocket Messages Received",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 7
-          },
-          "hiddenSeries": false,
-          "id": 49,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "rate(container_cpu_usage_seconds_total{container=\"receptor-switch\"}[1m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "CPU",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 4,
-            "x": 0,
-            "y": 11
-          },
-          "id": 27,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(receptor_controller_websocket_total_connection_count)",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "5m",
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Total Websocket Connections (Active + Inactive)",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "#299c46",
-            "rgba(237, 129, 40, 0.89)",
-            "#d44a3a"
-          ],
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 4,
-            "x": 4,
-            "y": 11
-          },
-          "id": 26,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "tableColumn": "",
-          "targets": [
-            {
-              "expr": "sum(receptor_controller_websocket_active_connection_count)",
-              "format": "time_series",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "interval": "5m",
-              "intervalFactor": 1,
-              "orderByTime": "ASC",
-              "policy": "default",
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": []
-            }
-          ],
-          "thresholds": "",
-          "title": "Websocket Active Connections",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 15
-          },
-          "hiddenSeries": false,
-          "id": 19,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "rate(container_cpu_usage_seconds_total{container=\"receptor-gateway\"}[1m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "CPU",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 16
-          },
-          "hiddenSeries": false,
-          "id": 50,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "container_memory_usage_bytes{container=\"receptor-switch\"}",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Memory Usage",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 24
-          },
-          "hiddenSeries": false,
-          "id": 15,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "container_memory_usage_bytes{container=\"receptor-gateway\"}",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Memory Usage",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 25
-          },
-          "hiddenSeries": false,
-          "id": 55,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-switch-.*\"}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Go Routines",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 33
-          },
-          "hiddenSeries": false,
-          "id": 54,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 2,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-gateway-.*\"}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Go Routines",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 41
-          },
-          "hiddenSeries": false,
-          "id": 18,
-          "legend": {
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_payload_message_sizes_count[1m]))",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Incoming Response Rate [1m]",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 50
-          },
-          "hiddenSeries": false,
-          "id": 8,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "receptor_controller_websocket_active_connection_count",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Active Websocket Connection Count",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 59
-          },
-          "hiddenSeries": false,
-          "id": 31,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "rate(receptor_controller_payload_message_sizes_sum[1m]) / rate(receptor_controller_payload_message_sizes_count[1m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "B"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Average Incoming Response Size [1m]",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "cards": {
-            "cardPadding": null,
-            "cardRound": null
-          },
-          "color": {
-            "cardColor": "#b4ff00",
-            "colorScale": "sqrt",
-            "colorScheme": "interpolateOranges",
-            "exponent": 0.5,
-            "mode": "opacity"
-          },
-          "dataFormat": "timeseries",
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 68
-          },
-          "heatmap": {},
-          "hideZeroBuckets": false,
-          "highlightCards": true,
-          "id": 33,
-          "legend": {
-            "show": false
-          },
-          "links": [],
-          "reverseYBuckets": false,
-          "targets": [
-            {
-              "expr": "avg(increase(receptor_controller_payload_message_sizes_bucket[1m])) by (le)",
-              "format": "heatmap",
-              "interval": "15s",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "title": "Response Size",
-          "tooltip": {
-            "show": true,
-            "showHistogram": false
-          },
-          "transparent": true,
-          "type": "heatmap",
-          "xAxis": {
-            "show": true
-          },
-          "xBucketNumber": null,
-          "xBucketSize": null,
-          "yAxis": {
-            "decimals": null,
-            "format": "deckbytes",
-            "logBase": 1,
-            "max": null,
-            "min": null,
-            "show": true,
-            "splitFactor": null
-          },
-          "yBucketBound": "auto",
-          "yBucketNumber": null,
-          "yBucketSize": null
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 77
-          },
-          "hiddenSeries": false,
-          "id": 10,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "avg_over_time(receptor_controller_kafka_response_writer_go_routine_count[5m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "legendFormat": "avg",
-              "refId": "B"
-            },
-            {
-              "expr": "max_over_time(receptor_controller_kafka_response_writer_go_routine_count[5m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "legendFormat": "max",
-              "refId": "C"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Kafka Response Writer Go Routine Metrics - 5m",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 86
-          },
-          "hiddenSeries": false,
-          "id": 16,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_kafka_response_writer_failure_count[1m]))",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Kafka Response Writer Failure Count - 1m",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 95
-          },
-          "hiddenSeries": false,
-          "id": 6,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_websocket_total_messages_received_count[1m]))",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Websocket Messages Received - 1m",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 104
-          },
-          "hiddenSeries": false,
-          "id": 7,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "options": {
-            "alertThreshold": true
-          },
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_websocket_total_messages_sent_count[1m]))",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Websocket Messages Sent - 1m",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 113
-          },
-          "hiddenSeries": false,
-          "id": 11,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(increase(receptor_controller_response_message_handled_count[1m])) + sum(increase(receptor_controller_response_message_without_handler_count[1m]))",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Receptor Responses Count - 1m",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 122
-          },
-          "hiddenSeries": false,
-          "id": 4,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(receptor_controller_websocket_total_connection_count)",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Total Websocket Connection Count",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 131
-          },
-          "hiddenSeries": false,
-          "id": 2,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "receptor_controller_duplicate_connection_count",
-              "format": "time_series",
-              "hide": true,
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Duplicate Websocket Connection Attempts",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "collapsed": false,
-          "datasource": null,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 140
-          },
-          "id": 37,
-          "panels": [],
-          "title": "Redis",
-          "type": "row"
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 141
-          },
-          "hiddenSeries": false,
-          "id": 39,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "rate(container_cpu_usage_seconds_total{container=\"redis\", namespace=~\"receptor-.*\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "legendFormat": "{{pod_name}}:{{container_name}}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "CPU",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 141
-          },
-          "hiddenSeries": false,
-          "id": 41,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"receptor-.*\",container=\"redis\"}[5m])) / sum(kube_pod_container_resource_limits_cpu_cores{namespace=~\"receptor-.*\", container=\"redis\"})",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Percentage of CPU limit consumed",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 150
-          },
-          "hiddenSeries": false,
-          "id": 43,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "container_memory_usage_bytes{namespace=~\"receptor-.*\",container=\"redis\"}",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "legendFormat": "{{pod_name}}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Memory",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {},
-              "links": []
-            },
-            "overrides": []
-          },
-          "fill": 1,
-          "fillGradient": 0,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 150
-          },
-          "hiddenSeries": false,
-          "id": 45,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pluginVersion": "7.2.1",
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(container_memory_usage_bytes{namespace=~\"receptor-.*\",container=\"redis\"}) / sum(kube_pod_container_resource_limits_memory_bytes{namespace=~\"receptor-.*\",container=\"redis\"})",
-              "format": "time_series",
-              "intervalFactor": 1,
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeRegions": [],
-          "timeShift": null,
-          "title": "Percentage of memory limit consumed",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        }
-      ],
-      "refresh": false,
-      "schemaVersion": 26,
-      "style": "dark",
-      "tags": [],
-      "templating": {
-        "list": [
-          {
-            "current": {
-              "selected": false,
-              "text": "crc-stg-01-prometheus",
-              "value": "crc-stg-01-prometheus"
-            },
-            "hide": 0,
-            "includeAll": false,
-            "label": "Datasource",
-            "multi": false,
-            "name": "datasource",
-            "options": [],
-            "query": "prometheus",
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "type": "datasource"
-          }
-        ]
-      },
-      "time": {
-        "from": "now-24h",
-        "to": "now"
-      },
-      "timepicker": {
-        "refresh_intervals": [
-          "5s",
-          "10s",
-          "30s",
-          "1m",
-          "5m",
-          "15m",
-          "30m",
-          "1h",
-          "2h",
-          "1d"
-        ],
-        "time_options": [
-          "5m",
-          "15m",
-          "1h",
-          "6h",
-          "12h",
-          "24h",
-          "2d",
-          "7d",
-          "30d"
-        ]
-      },
-      "timezone": "",
-      "title": "Receptor-Controller",
-      "uid": "FRmd1NeWk1",
-      "version": 1
-    }
+   {
+     "annotations": {
+       "list": [
+         {
+           "builtIn": 1,
+           "datasource": {
+             "type": "datasource",
+             "uid": "grafana"
+           },
+           "enable": true,
+           "hide": true,
+           "iconColor": "rgba(0, 211, 255, 1)",
+           "name": "Annotations & Alerts",
+           "target": {
+             "limit": 100,
+             "matchAny": false,
+             "tags": [],
+             "type": "dashboard"
+           },
+           "type": "dashboard"
+         }
+       ]
+     },
+     "editable": true,
+     "fiscalYearStartMonth": 0,
+     "graphTooltip": 0,
+     "id": 5760,
+     "iteration": 1675308159425,
+     "links": [],
+     "liveNow": false,
+     "panels": [
+       {
+         "datasource": {
+           "type": "prometheus",
+           "uid": "PD776AFABBE26000A"
+         },
+         "gridPos": {
+           "h": 3,
+           "w": 12,
+           "x": 0,
+           "y": 0
+         },
+         "id": 47,
+         "links": [],
+         "options": {
+           "content": "<center><h1>Receptor Gateway</h1></center>",
+           "mode": "html"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "type": "prometheus",
+               "uid": "PD776AFABBE26000A"
+             },
+             "refId": "A"
+           }
+         ],
+         "type": "text"
+       },
+       {
+         "datasource": {
+           "type": "prometheus",
+           "uid": "PD776AFABBE26000A"
+         },
+         "gridPos": {
+           "h": 3,
+           "w": 12,
+           "x": 12,
+           "y": 0
+         },
+         "id": 48,
+         "links": [],
+         "options": {
+           "content": "<center><h1>Receptor Switch</h1></center>",
+           "mode": "html"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "type": "prometheus",
+               "uid": "PD776AFABBE26000A"
+             },
+             "refId": "A"
+           }
+         ],
+         "type": "text"
+       },
+       {
+         "datasource": {
+           "type": "prometheus",
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 0,
+           "y": 3
+         },
+         "id": 29,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(up{service=\"receptor-gateway\", namespace=~\"receptor-.*\"})",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Pod Count",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 3,
+           "y": 3
+         },
+         "id": 30,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(kube_pod_container_status_restarts_total{container=\"receptor-gateway\"}[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Pod Restarts",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 6,
+           "y": 3
+         },
+         "id": 56,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(api_3scale_gateway_api_status{exported_service=\"receptor-controller\", status=\"5xx\"}[$__range])) / sum(increase(api_3scale_gateway_api_status{exported_service=\"receptor-controller\"}[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "",
+             "intervalFactor": 1,
+             "legendFormat": "",
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "WebSocket Errors (5xx) %",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 9,
+           "y": 3
+         },
+         "id": 57,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_kafka_response_writer_failure_count[$__range])) / sum(increase(receptor_controller_payload_message_sizes_count[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "",
+             "intervalFactor": 1,
+             "legendFormat": "",
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Response Delivery Errors %",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "type": "prometheus",
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 12,
+           "y": 3
+         },
+         "id": 51,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(up{service=\"receptor-switch\", namespace=~\"receptor-.*\"})",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Pod Count",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 15,
+           "y": 3
+         },
+         "id": 52,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(kube_pod_container_status_restarts_total{container=\"receptor-switch\"}[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Pod Restarts",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "type": "prometheus",
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 18,
+           "y": 3
+         },
+         "id": 58,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_http_status_code_counter{status_code=~\"5[0-9]{2}\"})) / sum(increase(receptor_controller_http_status_code_counter))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "",
+             "intervalFactor": 1,
+             "legendFormat": "",
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "API Errors (5xx) %",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 0,
+           "y": 7
+         },
+         "id": 24,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_websocket_total_messages_sent_count[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "5m",
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Websocket Messages Sent",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 3,
+           "x": 3,
+           "y": 7
+         },
+         "id": 25,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_websocket_total_messages_received_count[$__range]))",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "5m",
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Websocket Messages Received",
+         "type": "stat"
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 12,
+           "y": 7
+         },
+         "hiddenSeries": false,
+         "id": 49,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "rate(container_cpu_usage_seconds_total{container=\"receptor-switch\"}[1m])",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "CPU",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 4,
+           "x": 0,
+           "y": 11
+         },
+         "id": 27,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(receptor_controller_websocket_total_connection_count)",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "5m",
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Total Websocket Connections (Active + Inactive)",
+         "type": "stat"
+       },
+       {
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "color": {
+               "mode": "thresholds"
+             },
+             "mappings": [
+               {
+                 "options": {
+                   "match": "null",
+                   "result": {
+                     "text": "N/A"
+                   }
+                 },
+                 "type": "special"
+               }
+             ],
+             "thresholds": {
+               "mode": "absolute",
+               "steps": [
+                 {
+                   "color": "green",
+                   "value": null
+                 },
+                 {
+                   "color": "red",
+                   "value": 80
+                 }
+               ]
+             },
+             "unit": "none"
+           },
+           "overrides": []
+         },
+         "gridPos": {
+           "h": 4,
+           "w": 4,
+           "x": 4,
+           "y": 11
+         },
+         "id": 26,
+         "links": [],
+         "maxDataPoints": 100,
+         "options": {
+           "colorMode": "none",
+           "graphMode": "none",
+           "justifyMode": "auto",
+           "orientation": "horizontal",
+           "reduceOptions": {
+             "calcs": [
+               "mean"
+             ],
+             "fields": "",
+             "values": false
+           },
+           "textMode": "auto"
+         },
+         "pluginVersion": "9.0.3",
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(receptor_controller_websocket_active_connection_count)",
+             "format": "time_series",
+             "groupBy": [
+               {
+                 "params": [
+                   "$__interval"
+                 ],
+                 "type": "time"
+               },
+               {
+                 "params": [
+                   "null"
+                 ],
+                 "type": "fill"
+               }
+             ],
+             "interval": "5m",
+             "intervalFactor": 1,
+             "orderByTime": "ASC",
+             "policy": "default",
+             "refId": "A",
+             "resultFormat": "time_series",
+             "select": [
+               [
+                 {
+                   "params": [
+                     "value"
+                   ],
+                   "type": "field"
+                 },
+                 {
+                   "params": [],
+                   "type": "mean"
+                 }
+               ]
+             ],
+             "tags": []
+           }
+         ],
+         "title": "Websocket Active Connections",
+         "type": "stat"
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 15
+         },
+         "hiddenSeries": false,
+         "id": 19,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "rate(container_cpu_usage_seconds_total{container=\"receptor-gateway\"}[1m])",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "CPU",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 12,
+           "y": 16
+         },
+         "hiddenSeries": false,
+         "id": 50,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "container_memory_usage_bytes{container=\"receptor-switch\"}",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Memory Usage",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 24
+         },
+         "hiddenSeries": false,
+         "id": 15,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "container_memory_usage_bytes{container=\"receptor-gateway\"}",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Memory Usage",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 8,
+           "w": 12,
+           "x": 12,
+           "y": 25
+         },
+         "hiddenSeries": false,
+         "id": 55,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 2,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-switch-.*\"}",
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Go Routines",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 8,
+           "w": 12,
+           "x": 0,
+           "y": 33
+         },
+         "hiddenSeries": false,
+         "id": 54,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 2,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "go_goroutines{namespace=~\"receptor-.*\",pod=~\"receptor-gateway-.*\"}",
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Go Routines",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 41
+         },
+         "hiddenSeries": false,
+         "id": 18,
+         "legend": {
+           "avg": true,
+           "current": true,
+           "max": true,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": true
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_payload_message_sizes_count[1m]))",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Incoming Response Rate [1m]",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 50
+         },
+         "hiddenSeries": false,
+         "id": 8,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "receptor_controller_websocket_active_connection_count",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Active Websocket Connection Count",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 59
+         },
+         "hiddenSeries": false,
+         "id": 31,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "rate(receptor_controller_payload_message_sizes_sum[1m]) / rate(receptor_controller_payload_message_sizes_count[1m])",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "B"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Average Incoming Response Size [1m]",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "cards": {},
+         "color": {
+           "cardColor": "#b4ff00",
+           "colorScale": "sqrt",
+           "colorScheme": "interpolateOranges",
+           "exponent": 0.5,
+           "mode": "opacity"
+         },
+         "dataFormat": "timeseries",
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 68
+         },
+         "heatmap": {},
+         "hideZeroBuckets": false,
+         "highlightCards": true,
+         "id": 33,
+         "legend": {
+           "show": false
+         },
+         "links": [],
+         "reverseYBuckets": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "avg(increase(receptor_controller_payload_message_sizes_bucket[1m])) by (le)",
+             "format": "heatmap",
+             "interval": "15s",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "title": "Response Size",
+         "tooltip": {
+           "show": true,
+           "showHistogram": false
+         },
+         "transparent": true,
+         "type": "heatmap",
+         "xAxis": {
+           "show": true
+         },
+         "yAxis": {
+           "format": "deckbytes",
+           "logBase": 1,
+           "show": true
+         },
+         "yBucketBound": "auto"
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 77
+         },
+         "hiddenSeries": false,
+         "id": 10,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "avg_over_time(receptor_controller_kafka_response_writer_go_routine_count[5m])",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "legendFormat": "avg",
+             "refId": "B"
+           },
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "max_over_time(receptor_controller_kafka_response_writer_go_routine_count[5m])",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "legendFormat": "max",
+             "refId": "C"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Kafka Response Writer Go Routine Metrics - 5m",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 86
+         },
+         "hiddenSeries": false,
+         "id": 16,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_kafka_response_writer_failure_count[1m]))",
+             "format": "time_series",
+             "interval": "",
+             "intervalFactor": 1,
+             "legendFormat": "",
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Kafka Response Writer Failure Count - 1m",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 95
+         },
+         "hiddenSeries": false,
+         "id": 6,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_websocket_total_messages_received_count[1m]))",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Websocket Messages Received - 1m",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 104
+         },
+         "hiddenSeries": false,
+         "id": 7,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_websocket_total_messages_sent_count[1m]))",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Websocket Messages Sent - 1m",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 113
+         },
+         "hiddenSeries": false,
+         "id": 11,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(increase(receptor_controller_response_message_handled_count[1m])) + sum(increase(receptor_controller_response_message_without_handler_count[1m]))",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Receptor Responses Count - 1m",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       },
+       {
+         "aliasColors": {},
+         "bars": false,
+         "dashLength": 10,
+         "dashes": false,
+         "datasource": {
+           "uid": "$datasource"
+         },
+         "fieldConfig": {
+           "defaults": {
+             "links": []
+           },
+           "overrides": []
+         },
+         "fill": 1,
+         "fillGradient": 0,
+         "gridPos": {
+           "h": 9,
+           "w": 12,
+           "x": 0,
+           "y": 122
+         },
+         "hiddenSeries": false,
+         "id": 4,
+         "legend": {
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "show": true,
+           "total": false,
+           "values": false
+         },
+         "lines": true,
+         "linewidth": 1,
+         "links": [],
+         "nullPointMode": "null",
+         "options": {
+           "alertThreshold": true
+         },
+         "percentage": false,
+         "pluginVersion": "9.0.3",
+         "pointradius": 5,
+         "points": false,
+         "renderer": "flot",
+         "seriesOverrides": [],
+         "spaceLength": 10,
+         "stack": false,
+         "steppedLine": false,
+         "targets": [
+           {
+             "datasource": {
+               "uid": "$datasource"
+             },
+             "expr": "sum(receptor_controller_websocket_total_connection_count)",
+             "format": "time_series",
+             "intervalFactor": 1,
+             "refId": "A"
+           }
+         ],
+         "thresholds": [],
+         "timeRegions": [],
+         "title": "Total Websocket Connection Count",
+         "tooltip": {
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
+         },
+         "type": "graph",
+         "xaxis": {
+           "mode": "time",
+           "show": true,
+           "values": []
+         },
+         "yaxes": [
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           },
+           {
+             "format": "short",
+             "logBase": 1,
+             "show": true
+           }
+         ],
+         "yaxis": {
+           "align": false
+         }
+       }
+     ],
+     "refresh": false,
+     "schemaVersion": 36,
+     "style": "dark",
+     "tags": [],
+     "templating": {
+       "list": [
+         {
+           "current": {
+             "selected": true,
+             "text": "crcp01ue1-prometheus",
+             "value": "crcp01ue1-prometheus"
+           },
+           "hide": 0,
+           "includeAll": false,
+           "label": "Datasource",
+           "multi": false,
+           "name": "datasource",
+           "options": [],
+           "query": "prometheus",
+           "queryValue": "",
+           "refresh": 1,
+           "regex": "",
+           "skipUrlSync": false,
+           "type": "datasource"
+         }
+       ]
+     },
+     "time": {
+       "from": "now-24h",
+       "to": "now"
+     },
+     "timepicker": {
+       "refresh_intervals": [
+         "5s",
+         "10s",
+         "30s",
+         "1m",
+         "5m",
+         "15m",
+         "30m",
+         "1h",
+         "2h",
+         "1d"
+       ],
+       "time_options": [
+         "5m",
+         "15m",
+         "1h",
+         "6h",
+         "12h",
+         "24h",
+         "2d",
+         "7d",
+         "30d"
+       ]
+     },
+     "timezone": "",
+     "title": "Receptor-Controller",
+     "uid": "FRmd1NeWk1",
+     "version": 2,
+     "weekStart": ""
+   }
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-clouddot-insights-receptor-general
